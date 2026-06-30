@@ -57,6 +57,10 @@ export function GroupNode({
     return g.groups.some(recursiveHasMatch);
   }
 
+  // 検索時はマッチを含むグループを強制展開し、ヒットしたワードを即選択できるようにする
+  const containsMatch = !!q && recursiveHasMatch(group);
+  const expanded = !group.collapsed || containsMatch;
+
   // ---- グループ名列クリック ----
   const onNameClick = () => {
     if (editing) return;
@@ -159,7 +163,7 @@ export function GroupNode({
           style={{ paddingLeft: 8 + depth * 14 }}
         >
           <motion.span
-            animate={{ rotate: group.collapsed ? 0 : 90 }}
+            animate={{ rotate: expanded ? 90 : 0 }}
             className="text-eva-purple-bright group-hover:text-eva-green "
           >
             <FiChevronRight size={13} />
@@ -249,7 +253,7 @@ export function GroupNode({
 
         {/* 折り畳み展開部 */}
         <AnimatePresence initial={false}>
-          {!group.collapsed && (
+          {expanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
