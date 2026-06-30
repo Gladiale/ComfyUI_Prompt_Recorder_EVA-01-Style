@@ -21,8 +21,8 @@ export function genId(prefix: string): string {
   return `${prefix}_${rand()}`
 }
 
-export function createWord(text = '', note = '', selected = false): Word {
-  return { id: genId('w'), text, note, selected }
+export function createWord(text = '', note = '', selected = false, strength = 0): Word {
+  return { id: genId('w'), text, note, selected, strength }
 }
 
 export function createGroup(name = 'NEW GROUP'): Group {
@@ -196,6 +196,19 @@ export function setWordSelected(
   return mutateGroup(root, groupId, (g) => {
     const w = g.words.find((x) => x.id === wordId)
     if (w) w.selected = selected
+  })
+}
+
+/** 選択ワードの出力強度（0..10）を設定する。 */
+export function setWordStrength(
+  root: RootState,
+  groupId: string,
+  wordId: string,
+  strength: number,
+): RootState {
+  return mutateGroup(root, groupId, (g) => {
+    const w = g.words.find((x) => x.id === wordId)
+    if (w) w.strength = strength
   })
 }
 
@@ -383,10 +396,15 @@ function normalizeGroup(raw: unknown): Group | null {
 function normalizeWord(raw: unknown): Word | null {
   if (!raw || typeof raw !== 'object') return null
   const obj = raw as Record<string, unknown>
+  const strength =
+    typeof obj.strength === 'number' && Number.isFinite(obj.strength)
+      ? Math.max(0, Math.min(10, Math.round(obj.strength)))
+      : 0
   return {
     id: typeof obj.id === 'string' && obj.id ? obj.id : genId('w'),
     text: typeof obj.text === 'string' ? obj.text : '',
     note: typeof obj.note === 'string' ? obj.note : '',
     selected: typeof obj.selected === 'boolean' ? obj.selected : false,
+    strength,
   }
 }

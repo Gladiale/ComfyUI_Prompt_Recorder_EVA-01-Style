@@ -27,11 +27,13 @@ import {
   toggleCollapse as treeToggleCollapse,
   toggleWord as treeToggleWord,
   setWordSelected as treeSetWordSelected,
+  setWordStrength as treeSetWordStrength,
   updateWord as treeUpdateWord,
   type GroupDropTarget,
 } from '@/lib/tree'
 import { debounce, loadState, saveState } from '@/lib/storage'
 import { normalizeText } from '@/lib/normalize'
+import { clampStrength, formatWordWithStrength } from '@/lib/strength'
 
 type Separator = 'comma' | 'newline'
 
@@ -56,6 +58,7 @@ export interface PromptActions {
   updateWord: (groupId: string, wordId: string, patch: Partial<Pick<Word, 'text' | 'note'>>) => void
   toggleWord: (groupId: string, wordId: string) => void
   deselectWord: (groupId: string, wordId: string) => void
+  setWordStrength: (groupId: string, wordId: string, strength: number) => void
   deleteWord: (groupId: string, wordId: string) => void
   reorderWords: (groupId: string, newWords: Word[]) => void
   moveGroup: (draggedId: string, target: GroupDropTarget) => void
@@ -111,6 +114,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     toggleWord: (groupId, wordId) => setState((s) => treeToggleWord(s, groupId, wordId)),
     deselectWord: (groupId, wordId) =>
       setState((s) => treeSetWordSelected(s, groupId, wordId, false)),
+    setWordStrength: (groupId, wordId, strength) =>
+      setState((s) => treeSetWordStrength(s, groupId, wordId, clampStrength(strength))),
     deleteWord: (groupId, wordId) => setState((s) => treeDeleteWord(s, groupId, wordId)),
     reorderWords: (groupId, newWords) => setState((s) => treeReorderWords(s, groupId, newWords)),
     moveGroup: (draggedId, target) => setState((s) => treeMoveGroup(s, draggedId, target)),
@@ -122,15 +127,16 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   const selectedRefs = useMemo(() => collectSelected(state), [state])
 
   const synthesis = useMemo(() => {
-    // 出現順を維持しつつ、正規化テキストで重複排除
+    // 出現順を維持しつつ、整形後テキストで重複排除
     const seen = new Set<string>()
     const out: string[] = []
     for (const ref of selectedRefs) {
-      const key = normalizeText(ref.word.text)
       if (!ref.word.text.trim()) continue
+      const formatted = formatWordWithStrength(ref.word.text, ref.word.strength ?? 0)
+      const key = normalizeText(formatted)
       if (seen.has(key)) continue
       seen.add(key)
-      out.push(ref.word.text.trim())
+      out.push(formatted)
     }
     return separator === 'comma' ? out.join(', ') : out.join('\n')
   }, [selectedRefs, separator])

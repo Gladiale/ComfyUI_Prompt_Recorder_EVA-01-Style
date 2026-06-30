@@ -11,6 +11,12 @@ export interface Word {
   text: string
   note: string
   selected: boolean
+  /**
+   * 出力時の強度（0..10）。
+   *  0=そのまま / 1=() / 2..10=(text:1.x)
+   * 未設定（旧データ）は 0 扱い。選択時のみ総括欄へ反映される。
+   */
+  strength?: number
 }
 
 /** グループ：任意の深さで再帰的にネスト可能。 */
