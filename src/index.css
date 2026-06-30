@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   EVA-01 テーマ / Theme
+   ============================================================ */
+:root {
+  --eva-purple-deep: #2a0a4a;
+  --eva-purple: #5b1f8e;
+  --eva-purple-bright: #8a3fc8;
+  --eva-green: #39ff14;
+  --eva-green-soft: #7dff5c;
+  --eva-magenta: #ff2e88;
+  /* --bg-void: #070310;
+  --bg-panel: #0f0820;
+  --bg-panel-2: #160a2e; */
+  --bg-void: #070310;
+  --bg-panel: #0f0820;
+  --bg-panel-2: #160a2e;
+  --ink: #e9dcff;
+  --ink-dim: #9a86c8;
+  --line: #3a1f5e;
+  --line-soft: #241244;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 760px;
+  height: 560px;
+  overflow: hidden;
+  background: var(--bg-void);
+  color: var(--ink);
+  font-family: "EB Garamond", "Times New Roman", serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 760px;
+  height: 560px;
+}
+
+/* 深淵のハロー + 格子 */
+body {
+  background:
+    radial-gradient(720px 420px at 82% -8%, rgba(139, 63, 200, 0.22), transparent 60%),
+    radial-gradient(560px 360px at 0% 100%, rgba(57, 255, 20, 0.06), transparent 55%),
+    var(--bg-void);
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(91, 31, 142, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 31, 142, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+}
+
+/* スクロールバー（ポップアップ内） */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(15, 8, 32, 0.4);
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(91, 31, 142, 0.5);
+  border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(138, 63, 200, 0.7);
+}
+
+/* 碑文風見出しグロー */
+.glow-text {
+  text-shadow: 0 0 18px rgba(138, 63, 200, 0.35);
+}
+
+/* 選択ワード：蛍光緑で縁取り + inner glow = "起動" */
+.word-selected {
+  border-color: var(--eva-green) !important;
+  box-shadow:
+    inset 0 0 10px rgba(57, 255, 20, 0.28),
+    0 0 10px rgba(57, 255, 20, 0.22);
+  color: var(--eva-green-soft);
+}
+
+/* 挿入位置インジケータ：緑の発光ライン */
+.drop-indicator {
+  height: 2px;
+  background: var(--eva-green);
+  box-shadow:
+    0 0 8px var(--eva-green),
+    0 0 16px rgba(57, 255, 20, 0.6);
+  border-radius: 1px;
+}
+
+/* 微かな徽章発光 */
+@keyframes badgePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(57, 255, 20, 0.9);
+  }
+}
+.badge-pulse {
+  animation: badgePulse 2.2s ease-in-out infinite;
+}
+
+/* 編集入力のフォーカス */
+.ev-input {
+  background: rgba(7, 3, 16, 0.8);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.ev-input:focus {
+  border-color: var(--eva-green);
+  box-shadow:
+    0 0 0 1px rgba(57, 255, 20, 0.35),
+    inset 0 0 8px rgba(57, 255, 20, 0.12);
+}

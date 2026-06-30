@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ComfyUI Prompt Recorder — 仕様書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --eva-purple-deep:#2a0a4a;
+    --eva-purple:#5b1f8e;
+    --eva-purple-bright:#8a3fc8;
+    --eva-green:#39ff14;
+    --eva-green-soft:#7dff5c;
+    --eva-magenta:#ff2e88;
+    --eva-amber:#ffcc33;
+    --bg-void:#070310;
+    --bg-panel:#0f0820;
+    --bg-panel-2:#160a2e;
+    --ink:#e9dcff;
+    --ink-dim:#9a86c8;
+    --line:#3a1f5e;
+    --line-soft:#241244;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(139,63,200,.18), transparent 60%),
+      radial-gradient(900px 600px at 0% 100%, rgba(57,255,20,.06), transparent 55%),
+      var(--bg-void);
+    color:var(--ink);
+    font-family:'EB Garamond', 'Times New Roman', serif;
+    line-height:1.7;
+    font-size:18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* faint mystical grid */
+  body::before{
+    content:"";
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(91,31,142,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(91,31,142,.06) 1px, transparent 1px);
+    background-size:48px 48px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:48px 32px 120px}
+
+  /* ---- Header / Halo ---- */
+  .halo{
+    text-align:center;
+    padding:72px 24px 56px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .halo .seal{
+    font-family:'Cinzel Decorative', serif;
+    letter-spacing:.42em;
+    font-size:13px;
+    color:var(--eva-green);
+    text-shadow:0 0 12px rgba(57,255,20,.5);
+    margin-bottom:18px;
+  }
+  .halo h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:clamp(34px, 6vw, 64px);
+    margin:0;
+    letter-spacing:.04em;
+    background:linear-gradient(180deg,#fff 0%, var(--eva-purple-bright) 60%, var(--eva-magenta) 120%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 40px rgba(138,63,200,.25);
+  }
+  .halo .sub{
+    margin-top:18px;
+    color:var(--ink-dim);
+    font-style:italic;
+    font-size:20px;
+  }
+  .halo .meta{
+    margin-top:30px;
+    display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+    font-family:'JetBrains Mono', monospace;font-size:12px;letter-spacing:.08em;
+  }
+  .meta b{color:var(--eva-green-soft);font-weight:500}
+
+  /* ---- Section ---- */
+  section{margin:64px 0}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:28px}
+  .sec-head .num{
+    font-family:'Cinzel',serif;font-weight:700;font-size:13px;
+    color:var(--eva-purple-bright);border:1px solid var(--line);
+    padding:6px 12px;border-radius:2px;letter-spacing:.2em;
+    box-shadow:inset 0 0 12px rgba(91,31,142,.3);
+  }
+  .sec-head h2{
+    font-family:'Cinzel',serif;font-weight:600;
+    font-size:30px;margin:0;letter-spacing:.06em;
+    color:#fff;
+  }
+  .sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+
+  p.lead{color:var(--ink-dim);font-size:19px;font-style:italic;margin:0 0 24px}
+
+  /* ---- Cards ---- */
+  .grid{display:grid;gap:22px}
+  .grid.cols-2{grid-template-columns:1fr 1fr}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
+
+  .card{
+    background:linear-gradient(180deg, rgba(22,10,46,.9), rgba(15,8,32,.9));
+    border:1px solid var(--line);
+    border-radius:3px;padding:24px;
+    position:relative;
+    box-shadow:0 0 0 1px rgba(91,31,142,.05), 0 12px 40px rgba(0,0,0,.4);
+  }
+  .card::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--eva-purple-bright),var(--eva-magenta));
+    opacity:.0;transition:opacity .3s;
+  }
+  .card:hover::before{opacity:1}
+  .card h3{
+    font-family:'Cinzel',serif;font-weight:600;font-size:18px;
+    margin:0 0 12px;color:#fff;letter-spacing:.05em;
+    display:flex;align-items:center;gap:10px;
+  }
+  .card h3 .dot{width:8px;height:8px;background:var(--eva-green);border-radius:50%;box-shadow:0 0 10px var(--eva-green)}
+  .card p{margin:0 0 10px;color:var(--ink-dim);font-size:16px}
+  .card p:last-child{margin-bottom:0}
+
+  ul.sig{list-style:none;padding:0;margin:10px 0 0}
+  ul.sig li{position:relative;padding-left:22px;margin:8px 0;color:var(--ink);font-size:16px}
+  ul.sig li::before{content:"✦";position:absolute;left:0;top:0;color:var(--eva-green-soft);font-size:12px}
+  code, .mono{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--eva-green-soft);background:rgba(57,255,20,.06);padding:1px 6px;border-radius:2px}
+
+  /* color swatches */
+  .swatches{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .sw{flex:1;min-width:120px;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .sw .chip{height:54px}
+  .sw .lab{padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);background:var(--bg-panel)}
+  .sw .lab b{display:block;color:#fff;font-size:12px;margin-bottom:2px}
+
+  /* diagram of layout */
+  .diagram{
+    margin-top:18px;border:1px solid var(--line);border-radius:3px;
+    background:var(--bg-panel);padding:14px;
+  }
+  .diag-frame{display:grid;grid-template-columns:1.55fr 1fr;gap:10px;height:280px}
+  .diag-left{border:1px dashed var(--line);border-radius:2px;padding:10px;display:flex;flex-direction:column;gap:6px;background:rgba(91,31,142,.08)}
+  .diag-right{display:grid;grid-template-rows:1fr 1fr;gap:10px}
+  .diag-box{border:1px dashed var(--line);border-radius:2px;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--ink-dim);font-size:13px}
+  .grp{border:1px solid var(--line-soft);border-radius:2px;background:var(--bg-panel-2);font-size:11px;color:var(--ink-dim);padding:5px 8px}
+  .ratio-note{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--eva-green-soft);text-align:center;margin-top:10px;letter-spacing:.1em}
+
+  /* interaction table */
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+  th{font-family:'Cinzel',serif;font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--eva-purple-bright);text-transform:uppercase}
+  td:first-child{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--eva-green-soft);width:42%;white-space:nowrap}
+
+  /* JSON block */
+  pre.json{
+    background:#0a0418;border:1px solid var(--line);border-radius:3px;
+    padding:18px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:13px;
+    color:#c8b6ff;line-height:1.6;margin-top:12px;
+  }
+  pre.json .k{color:var(--eva-green)}
+  pre.json .s{color:var(--eva-amber)}
+  pre.json .c{color:var(--ink-dim);font-style:italic}
+
+  /* tech badges */
+  .badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .badge{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.12em;padding:7px 14px;border:1px solid var(--line);border-radius:2px;color:var(--ink);background:rgba(91,31,142,.12)}
+  .badge.hot{border-color:var(--eva-green);color:var(--eva-green);box-shadow:0 0 14px rgba(57,255,20,.2)}
+
+  .foot{text-align:center;margin-top:90px;padding-top:30px;border-top:1px solid var(--line);color:var(--ink-dim);font-style:italic}
+  .foot .crest{font-family:'Cinzel Decorative',serif;letter-spacing:.4em;color:var(--eva-purple-bright);font-size:12px;margin-bottom:10px}
+
+  .note{border-left:2px solid var(--eva-magenta);padding:6px 0 6px 16px;margin-top:14px;color:var(--ink-dim);font-size:15px;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HALO ============ -->
+  <header class="halo">
+    <div class="seal">◇ NERV · PROMPT TERMINAL ◇</div>
+    <h1>COMFYUI PROMPT RECORDER</h1>
+    <div class="sub">— ComfyUI プロンプトワード記録 Chrome 拡張機能 仕様書 —</div>
+    <div class="meta">
+      <span>VERSION <b>1.0</b></span>
+      <span>·</span>
+      <span>REV <b>2026.06.29</b></span>
+      <span>·</span>
+      <span>STACK <b>React + Vite + TS</b></span>
+      <span>·</span>
+      <span>PARADIGM <b>EVA-01</b></span>
+    </div>
+  </header>
+
+  <!-- ============ 1. OVERVIEW ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">I</span><h2>概要 / Overview</h2><span class="rule"></span>
+    </div>
+    <p class="lead">ComfyUI で使用するプロンプトワードを、自由に階層化されたグループへ記録・選定し、重複を排除した最終プロンプトを生成するブラウザ拡張機能。アイコンクリックでポップアップ起動。</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot"></span>目的</h3>
+        <p>プロンプトワードを意味的にグループ化（キャラクター / 背景 / 光 等、更にその中に上半身・装飾品・下半身等のサブグループ）して蓄積。必要なワードだけを選ぶことで、最終プロンプトを即時に組み立てる。</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>形態</h3>
+        <p>Google Chrome 拡張機能（Manifest V3）。拡張機能アイコンをクリックするとポップアップ（<code>popup.html</code>）が開き、その中に全 UI を展開する。状態は <code>chrome.storage.local</code> に永続化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. DESIGN LANGUAGE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">II</span><h2>デザイン言語 / Design Language</h2><span class="rule"></span>
+    </div>
+    <p class="lead">エヴァンゲリオン初号機の色彩を基調とし、宗教的で神秘的な気配を纏う。モダンかつ洗練、しかし古典を思わせるフォントで厳格さを演出。</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot"></span>カラーパレット</h3>
+        <p>初号機の紫と蛍光緑、そして使徒由来の赤紫をアクセントに。</p>
+        <div class="swatches">
+          <div class="sw"><div class="chip" style="background:#2a0a4a"></div><div class="lab"><b>Deep Purple</b>#2A0A4A</div></div>
+          <div class="sw"><div class="chip" style="background:#5b1f8e"></div><div class="lab"><b>Unit Purple</b>#5B1F8E</div></div>
+          <div class="sw"><div class="chip" style="background:#8a3fc8"></div><div class="lab"><b>Iris</b>#8A3FC8</div></div>
+          <div class="sw"><div class="chip" style="background:#39ff14;box-shadow:inset 0 0 30px rgba(0,0,0,.3)"></div><div class="lab"><b>Neon Green</b>#39FF14</div></div>
+          <div class="sw"><div class="chip" style="background:#ff2e88"></div><div class="lab"><b>Magenta</b>#FF2E88</div></div>
+          <div class="sw"><div class="chip" style="background:#070310"></div><div class="lab"><b>Void</b>#070310</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>タイポグラフィ</h3>
+        <p>見出しに宗教典籍を思わせる <code>Cinzel / Cinzel Decorative</code>（ローマ碑文体）。本文に繊細で古典的な <code>EB Garamond</code>。データ・コード類には <code>JetBrains Mono</code> を採用。</p>
+        <div class="note">神秘的さ＝「静寂・光・碑文」。文字間を広めに、グロー（発光）で聖性を、紫の深淵で畏敬を表現。</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:22px">
+      <h3><span class="dot"></span>ビジュアル演出</h3>
+      <ul class="sig">
+        <li>背景：深淵の紫黒に、微かな格子と光のハロー（aurora halation）。</li>
+        <li>選択状態：ワードが蛍光緑で縁取られ、inner-glow + 発光で「起動」を表現。</li>
+        <li>境界線：細い青紫のライン、要所に緑の強調線（初号機の装甲継ぎ目を模倣）。</li>
+        <li>ドラッグ中：対象が半透過し、緑の残像Trail（Motion の spring）を伴う。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 3. LAYOUT ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">III</span><h2>画面レイアウト / Layout</h2><span class="rule"></span>
+    </div>
+    <p class="lead">左右非対称。自然界の比率（黄金比 ≈ 1.618）に従い、左に広く、右に控えめに。</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot"></span>区分</h3>
+        <ul class="sig">
+          <li><b>左領域（広）</b>：ワード画面。全グループ／ワードの閲覧・編集・ドラッグ。</li>
+          <li><b>右上（半）</b>：総括欄。選択ワードの重複排除済み最終プロンプトを出力。</li>
+          <li><b>右下（半）</b>：選択済みワード一覧。各ワードをクリックで選択解除。</li>
+        </ul>
+        <div class="ratio-note">黄金比 1.618 : 1 → 左 ≈ 61.8% · 右 ≈ 38.2%</div>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>概観図</h3>
+        <div class="diagram">
+          <div class="diag-frame">
+            <div class="diag-left">
+              <div style="font-family:'Cinzel',serif;color:#fff;font-size:13px;margin-bottom:4px">WORDS — 左 61.8%</div>
+              <div class="grp">▾ CHARACTER</div>
+              <div class="grp" style="margin-left:14px">▾ Upper Body</div>
+              <div class="grp" style="margin-left:14px">▾ Accessories</div>
+              <div class="grp">▾ BACKGROUND</div>
+              <div class="grp">▾ LIGHT</div>
+            </div>
+            <div class="diag-right">
+              <div class="diag-box"><span>SYNTHESIS<br><small>右上：最終プロンプト出力</small></span></div>
+              <div class="diag-box"><span>SELECTED<br><small>右下：選択ワード（解除可）</small></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">ポップアップ推奨サイズ：幅 760px × 高さ 560px（Chrome popup 最大制限 800×600 内）。レイアウトはこれに最適化し、縦方向は固定・横方向は可変。</div>
+  </section>
+
+  <!-- ============ 4. DATA MODEL ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">IV</span><h2>データモデル / Data Model</h2><span class="rule"></span>
+    </div>
+    <p class="lead">グループは再帰的な木構造（親グループを持てる）。ワードは必ずいずれかのグループに属する。</p>
+<pre class="json"><span class="c">// Group：任意の深さでネスト可能</span>
+{
+  <span class="k">"id"</span>: <span class="s">"grp_character"</span>,
+  <span class="k">"name"</span>: <span class="s">"CHARACTER"</span>,
+  <span class="k">"collapsed"</span>: false,
+  <span class="k">"groups"</span>: [ <span class="c">/* 子グループ配列 */</span> ],
+  <span class="k">"words"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"w_001"</span>,
+      <span class="k">"text"</span>: <span class="s">"long silver hair"</span>,
+      <span class="k">"note"</span>: <span class="s">"銀髪ロング。綾波系。"</span>,
+      <span class="k">"selected"</span>: false
+    }
+  ]
+}
+<span class="c">// ルート構造</span>
+{ <span class="k">"version"</span>: 1, <span class="k">"rootGroups"</span>: [ <span class="c">/* Group[] */</span> ] }</pre>
+    <div class="note">同一ワードの重複は <code>text</code> の正規化（trim・小文字化）で判定し、最終プロンプト出力時に排除。語順は選択された順ではなく、左ツリー上の出現順を維持。</div>
+  </section>
+
+  <!-- ============ 5. GROUPS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">V</span><h2>グループ機能 / Groups</h2><span class="rule"></span>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot"></span>階層と命名</h3>
+        <p>グループ名・ワード共に自由入力。グループは無制限にネスト可能（例：CHARACTER > Upper Body > Hair）。</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>折り畳み</h3>
+        <p>ワード増加による縦長化を防ぐ折り畳み機能。グループ内に選択ワードがある場合、グループ行に<b>蛍光緑の徽章（badge）と発光</b>で「内に選択あり」を暗示する。</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>操作対象</th><th>動作</th></tr></thead>
+      <tbody>
+        <tr><td>グループ名 / シングルクリック</td><td>階層の展開・折り畳み切替</td></tr>
+        <tr><td>グループ名 / ダブルクリック</td><td>グループ名編集モードへ移行</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ 6. WORDS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">VI</span><h2>ワード機能 / Words</h2><span class="rule"></span>
+    </div>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3><span class="dot"></span>選択と編集</h3>
+        <p>シングルクリック＝選択切替。ダブルクリック＝ワード編集。</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>注釈</h3>
+        <p>各ワードに注釈（note）を付与。意味不明なワードも即座に理解可能。ワード横に小さな緑の印で注釈の有無を示す。</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>検索</h3>
+        <p>ワード本文<b>および</b>注釈を横断検索する検索欄。ヒット以外を淡色化し、コンテキストを保つ。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. SYNTHESIS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">VII</span><h2>総括欄 / Synthesis</h2><span class="rule"></span>
+    </div>
+    <div class="card">
+      <h3><span class="dot"></span>最終プロンプト生成</h3>
+      <p>選択された全ワードを、左ツリーの出現順に集約。<code>text</code> の正規化比較で重複を排除し、カンマ（または改行）区切りで右上の総括欄へ出力。</p>
+      <ul class="sig">
+        <li>出力形式：カンマ区切り一行（コピー容易）。切替で改行区切りも可。</li>
+        <li>右下「選択済み」欄：各ワードをクリックすると選択解除され、総括欄が即時再計算。</li>
+        <li>クリップボードコピー（緑のアイコン）を備える。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 8. DRAG & DROP ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">VIII</span><h2>ドラッグ&ドロップ / Drag &amp; Drop</h2><span class="rule"></span>
+    </div>
+    <p class="lead">読みやすさのため、後からの追加にも耐えるよう並び替えを前提とする。スムーズなアニメーション（Motion spring）を伴う。</p>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>対象</th><th>移動範囲</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>ワード</td><td>同一グループ内のみ</td><td>順序の並び替え。他グループへは移動不可。</td></tr>
+        <tr><td>グループ</td><td>順序の並び替え ＋ 別グループ<b>内</b>への移動</td><td>グループ A をグループ B の子としてネスト可能。</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="grid cols-2" style="margin-top:22px">
+      <div class="card">
+        <h3><span class="dot"></span>アニメーション要件</h3>
+        <ul class="sig">
+          <li>ドラッグ開始：対象が縮小＋半透過、緑の残像Trailを引く。</li>
+          <li>ドロップ先：spring による弾性のある挿入（LayoutGroup + AnimatePresence）。</li>
+          <li>挿入位置インジケータ：緑の発光ラインで挿入点を表示。</li>
+          <li>ドロップ終了：ねばりのある spring で着地（stiffness≈260, damping≈24 程度）。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>実装方針</h3>
+        <p>HTML5 DnD ではなく、Motion の <code>Reorder.Group</code> / <code>Reorder.Item</code> と <code>layout</code> prop を活用。グループ間移動は状態ツリーの再帰書き換えで実現し、<code>layoutId</code> で連続性を保持。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9. IMPORT/EXPORT ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">IX</span><h2>JSON 入出力 / Import &amp; Export</h2><span class="rule"></span>
+    </div>
+    <div class="card">
+      <h3><span class="dot"></span>アイコンのみの操作</h3>
+      <p>文字を排した2つのアイコンのみで完結。</p>
+      <ul class="sig">
+        <li><b>書き出し（Export）</b>：赤紫の下向き矢印アイコン → 現在のツリーを JSON に固めてダウンロード。</li>
+        <li><b>読み込み（Import）</b>：緑の上向き矢印アイコン → ファイル選択ダイアログから JSON を読み込み、ツリーを置換（マージ確認付き）。</li>
+        <li>アイコンは React Icons（<code>Fi/Fa</code>）から選定、ホバー時に発光。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 10. TECH STACK ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">X</span><h2>技術スタック / Stack</h2><span class="rule"></span>
+    </div>
+    <div class="badges">
+      <span class="badge hot">React 18</span>
+      <span class="badge hot">Vite</span>
+      <span class="badge hot">TypeScript</span>
+      <span class="badge hot">Tailwind CSS</span>
+      <span class="badge hot">Motion</span>
+      <span class="badge hot">React Icons</span>
+    </div>
+    <div class="grid cols-2" style="margin-top:22px">
+      <div class="card">
+        <h3><span class="dot"></span>状態管理</h3>
+        <p>React Context（<code>PromptContext</code>）でグローバル状態を一元管理。ツリー構造・選択状態・折り畳み状態を保持し、Provider 経由で各画面へ供給。</p>
+        <p>永続化層は Context 内に抽象化し <code>chrome.storage.local</code> へ自動保存（debounce）。</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot"></span>ビルド出力</h3>
+        <p>Vite で <code>popup.html</code> を起点にビルド。出力物 + <code>manifest.json</code> を <code>dist/</code> にまとめ、Chrome に「パッケージ化されていない拡張機能」として読み込ませる。</p>
+        <p class="mono">manifest_version: 3 / action.default_popup: popup.html</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 11. FILE STRUCTURE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">XI</span><h2>ファイル構成 / Structure</h2><span class="rule"></span>
+    </div>
+<pre class="json">
+src/
+├─ main.tsx                  <span class="c">// React エントリ</span>
+├─ popup.html                <span class="c">// Vite 入力 HTML</span>
+├─ context/
+│  └─ PromptContext.tsx      <span class="c">// グローバル状態・永続化</span>
+├─ components/
+│  ├─ WordPanel.tsx          <span class="c">// 左：ワード画面</span>
+│  ├─ SynthesisPanel.tsx     <span class="c">// 右上：総括欄</span>
+│  ├─ SelectedPanel.tsx      <span class="c">// 右下：選択ワード</span>
+│  ├─ GroupNode.tsx          <span class="c">// 再帰的グループ表示</span>
+│  ├─ WordItem.tsx           <span class="c">// ワード行（選択/編集/DnD）</span>
+│  ├─ SearchBox.tsx          <span class="c">// 検索欄</span>
+│  └─ IOButtons.tsx          <span class="c">// Import/Export アイコン</span>
+├─ lib/
+│  ├─ tree.ts                <span class="c">// ツリー操作（追加/移動/並替）</span>
+│  ├─ normalize.ts           <span class="c">// 重複判定</span>
+│  └─ storage.ts             <span class="c">// chrome.storage ラッパ</span>
+├─ types.ts                  <span class="c">// Group / Word 型定義</span>
+└─ index.css                 <span class="c">// Tailwind + EVA テーマ</span>
+public/
+└─ manifest.json
+</pre>
+  </section>
+
+  <!-- ============ 12. INTERACTION SUMMARY ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="num">XII</span><h2>操作一覧 / Interactions</h2><span class="rule"></span>
+    </div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>操作</th><th>対象</th><th>結果</th></tr></thead>
+      <tbody>
+        <tr><td>シングルクリック</td><td>ワード</td><td>選択 ON/OFF</td></tr>
+        <tr><td>ダブルクリック</td><td>ワード</td><td>編集モード（text / note）</td></tr>
+        <tr><td>シングルクリック</td><td>グループ名</td><td>展開 / 折り畳み</td></tr>
+        <tr><td>ダブルクリック</td><td>グループ名</td><td>グループ名編集</td></tr>
+        <tr><td>ドラッグ</td><td>ワード</td><td>同一グループ内で順序変更</td></tr>
+        <tr><td>ドラッグ</td><td>グループ</td><td>順序変更 / 他グループ内へネスト移動</td></tr>
+        <tr><td>クリック</td><td>右下の選択ワード</td><td>選択解除</td></tr>
+        <tr><td>入力</td><td>検索欄</td><td>ワード＋注釈を横断検索</td></tr>
+        <tr><td>クリック</td><td>Export アイコン</td><td>JSON ダウンロード</td></tr>
+        <tr><td>クリック</td><td>Import アイコン</td><td>JSON 読み込み（ツリー置換）</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="crest">◇ ◆ ◇</div>
+    <p>“人類の補完は、プロンプトより始まる。”</p>
+    <p style="font-size:13px">EVA-01 THEMED · COMFYUI PROMPT RECORDER · SPECIFICATION v1.0</p>
+  </footer>
+
+</div>
+</body>
+</html>
