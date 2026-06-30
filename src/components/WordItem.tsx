@@ -89,7 +89,8 @@ export function WordItem({ word, groupId, dimmed }: Props) {
       <div
         onClick={onClick}
         className={[
-          "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer select-none transition-all",
+          "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer transition-all",
+          editing ? "" : "select-none",
           word.selected
             ? "word-selected bg-eva-bg-panel-2"
             : "border-eva-line-soft bg-eva-bg-panel/60 hover:border-eva-purple-bright",
@@ -100,7 +101,15 @@ export function WordItem({ word, groupId, dimmed }: Props) {
         <span className="w-[3px] self-stretch rounded-full bg-eva-line group-hover:bg-eva-green/60 transition-colors" />
 
         {editing ? (
-          <div className="flex-1 flex flex-col gap-1 py-0.5">
+          <div
+            className="flex-1 flex flex-col gap-1 py-0.5"
+            // フォーカスが編集領域の外へ出たときだけ確定（入力欄間移動では閉じない）
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                commitEdit();
+              }
+            }}
+          >
             <input
               autoFocus
               value={draftText}
@@ -109,7 +118,6 @@ export function WordItem({ word, groupId, dimmed }: Props) {
                 if (e.key === "Enter") commitEdit();
                 if (e.key === "Escape") cancelEdit();
               }}
-              onBlur={commitEdit}
               className="ev-input rounded-sm px-1.5 py-0.5 text-[13px]"
               placeholder="word"
             />
@@ -120,7 +128,6 @@ export function WordItem({ word, groupId, dimmed }: Props) {
                 if (e.key === "Enter") commitEdit();
                 if (e.key === "Escape") cancelEdit();
               }}
-              onBlur={commitEdit}
               className="ev-input rounded-sm px-1.5 py-0.5 text-[11px] font-mono"
               placeholder="note (注釈)"
             />
