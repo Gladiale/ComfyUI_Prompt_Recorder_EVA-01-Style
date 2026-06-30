@@ -136,9 +136,6 @@ export function GroupNode({
   return (
     <motion.div layout className="select-none bg-[#371029]">
       <div
-        draggable={!editing}
-        onDragStart={onGroupDragStart}
-        onDragEnd={onGroupDragEnd}
         onDragOver={onGroupDragOver}
         onDragLeave={() => setDropInfo(null)}
         onDrop={onGroupDrop}
@@ -149,8 +146,11 @@ export function GroupNode({
             : "border-eva-line-soft",
         ].join(" ")}
       >
-        {/* グループヘッダ行 */}
+        {/* グループヘッダ行（グループ自身のDnDドラッグ元） */}
         <div
+          draggable={!editing}
+          onDragStart={onGroupDragStart}
+          onDragEnd={onGroupDragEnd}
           onClick={onNameClick}
           className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group hover:border-eva-purple-bright"
           style={{ paddingLeft: 8 + depth * 14 }}

@@ -205,10 +205,11 @@ export function deleteWord(root: RootState, groupId: string, wordId: string): Ro
   })
 }
 
-/** 同一グループ内でのワード並び替え（Motion Reorder の結果を受ける）。 */
+/** 同一グループ内でのワード並び替え（Motion Reorder の結果を受ける）。
+ *  Motion は value の参照でアイテムを追跡するため、クローンせず同一参照を保つ。 */
 export function reorderWords(root: RootState, groupId: string, newWords: Word[]): RootState {
   return mutateGroup(root, groupId, (g) => {
-    g.words = newWords.map((w) => ({ ...w }))
+    g.words = newWords
   })
 }
 
