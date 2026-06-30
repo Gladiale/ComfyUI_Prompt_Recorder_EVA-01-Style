@@ -1,5 +1,8 @@
 # vibe coding
-model GML 5.2
+- MODEL: gml 5.2
+- IDE:   vscode + claude code + cc switch
+
+![preview](preview.png)
 
 # ComfyUI Prompt Recorder
 
