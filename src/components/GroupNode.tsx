@@ -1,6 +1,6 @@
 // 再帰的グループ表示 / GroupNode
 // 展開・折り畳み、グループ名編集、ワードのDnD並替、グループ自体のDnD移動
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Reorder, motion, AnimatePresence } from "motion/react";
 import { FiChevronRight, FiFolderPlus, FiFilePlus, FiTrash2 } from "react-icons/fi";
 import type { Group, Word } from "@/types";
@@ -41,6 +41,13 @@ export function GroupNode({
   const [draftName, setDraftName] = useState(group.name);
   const [dropInfo, setDropInfo] = useState<"before" | "after" | "into" | null>(null);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ドラッグ終了時（isDraggingGroup が null に戻った時）に残ったドロップ表示を全て消去。
+  // 深いネスト時、ドロップ先が子グループになり親の onDrop が発火しないケースでも
+  // 緑枠が残らないようにする安全網。
+  useEffect(() => {
+    if (!isDraggingGroup) setDropInfo(null);
+  }, [isDraggingGroup]);
 
   // Reorder.Item の value は group自身
   const q = query.trim().toLowerCase();
