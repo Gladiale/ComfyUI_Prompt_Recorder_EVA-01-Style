@@ -5,7 +5,7 @@ import { Reorder, motion, AnimatePresence } from "motion/react";
 import { FiChevronRight, FiFolderPlus, FiFilePlus, FiTrash2 } from "react-icons/fi";
 import type { Group, Word } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
-import { groupHasSelection } from "@/lib/tree";
+import { countSelectedWords } from "@/lib/tree";
 import { normalizeText } from "@/lib/normalize";
 import { WordItem } from "./WordItem";
 import { useConfirm } from "./ConfirmDialog";
@@ -48,6 +48,9 @@ export function GroupNode({
     !q || normalizeText(w.text).includes(q) || w.note.toLowerCase().includes(q);
   const groupMatchesSearch =
     !q || group.name.toLowerCase().includes(q) || recursiveHasMatch(group);
+
+  // 配下の選択ワード数（徽章に件数表示）
+  const selectedCount = countSelectedWords(group);
 
   function recursiveHasMatch(g: Group): boolean {
     if (g.words.some(wordMatches)) return true;
@@ -191,12 +194,14 @@ export function GroupNode({
           {/* 追加ボタン群 */}
           {!editing && (
             <div className="flex items-center gap-1 ml-auto">
-              {/* 選択内包の徽章 */}
-              {groupHasSelection(group) && (
+              {/* 選択内包の徽章：配下の選択ワード数を表示 */}
+              {selectedCount > 0 && (
                 <span
-                  className="badge-pulse w-2 h-2 rounded-full bg-eva-green shrink-0"
-                  title="内に選択ワードあり"
-                />
+                  className="badge-pulse shrink-0 min-w-[16px] h-[16px] px-1 rounded-full bg-eva-green/15 border border-eva-green/60 text-eva-green-soft text-[10px] font-mono leading-none flex items-center justify-center"
+                  title={`内に選択ワード ${selectedCount} 件`}
+                >
+                  {selectedCount}
+                </span>
               )}
 
               <button

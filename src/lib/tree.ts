@@ -343,6 +343,13 @@ export function groupHasSelection(g: Group): boolean {
   return g.groups.some((child) => groupHasSelection(child))
 }
 
+/** グループ階層内の選択ワード数を再帰的に集計（徽章の件数表示用）。 */
+export function countSelectedWords(g: Group): number {
+  let n = g.words.filter((w) => w.selected).length
+  for (const child of g.groups) n += countSelectedWords(child)
+  return n
+}
+
 // ============================================================
 // Import / Export
 // ============================================================
