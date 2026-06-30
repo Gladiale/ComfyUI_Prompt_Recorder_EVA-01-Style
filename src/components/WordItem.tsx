@@ -4,6 +4,7 @@ import { Reorder, useDragControls } from "motion/react";
 import { FiX } from "react-icons/fi";
 import type { Word } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
+import { useConfirm } from "./ConfirmDialog";
 
 interface Props {
   word: Word;
@@ -15,6 +16,7 @@ const DBL_CLICK_DELAY = 230;
 
 export function WordItem({ word, groupId, dimmed }: Props) {
   const { toggleWord, updateWord, deleteWord } = usePrompt();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -38,6 +40,19 @@ export function WordItem({ word, groupId, dimmed }: Props) {
     setDraftText(word.text);
     setDraftNote(word.note);
     setEditing(false);
+  };
+
+  // 削除：アプリ内ダイアログで確認してから実行
+  const onDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const ok = await confirm({
+      title: "WORD DELETE",
+      message: `「${word.text || "（empty）"}」を削除しますか？`,
+      confirmLabel: "削除",
+      cancelLabel: "キャンセル",
+      danger: true,
+    });
+    if (ok) deleteWord(groupId, word.id);
   };
 
   // シングルクリック=選択切替、ダブルクリック=編集（遅延で判別）
@@ -140,10 +155,7 @@ export function WordItem({ word, groupId, dimmed }: Props) {
         {/* 削除（編集中・ホバー時） */}
         {!editing && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteWord(groupId, word.id);
-            }}
+            onClick={onDelete}
             className="opacity-0 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0"
             title="削除"
           >

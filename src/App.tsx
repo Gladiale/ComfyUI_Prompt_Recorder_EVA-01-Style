@@ -1,6 +1,7 @@
 // 全体レイアウト / App
 // 左右非対称（黄金比 1.618:1 → 左 61.8%, 右 38.2%）。縦固定・横可変。
 import { PromptProvider, usePrompt } from '@/context/PromptContext'
+import { ConfirmProvider } from '@/components/ConfirmDialog'
 import { WordPanel } from '@/components/WordPanel'
 import { SynthesisPanel } from '@/components/SynthesisPanel'
 import { SelectedPanel } from '@/components/SelectedPanel'
@@ -42,7 +43,9 @@ function Shell() {
 export default function App() {
   return (
     <PromptProvider>
-      <Shell />
+      <ConfirmProvider>
+        <Shell />
+      </ConfirmProvider>
     </PromptProvider>
   )
 }

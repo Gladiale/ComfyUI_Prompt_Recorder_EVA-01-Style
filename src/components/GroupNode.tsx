@@ -8,6 +8,7 @@ import { usePrompt } from "@/context/PromptContext";
 import { groupHasSelection } from "@/lib/tree";
 import { normalizeText } from "@/lib/normalize";
 import { WordItem } from "./WordItem";
+import { useConfirm } from "./ConfirmDialog";
 
 interface Props {
   group: Group;
@@ -35,6 +36,7 @@ export function GroupNode({
     reorderWords,
     moveGroup,
   } = usePrompt();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(group.name);
   const [dropInfo, setDropInfo] = useState<"before" | "after" | "into" | null>(null);
@@ -209,10 +211,16 @@ export function GroupNode({
               </button>
 
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  if (window.confirm(`「${group.name}」を削除しますか？`))
-                    deleteGroup(group.id);
+                  const ok = await confirm({
+                    title: "GROUP DELETE",
+                    message: `「${group.name}」を削除しますか？\n（配下のワード・サブグループも全て削除されます）`,
+                    confirmLabel: "削除",
+                    cancelLabel: "キャンセル",
+                    danger: true,
+                  });
+                  if (ok) deleteGroup(group.id);
                 }}
                 className="p-0.5 text-eva-ink-dim hover:text-eva-magenta transition-colors opacity-60 hover:opacity-100"
                 title="グループ削除"
