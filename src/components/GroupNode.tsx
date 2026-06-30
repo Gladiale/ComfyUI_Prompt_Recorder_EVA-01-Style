@@ -1,7 +1,7 @@
 // 再帰的グループ表示 / GroupNode
 // 展開・折り畳み、グループ名編集、ワードのDnD並替、グループ自体のDnD移動
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { Reorder, motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { FiChevronRight, FiFolderPlus, FiFilePlus, FiTrash2 } from "react-icons/fi";
 import type { Group, Word } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
@@ -90,9 +90,60 @@ export function GroupNode({
     setEditing(false);
   };
 
-  // ---- ワード並替 ----
-  const onReorder = (newWords: Word[]) => {
-    reorderWords(group.id, newWords);
+  // ---- ワード並替（HTML5 DnD・2Dブロック対応）----
+  // Motion Reorder は単一軸前提で flex-wrap の2D配置だと行内並替が壊れるため、
+  // ポインタ位置から挿入先を算出して自前で並び替える。
+  const [dragWordId, setDragWordId] = useState<string | null>(null);
+  const dragWordIdRef = useRef<string | null>(null);
+  const setDragWord = (id: string | null) => {
+    dragWordIdRef.current = id;
+    setDragWordId(id);
+  };
+
+  const handleWordDragStart = (word: Word) => {
+    setDragWord(word.id);
+  };
+  const handleWordDragEnd = () => {
+    setDragWord(null);
+  };
+
+  // 各ワード上での dragover：ポインタが中央より左なら前、右なら後ろへ挿入。
+  // 折り返し2D配置でも「乗っているワード」自身が判定するので自然に機能する。
+  const handleWordDragOver = (e: DragEvent, word: Word) => {
+    const dragId = dragWordIdRef.current;
+    if (!dragId || dragId === word.id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const isAfter = e.clientX > rect.left + rect.width / 2;
+    const from = group.words.findIndex((w) => w.id === dragId);
+    const over = group.words.findIndex((w) => w.id === word.id);
+    if (from === -1 || over === -1) return;
+
+    let insertAt = isAfter ? over + 1 : over;
+    const newWords = [...group.words];
+    const [moved] = newWords.splice(from, 1);
+    if (from < insertAt) insertAt -= 1;
+    insertAt = Math.max(0, Math.min(insertAt, newWords.length));
+    newWords.splice(insertAt, 0, moved);
+
+    // 変化があるときだけ更新（dragover は高頻度発火のため）
+    const changed = newWords.some((w, i) => w.id !== group.words[i]?.id);
+    if (changed) reorderWords(group.id, newWords);
+  };
+
+  const onWordsContainerDragOver = (e: DragEvent) => {
+    if (!dragWordIdRef.current) return;
+    // ワード間の隙間でもドロップ可能にする
+    e.preventDefault();
+  };
+  const onWordsDrop = (e: DragEvent) => {
+    if (!dragWordIdRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDragWord(null);
   };
 
   // ---- グループ自身のDnD（HTML5で位置検出 → moveGroupで状態書換） ----
@@ -271,13 +322,12 @@ export function GroupNode({
               {/* 挿入位置インジケータ（before/after） */}
               {dropInfo === "before" && <div className="drop-indicator mx-2" />}
 
-              {/* ワード群 */}
-              <Reorder.Group
-                axis="y"
-                values={group.words}
-                onReorder={onReorder}
-                className="flex flex-col gap-1 py-1"
+              {/* ワード群（ブロック配置・HTML5 DnDで2D並替） */}
+              <div
+                className="flex flex-wrap gap-1 py-1"
                 style={{ paddingLeft: 14 + depth * 0 }}
+                onDragOver={onWordsContainerDragOver}
+                onDrop={onWordsDrop}
               >
                 <AnimatePresence initial={false}>
                   {group.words.map((w) => (
@@ -286,10 +336,14 @@ export function GroupNode({
                       word={w}
                       groupId={group.id}
                       dimmed={!!q && !wordMatches(w)}
+                      isDragging={dragWordId === w.id}
+                      onWordDragStart={handleWordDragStart}
+                      onWordDragOver={handleWordDragOver}
+                      onWordDragEnd={handleWordDragEnd}
                     />
                   ))}
                 </AnimatePresence>
-              </Reorder.Group>
+              </div>
 
               {/* 子グループ群（再帰） */}
               <div className="flex flex-col gap-1.5 pb-1.5">

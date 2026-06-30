@@ -1,6 +1,6 @@
 // ワード行 / WordItem — 選択切替・編集・DnD並替
-import { useRef, useState } from "react";
-import { Reorder, useDragControls } from "motion/react";
+import { useRef, useState, type DragEvent } from "react";
+import { motion } from "motion/react";
 import { FiX } from "react-icons/fi";
 import type { Word } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
@@ -10,11 +10,23 @@ interface Props {
   word: Word;
   groupId: string;
   dimmed: boolean; // 検索非ヒット時の淡色化
+  isDragging: boolean; // 自身がドラッグ中（隙間を空けるため非表示）
+  onWordDragStart: (word: Word) => void;
+  onWordDragOver: (e: DragEvent, word: Word) => void;
+  onWordDragEnd: () => void;
 }
 
 const DBL_CLICK_DELAY = 230;
 
-export function WordItem({ word, groupId, dimmed }: Props) {
+export function WordItem({
+  word,
+  groupId,
+  dimmed,
+  isDragging,
+  onWordDragStart,
+  onWordDragOver,
+  onWordDragEnd,
+}: Props) {
   const { toggleWord, updateWord, deleteWord } = usePrompt();
   const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
@@ -23,7 +35,6 @@ export function WordItem({ word, groupId, dimmed }: Props) {
   // 編集ローカル状態
   const [draftText, setDraftText] = useState(word.text);
   const [draftNote, setDraftNote] = useState(word.note);
-  const controls = useDragControls();
 
   const startEdit = () => {
     setDraftText(word.text);
@@ -71,25 +82,47 @@ export function WordItem({ word, groupId, dimmed }: Props) {
     }, DBL_CLICK_DELAY);
   };
 
+  // ---- DnD並替 ----
+  const onDragStart = (e: DragEvent) => {
+    if (editing) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/word", word.id);
+    onWordDragStart(word);
+  };
+  // ワードDnD以外（グループDnD）は親のグループハンドラへ委譲するため何もしない。
+  const isWordDrag = (e: DragEvent) => e.dataTransfer.types.includes("text/word");
+  const onDragOver = (e: DragEvent) => {
+    if (!isWordDrag(e)) return;
+    onWordDragOver(e, word);
+  };
+  const onDrop = (e: DragEvent) => {
+    if (!isWordDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onWordDragEnd();
+  };
+
   return (
-    <Reorder.Item
-      value={word}
-      dragListener
-      dragControls={controls}
-      dragTransition={{ bounceStiffness: 260, bounceDamping: 24 }}
+    <motion.div
+      layout
       initial={false}
-      className="relative"
-      whileDrag={{
-        scale: 0.96,
-        opacity: 0.7,
-        boxShadow: "0 0 18px rgba(57,255,20,0.45)",
-        zIndex: 50,
-      }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className={`relative inline-flex max-w-full transition-opacity ${
+        isDragging ? "opacity-40" : "opacity-100"
+      }`}
     >
       <div
+        draggable={!editing}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onDragEnd={onWordDragEnd}
         onClick={onClick}
         className={[
-          "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer transition-all",
+          "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer transition-all max-w-[260px]",
           editing ? "" : "select-none",
           word.selected
             ? "word-selected bg-eva-bg-panel-2"
@@ -170,6 +203,6 @@ export function WordItem({ word, groupId, dimmed }: Props) {
           </button>
         )}
       </div>
-    </Reorder.Item>
+    </motion.div>
   );
 }
