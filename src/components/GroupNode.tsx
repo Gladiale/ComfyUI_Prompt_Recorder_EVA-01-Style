@@ -157,16 +157,21 @@ export function GroupNode({
     setDropInfo(null);
   };
 
-  // ドロップ先計算：グループ枠上で before/after/into を判定
+  // ドロップ先計算：グループ枠上で before/after/into を判定。
+  // 折り畳み時は内容が見えないため into は無効化し、上半分/下半分で before/after に割り振る。
   const computeDropMode = (e: DragEvent): "before" | "after" | "into" | null => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const y = e.clientY - rect.top;
     const h = rect.height;
-    const topZone = h * 0.22;
-    const botZone = h * 0.78;
-    if (y < topZone) return "before";
-    if (y > botZone) return "after";
-    return "into";
+    if (expanded) {
+      const topZone = h * 0.22;
+      const botZone = h * 0.78;
+      if (y < topZone) return "before";
+      if (y > botZone) return "after";
+      return "into";
+    }
+    // 折り畳み時：上下一杯の要素しかないので中央で二分
+    return y < h / 2 ? "before" : "after";
   };
 
   const onGroupDragOver = (e: DragEvent) => {
@@ -209,6 +214,9 @@ export function GroupNode({
           dropInfo === "into" ? "border-eva-green shadow-glow-green" : "border-[#8058b1]",
         ].join(" ")}
       >
+        {/* 挿入位置インジケータ（before）：折り畳み時も表示するため枠直下に置く */}
+        {dropInfo === "before" && <div className="drop-indicator mx-2 mt-1" />}
+
         {/* グループヘッダ行（グループ自身のDnDドラッグ元） */}
         <div
           draggable={!editing}
@@ -318,9 +326,6 @@ export function GroupNode({
               transition={{ duration: 0.2 }}
               className="overflow-hidden peer-hover:bg-[#d8b3e1] transition-colors duration-200"
             >
-              {/* 挿入位置インジケータ（before/after） */}
-              {dropInfo === "before" && <div className="drop-indicator mx-2" />}
-
               {/* ワード群（ブロック配置・HTML5 DnDで2D並替） */}
               <div
                 className="flex flex-wrap gap-1 py-1"
@@ -357,11 +362,12 @@ export function GroupNode({
                   />
                 ))}
               </div>
-
-              {dropInfo === "after" && <div className="drop-indicator mx-2" />}
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* 挿入位置インジケータ（after）：折り畳み時も表示するため枠直上（末尾）に置く */}
+        {dropInfo === "after" && <div className="drop-indicator mx-2 mb-1" />}
       </div>
     </motion.div>
   );
