@@ -145,7 +145,7 @@ export function WordItem({
               : undefined
           }
           className={`w-[3px] self-stretch rounded-full bg-eva-line group-hover:bg-eva-green/60 transition-colors${
-            word.selected ? " cursor-pointer hover:bg-eva-magenta" : ""
+            word.selected ? " cursor-pointer group-hover:hover:bg-[#f6cff9]" : ""
           }`}
         />
 
