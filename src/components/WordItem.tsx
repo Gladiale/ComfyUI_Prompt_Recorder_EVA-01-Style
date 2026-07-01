@@ -27,7 +27,7 @@ export function WordItem({
   onWordDragOver,
   onWordDragEnd,
 }: Props) {
-  const { toggleWord, updateWord, deleteWord } = usePrompt();
+  const { toggleWord, updateWord, deleteWord, focusSelectedWord } = usePrompt();
   const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,8 +130,24 @@ export function WordItem({
           dimmed ? "opacity-30" : "opacity-100",
         ].join(" ")}
       >
-        {/* ドラッグハンドル風の縦線（初号機装甲継ぎ目） */}
-        <span className="w-[3px] self-stretch rounded-full bg-eva-line group-hover:bg-eva-green/60 transition-colors" />
+        {/* ドラッグハンドル風の縦線（初号機装甲継ぎ目）
+            選択中ワードならクリックで選択一覧へフォーカス（点滅＋スクロール）。
+            親の選択切替クリックは発火させない。 */}
+        <span
+          role={word.selected ? "button" : undefined}
+          aria-label={word.selected ? "選択一覧でこのワードにフォーカス" : undefined}
+          onClick={
+            word.selected
+              ? (e) => {
+                  e.stopPropagation();
+                  focusSelectedWord(word.id);
+                }
+              : undefined
+          }
+          className={`w-[3px] self-stretch rounded-full bg-eva-line group-hover:bg-eva-green/60 transition-colors${
+            word.selected ? " cursor-pointer hover:bg-eva-magenta" : ""
+          }`}
+        />
 
         {editing ? (
           <div

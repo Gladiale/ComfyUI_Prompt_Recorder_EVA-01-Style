@@ -1,6 +1,7 @@
 // 右下：選択済みワード一覧 / SelectedPanel
 // 各ワードをクリックすると選択解除され、総括欄が即時再計算される。
 // 強度ステッパーで出力時の強調（0..10）を調整できる。
+import { useEffect, useRef } from "react";
 import { FiX, FiMinus, FiPlus } from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
@@ -11,7 +12,24 @@ import {
 } from "@/lib/strength";
 
 export function SelectedPanel() {
-  const { selectedRefs, deselectWord, setWordStrength } = usePrompt();
+  const { selectedRefs, deselectWord, setWordStrength, focusWordId, focusNonce } =
+    usePrompt();
+
+  // フォーカス対象ワードのDOM参照マップ（key=word.id）
+  const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // フォーカス要求を監視：該当行をスクロールインビュー＋一時点滅
+  useEffect(() => {
+    if (!focusWordId) return;
+    const el = rowRefs.current.get(focusWordId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // 点滅：一度リセットしてから再付与で再発火させる
+    el.classList.remove("focused-flash");
+    // reflow を踏んで再発火
+    void el.offsetWidth;
+    el.classList.add("focused-flash");
+  }, [focusWordId, focusNonce]);
 
   return (
     <section className="flex flex-col h-full min-h-0 rounded-sm border border-eva-line bg-eva-bg-panel/70">
@@ -32,13 +50,17 @@ export function SelectedPanel() {
             return (
               <motion.div
                 key={ref.word.id}
+                ref={(el) => {
+                  if (el) rowRefs.current.set(ref.word.id, el);
+                  else rowRefs.current.delete(ref.word.id);
+                }}
                 layout
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 12, height: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 24 }}
                 onClick={() => deselectWord(ref.groupId, ref.word.id)}
-                className="group w-full flex items-center gap-2 px-2 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 mb-1 text-left cursor-pointer"
+                className="sel-row group w-full flex items-center gap-2 px-2 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 mb-1 text-left cursor-pointer"
                 title="クリックで選択解除"
               >
                 <span className="font-mono text-[9px] text-eva-purple-bright w-5 text-right shrink-0">

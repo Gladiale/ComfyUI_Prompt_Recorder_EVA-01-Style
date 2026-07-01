@@ -46,6 +46,10 @@ interface PromptContextValue extends PromptActions {
   synthesis: string
   // 派生：選択ワード参照（右下一覧用）
   selectedRefs: { word: Word; groupId: string; groupPath: string[] }[]
+  // 選択一覧へのフォーカス要求（同一ワードの連続クリックでも再発火させるため nonce を併用）
+  focusWordId: string | null
+  focusNonce: number
+  focusSelectedWord: (wordId: string) => void
 }
 
 export interface PromptActions {
@@ -72,6 +76,14 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RootState>(() => createDefaultState())
   const [ready, setReady] = useState(false)
   const [separator, setSeparator] = useState<Separator>('comma')
+
+  // 選択一覧へのフォーカス要求：ワードIDと発火用 nonce
+  const [focusWordId, setFocusWordId] = useState<string | null>(null)
+  const [focusNonce, setFocusNonce] = useState(0)
+  const focusSelectedWord = (wordId: string) => {
+    setFocusWordId(wordId)
+    setFocusNonce((n) => n + 1)
+  }
 
   // 初回マウント：ストレージから復元
   useEffect(() => {
@@ -148,6 +160,9 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     setSeparator,
     synthesis,
     selectedRefs,
+    focusWordId,
+    focusNonce,
+    focusSelectedWord,
     ...actions,
   }
 
