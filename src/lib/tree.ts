@@ -3,7 +3,7 @@
 // 再帰的な木構造に対する純粋関数群（immutable 更新）。
 // ============================================================
 
-import type { Group, RootState, Word } from '@/types'
+import type { Group, PresetEntry, PromptPreset, RootState, Word } from '@/types'
 import { ROOT_VERSION } from '@/types'
 
 // ---- ID 生成 ----
@@ -364,6 +364,84 @@ export function countSelectedWords(g: Group): number {
 }
 
 // ============================================================
+// プリセット（選択状態の組み合わせ）操作
+// ============================================================
+
+/** ツリー内の全ワードを「出現順（深さ優先）」で走査する。 */
+function forEachWord(root: RootState, cb: (w: Word) => void): void {
+  const visit = (g: Group): void => {
+    for (const w of g.words) cb(w)
+    for (const child of g.groups) visit(child)
+  }
+  for (const g of root.rootGroups) visit(g)
+}
+
+/**
+ * 現在の選択状態（selected == true または strength !== 0）を
+ * プリセットとして保存する。entries は出現順。
+ */
+export function savePreset(root: RootState, name: string): RootState {
+  const entries: PresetEntry[] = []
+  forEachWord(root, (w) => {
+    if (w.selected || (w.strength ?? 0) !== 0) {
+      entries.push({
+        wordId: w.id,
+        text: w.text,
+        selected: w.selected,
+        strength: w.strength ?? 0,
+      })
+    }
+  })
+  const next = clone(root)
+  const preset: PromptPreset = {
+    id: genId('preset'),
+    name: name.trim() || `PRESET ${(next.presets?.length ?? 0) + 1}`,
+    entries,
+    createdAt: Date.now(),
+  }
+  next.presets = [...(next.presets ?? []), preset]
+  return next
+}
+
+/**
+ * プリセットを復元（完全置換）：
+ * 一旦全ワードを未選択・強度0にリセットし、
+ * プリセットの entries に一致する wordId があれば selected/strength を当てはめる。
+ */
+export function applyPreset(root: RootState, presetId: string): RootState {
+  const preset = (root.presets ?? []).find((p) => p.id === presetId)
+  if (!preset) return root
+  const map = new Map<string, PresetEntry>()
+  for (const e of preset.entries) map.set(e.wordId, e)
+  const next = clone(root)
+  forEachWord(next, (w) => {
+    const e = map.get(w.id)
+    if (e) {
+      w.selected = e.selected
+      w.strength = e.strength
+    } else {
+      w.selected = false
+      w.strength = 0
+    }
+  })
+  return next
+}
+
+export function deletePreset(root: RootState, presetId: string): RootState {
+  const next = clone(root)
+  next.presets = (next.presets ?? []).filter((p) => p.id !== presetId)
+  return next
+}
+
+export function renamePreset(root: RootState, presetId: string, name: string): RootState {
+  const next = clone(root)
+  next.presets = (next.presets ?? []).map((p) =>
+    p.id === presetId ? { ...p, name: name.trim() || p.name } : p,
+  )
+  return next
+}
+
+// ============================================================
 // Import / Export
 // ============================================================
 
@@ -374,7 +452,39 @@ export function normalizeImportedState(raw: unknown): RootState {
   const rootGroups = Array.isArray(obj.rootGroups)
     ? obj.rootGroups.map(normalizeGroup).filter(Boolean) as Group[]
     : []
-  return { version: ROOT_VERSION, rootGroups }
+  const presets = Array.isArray(obj.presets)
+    ? obj.presets.map(normalizePreset).filter(Boolean) as PromptPreset[]
+    : []
+  return { version: ROOT_VERSION, rootGroups, presets }
+}
+
+function normalizePreset(raw: unknown): PromptPreset | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  const entries = Array.isArray(obj.entries)
+    ? obj.entries.map(normalizePresetEntry).filter(Boolean) as PresetEntry[]
+    : []
+  return {
+    id: typeof obj.id === 'string' && obj.id ? obj.id : genId('preset'),
+    name: typeof obj.name === 'string' ? obj.name : 'PRESET',
+    entries,
+    createdAt: typeof obj.createdAt === 'number' && Number.isFinite(obj.createdAt) ? obj.createdAt : 0,
+  }
+}
+
+function normalizePresetEntry(raw: unknown): PresetEntry | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  const strength =
+    typeof obj.strength === 'number' && Number.isFinite(obj.strength)
+      ? Math.max(0, Math.min(10, Math.round(obj.strength)))
+      : 0
+  return {
+    wordId: typeof obj.wordId === 'string' && obj.wordId ? obj.wordId : '',
+    text: typeof obj.text === 'string' ? obj.text : '',
+    selected: typeof obj.selected === 'boolean' ? obj.selected : true,
+    strength,
+  }
 }
 
 function normalizeGroup(raw: unknown): Group | null {

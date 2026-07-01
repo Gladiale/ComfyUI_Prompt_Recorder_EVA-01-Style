@@ -15,14 +15,18 @@ import type { Group, RootState, Word } from '@/types'
 import {
   addGroup as treeAddGroup,
   addWord as treeAddWord,
+  applyPreset as treeApplyPreset,
   collectSelected,
   createDefaultState,
   deleteGroup as treeDeleteGroup,
+  deletePreset as treeDeletePreset,
   deleteWord as treeDeleteWord,
   moveGroup as treeMoveGroup,
   normalizeImportedState,
   reorderWords as treeReorderWords,
   renameGroup as treeRenameGroup,
+  renamePreset as treeRenamePreset,
+  savePreset as treeSavePreset,
   setCollapsed as treeSetCollapsed,
   toggleCollapse as treeToggleCollapse,
   toggleWord as treeToggleWord,
@@ -66,6 +70,10 @@ export interface PromptActions {
   deleteWord: (groupId: string, wordId: string) => void
   reorderWords: (groupId: string, newWords: Word[]) => void
   moveGroup: (draggedId: string, target: GroupDropTarget) => void
+  savePreset: (name: string) => void
+  applyPreset: (presetId: string) => void
+  deletePreset: (presetId: string) => void
+  renamePreset: (presetId: string, name: string) => void
   replaceState: (raw: unknown) => void
   exportState: () => RootState
 }
@@ -131,6 +139,10 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     deleteWord: (groupId, wordId) => setState((s) => treeDeleteWord(s, groupId, wordId)),
     reorderWords: (groupId, newWords) => setState((s) => treeReorderWords(s, groupId, newWords)),
     moveGroup: (draggedId, target) => setState((s) => treeMoveGroup(s, draggedId, target)),
+    savePreset: (name) => setState((s) => treeSavePreset(s, name)),
+    applyPreset: (presetId) => setState((s) => treeApplyPreset(s, presetId)),
+    deletePreset: (presetId) => setState((s) => treeDeletePreset(s, presetId)),
+    renamePreset: (presetId, name) => setState((s) => treeRenamePreset(s, presetId, name)),
     replaceState: (raw) => setState(() => normalizeImportedState(raw)),
     exportState: () => state,
   }

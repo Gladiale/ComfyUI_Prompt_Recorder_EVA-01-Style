@@ -28,8 +28,30 @@ export interface Group {
   words: Word[]
 }
 
+/**
+ * プリセット（選択状態の組み合わせ）の1エントリ。
+ * 復元時は wordId で現ツリーのワードを探し selected/strength を当てはめる。
+ * text は別環境で同一IDが無い場合のフォールバック表示用スナップショット。
+ */
+export interface PresetEntry {
+  wordId: string
+  text: string
+  selected: boolean
+  strength: number
+}
+
+/** プロンプトの組み合わせを保存したプリセット。 */
+export interface PromptPreset {
+  id: string
+  name: string
+  entries: PresetEntry[]
+  createdAt: number
+}
+
 /** ルート構造。chrome.storage.local に永続化される。 */
 export interface RootState {
   version: number
   rootGroups: Group[]
+  /** 保存済みの選択組み合わせ一覧。旧データは undefined 可。 */
+  presets?: PromptPreset[]
 }
