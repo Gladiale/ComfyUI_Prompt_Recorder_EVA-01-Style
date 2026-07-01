@@ -206,9 +206,7 @@ export function GroupNode({
         onDrop={onGroupDrop}
         className={[
           "rounded-sm border transition-colors",
-          dropInfo === "into"
-            ? "border-eva-green shadow-glow-green"
-            : "border-eva-line-soft",
+          dropInfo === "into" ? "border-eva-green shadow-glow-green" : "border-[#8058b1]",
         ].join(" ")}
       >
         {/* グループヘッダ行（グループ自身のDnDドラッグ元） */}
@@ -217,7 +215,8 @@ export function GroupNode({
           onDragStart={onGroupDragStart}
           onDragEnd={onGroupDragEnd}
           onClick={onNameClick}
-          className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group hover:border-eva-purple-bright"
+          // group 親要素 peer 兄弟要素
+          className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group peer hover:bg-[#c28bc5] transition-colors duration-200"
           style={{ paddingLeft: 8 + depth * 14 }}
         >
           <motion.span
@@ -316,8 +315,8 @@ export function GroupNode({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden"
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden peer-hover:bg-[#d8b3e1] transition-colors duration-200"
             >
               {/* 挿入位置インジケータ（before/after） */}
               {dropInfo === "before" && <div className="drop-indicator mx-2" />}
