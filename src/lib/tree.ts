@@ -390,7 +390,6 @@ export function savePreset(root: RootState, name: string): RootState {
     if (w.selected) {
       entries.push({
         wordId: w.id,
-        text: w.text,
         selected: true,
         strength: w.strength ?? 0,
       })
@@ -514,7 +513,6 @@ function normalizePresetEntry(raw: unknown): PresetEntry | null {
       : 0
   return {
     wordId: typeof obj.wordId === 'string' && obj.wordId ? obj.wordId : '',
-    text: typeof obj.text === 'string' ? obj.text : '',
     selected: typeof obj.selected === 'boolean' ? obj.selected : true,
     strength,
   }

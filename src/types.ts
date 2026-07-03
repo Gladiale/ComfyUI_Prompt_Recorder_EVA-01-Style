@@ -31,11 +31,9 @@ export interface Group {
 /**
  * プリセット（選択状態の組み合わせ）の1エントリ。
  * 復元時は wordId で現ツリーのワードを探し selected/strength を当てはめる。
- * text は別環境で同一IDが無い場合のフォールバック表示用スナップショット。
  */
 export interface PresetEntry {
   wordId: string
-  text: string
   selected: boolean
   strength: number
 }
