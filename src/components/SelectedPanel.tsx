@@ -12,6 +12,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiCheck,
+  FiChevronUp,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
@@ -30,6 +31,7 @@ export function SelectedPanel() {
     applyPreset,
     deletePreset,
     renamePreset,
+    reorderPresets,
   } = usePrompt();
   const confirm = useConfirm();
   const presets = state.presets ?? [];
@@ -47,8 +49,22 @@ export function SelectedPanel() {
     setDraftName("");
     setNaming(true);
   };
-  const commitNaming = () => {
-    savePreset(draftName);
+  const commitNaming = async () => {
+    const name = draftName.trim();
+    if (!name) return;
+    // 同名既存があれば上書き確認
+    const dup = presets.find((p) => p.name.trim().toLowerCase() === name.toLowerCase());
+    if (dup) {
+      const ok = await confirm({
+        title: "PRESET OVERWRITE",
+        message: `同名のプリセット「${dup.name}」が存在します。\n上書きしますか？`,
+        confirmLabel: "上書き",
+        cancelLabel: "キャンセル",
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    savePreset(name);
     setNaming(false);
     setDraftName("");
   };
@@ -72,6 +88,37 @@ export function SelectedPanel() {
       danger: true,
     });
     if (ok) deletePreset(id);
+  };
+
+  // 適用：現在の選択状態が完全置換されるため確認を挟む
+  const onApplyPreset = async (
+    e: React.MouseEvent,
+    id: string,
+    name: string,
+    count: number,
+  ) => {
+    e.stopPropagation();
+    const ok = await confirm({
+      title: "PRESET RESTORE",
+      message: `プリセット「${name}」（${count} pt）を復元しますか？\n現在の選択状態は置き換えられます。`,
+      confirmLabel: "復元",
+      cancelLabel: "キャンセル",
+      danger: true,
+    });
+    if (ok) {
+      applyPreset(id);
+      setPresetOpen(false);
+    }
+  };
+
+  // 順序入替：指定プリセットを一つ前/後ろへ移動
+  const movePreset = (id: string, dir: -1 | 1) => {
+    const ids = presets.map((p) => p.id);
+    const i = ids.indexOf(id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    reorderPresets(ids);
   };
 
   // フォーカス対象ワードのDOM参照マップ（key=word.id）
@@ -187,7 +234,7 @@ export function SelectedPanel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-2 top-full mt-1 z-20 w-[95%] max-h-72 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
+              className="absolute right-2 top-full mt-1 z-20 w-[95%] max-h-56 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {presets.length === 0 ? (
@@ -195,16 +242,36 @@ export function SelectedPanel() {
                   プリセットはありません。FiBookmark で保存。
                 </div>
               ) : (
-                presets.map((p) => (
+                presets.map((p, idx) => (
                   <div
                     key={p.id}
-                    onClick={() => {
-                      applyPreset(p.id);
-                      setPresetOpen(false);
-                    }}
-                    className="group flex items-center gap-1.5 px-2 py-1.5 border-b border-eva-line-soft/50 last:border-0 hover:bg-[#c9e59b] cursor-pointer text-left"
-                    title="クリックでこの組み合わせを復元"
+                    className="group flex items-center gap-1 px-2 py-1.5 border-b border-eva-line-soft/50 last:border-0 hover:bg-[#7c3678] text-left group"
                   >
+                    {/* 順序調整 ↑↓ */}
+                    {renamingId === p.id ? null : (
+                      <div
+                        className="flex flex-col shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => movePreset(p.id, -1)}
+                          disabled={idx === 0}
+                          className="p-[1px] text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
+                          title="上へ"
+                        >
+                          <FiChevronUp size={11} />
+                        </button>
+                        <button
+                          onClick={() => movePreset(p.id, 1)}
+                          disabled={idx === presets.length - 1}
+                          className="p-[1px] text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
+                          title="下へ"
+                        >
+                          <FiChevronDown size={11} />
+                        </button>
+                      </div>
+                    )}
+
                     {renamingId === p.id ? (
                       <input
                         autoFocus
@@ -219,7 +286,7 @@ export function SelectedPanel() {
                         className="ev-input flex-1 rounded-sm px-1.5 py-0.5 text-[11px]"
                       />
                     ) : (
-                      <span className="flex-1 min-w-0 truncate text-[12px] text-[#582e4b]">
+                      <span className="flex-1 min-w-0 truncate text-[12px] text-[#582e4b] group-hover:text-[#eac5ef]">
                         {p.name}
                         <span className="ml-1 font-mono text-[9px] text-eva-ink-dim">
                           ({p.entries.length})
@@ -229,6 +296,16 @@ export function SelectedPanel() {
 
                     {renamingId === p.id ? null : (
                       <>
+                        {/* 復元：確認ダイアログを挟む */}
+                        <button
+                          onClick={(e) =>
+                            onApplyPreset(e, p.id, p.name, p.entries.length)
+                          }
+                          className="p-0.5 text-eva-green-soft hover:text-eva-green transition-colors opacity-0 group-hover:opacity-100"
+                          title="この組み合わせを復元"
+                        >
+                          <FiCheck size={12} />
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

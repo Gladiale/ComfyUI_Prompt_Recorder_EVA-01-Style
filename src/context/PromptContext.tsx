@@ -26,6 +26,7 @@ import {
   reorderWords as treeReorderWords,
   renameGroup as treeRenameGroup,
   renamePreset as treeRenamePreset,
+  reorderPresets as treeReorderPresets,
   savePreset as treeSavePreset,
   setCollapsed as treeSetCollapsed,
   toggleCollapse as treeToggleCollapse,
@@ -74,6 +75,7 @@ export interface PromptActions {
   applyPreset: (presetId: string) => void
   deletePreset: (presetId: string) => void
   renamePreset: (presetId: string, name: string) => void
+  reorderPresets: (newIds: string[]) => void
   replaceState: (raw: unknown) => void
   exportState: () => RootState
 }
@@ -143,6 +145,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     applyPreset: (presetId) => setState((s) => treeApplyPreset(s, presetId)),
     deletePreset: (presetId) => setState((s) => treeDeletePreset(s, presetId)),
     renamePreset: (presetId, name) => setState((s) => treeRenamePreset(s, presetId, name)),
+    reorderPresets: (newIds) => setState((s) => treeReorderPresets(s, newIds)),
     replaceState: (raw) => setState(() => normalizeImportedState(raw)),
     exportState: () => state,
   }
