@@ -12,6 +12,11 @@ export interface Word {
   note: string
   selected: boolean
   /**
+   * 参照用画像。最大420×420に縮小されたJPEGの data URL（Base64）。
+   * 旧データ・注釈のみのワードは undefined。
+   */
+  image?: string
+  /**
    * 出力時の強度（0..10）。
    *  0=そのまま / 1=() / 2..10=(text:1.x)
    * 未設定（旧データ）は 0 扱い。選択時のみ総括欄へ反映される。

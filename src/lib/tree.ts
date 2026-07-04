@@ -21,8 +21,16 @@ export function genId(prefix: string): string {
   return `${prefix}_${rand()}`
 }
 
-export function createWord(text = '', note = '', selected = false, strength = 0): Word {
-  return { id: genId('w'), text, note, selected, strength }
+export function createWord(
+  text = '',
+  note = '',
+  selected = false,
+  strength = 0,
+  image?: string,
+): Word {
+  const w: Word = { id: genId('w'), text, note, selected, strength }
+  if (image) w.image = image
+  return w
 }
 
 export function createGroup(name = 'NEW GROUP'): Group {
@@ -161,9 +169,13 @@ function removeFromList(list: Group[], id: string): Group[] {
 
 // ---- ワード操作 ----
 
-export function addWord(root: RootState, groupId: string, text = ''): RootState {
+export function addWord(
+  root: RootState,
+  groupId: string,
+  data: { text?: string; note?: string; image?: string } = {},
+): RootState {
   return mutateGroup(root, groupId, (g) => {
-    g.words.push(createWord(text, '', false))
+    g.words.push(createWord(data.text ?? '', data.note ?? '', false, 0, data.image))
     g.collapsed = false
   })
 }
@@ -172,11 +184,15 @@ export function updateWord(
   root: RootState,
   groupId: string,
   wordId: string,
-  patch: Partial<Pick<Word, 'text' | 'note'>>,
+  patch: Partial<Pick<Word, 'text' | 'note' | 'image'>>,
 ): RootState {
   return mutateGroup(root, groupId, (g) => {
     const w = g.words.find((x) => x.id === wordId)
-    if (w) Object.assign(w, patch)
+    if (w) {
+      Object.assign(w, patch)
+      // 空文字列は画像削除とみなして undefined に正規化
+      if (patch.image === '') w.image = undefined
+    }
   })
 }
 
@@ -541,11 +557,13 @@ function normalizeWord(raw: unknown): Word | null {
     typeof obj.strength === 'number' && Number.isFinite(obj.strength)
       ? Math.max(0, Math.min(10, Math.round(obj.strength)))
       : 0
-  return {
+  const word: Word = {
     id: typeof obj.id === 'string' && obj.id ? obj.id : genId('w'),
     text: typeof obj.text === 'string' ? obj.text : '',
     note: typeof obj.note === 'string' ? obj.note : '',
     selected: typeof obj.selected === 'boolean' ? obj.selected : false,
     strength,
   }
+  if (typeof obj.image === 'string' && obj.image) word.image = obj.image
+  return word
 }

@@ -63,8 +63,12 @@ export interface PromptActions {
   toggleCollapse: (id: string) => void
   setCollapsed: (id: string, collapsed: boolean) => void
   deleteGroup: (id: string) => void
-  addWord: (groupId: string, text?: string) => void
-  updateWord: (groupId: string, wordId: string, patch: Partial<Pick<Word, 'text' | 'note'>>) => void
+  addWord: (groupId: string, data?: { text?: string; note?: string; image?: string }) => void
+  updateWord: (
+    groupId: string,
+    wordId: string,
+    patch: Partial<Pick<Word, 'text' | 'note' | 'image'>>,
+  ) => void
   toggleWord: (groupId: string, wordId: string) => void
   deselectWord: (groupId: string, wordId: string) => void
   setWordStrength: (groupId: string, wordId: string, strength: number) => void
@@ -130,7 +134,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     toggleCollapse: (id) => setState((s) => treeToggleCollapse(s, id)),
     setCollapsed: (id, collapsed) => setState((s) => treeSetCollapsed(s, id, collapsed)),
     deleteGroup: (id) => setState((s) => treeDeleteGroup(s, id)),
-    addWord: (groupId, text) => setState((s) => treeAddWord(s, groupId, text)),
+    addWord: (groupId, data) => setState((s) => treeAddWord(s, groupId, data)),
     updateWord: (groupId, wordId, patch) =>
       setState((s) => treeUpdateWord(s, groupId, wordId, patch)),
     toggleWord: (groupId, wordId) => setState((s) => treeToggleWord(s, groupId, wordId)),

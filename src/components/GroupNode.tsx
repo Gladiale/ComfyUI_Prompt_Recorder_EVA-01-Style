@@ -9,6 +9,7 @@ import { countSelectedWords } from "@/lib/tree";
 import { normalizeText } from "@/lib/normalize";
 import { WordItem } from "./WordItem";
 import { useConfirm } from "./ConfirmDialog";
+import { useWordEditor } from "./WordEditModal";
 
 interface Props {
   group: Group;
@@ -31,12 +32,12 @@ export function GroupNode({
     toggleCollapse,
     renameGroup,
     addGroup,
-    addWord,
     deleteGroup,
     reorderWords,
     moveGroup,
   } = usePrompt();
   const confirm = useConfirm();
+  const { openAdd } = useWordEditor();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(group.name);
   const [dropInfo, setDropInfo] = useState<"before" | "after" | "into" | null>(null);
@@ -276,7 +277,7 @@ export function GroupNode({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  addWord(group.id);
+                  openAdd(group.id);
                 }}
                 className="p-0.5 text-eva-green-soft hover:text-eva-green transition-colors opacity-60 hover:opacity-100"
                 title="ワード追加 (+ WORD)"

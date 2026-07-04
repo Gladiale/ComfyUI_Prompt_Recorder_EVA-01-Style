@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ComfyUI Prompt Recorder",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "プロンプトワードを階層化されたグループへ記録・選定し、重複を排除した最終プロンプトを生成する (EVA-01 themed).",
   "action": {
     "default_popup": "popup.html",
