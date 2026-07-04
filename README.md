@@ -2,7 +2,8 @@
 - MODEL: gml 5.2
 - IDE:   vscode + claude code + cc switch
 
-![preview](preview.png)
+![preview](preview_01.png)
+![preview](preview_02.png)
 
 # ComfyUI Prompt Recorder
 
@@ -10,6 +11,10 @@
 プロンプトワードを階層化されたグループへ記録・選定し、重複を排除した最終プロンプトを生成する。
 
 [仕様書 (specification.html)](./specification.html) に基づき実装。
+
+# 操作方法
+- **グループ**: シングルクリック折り畳み、ダブルクリック編集、ドラッグ&ドロップ順調整＆入れ子機能。
+- **ワード**: シングルクリック選択、ダブルクリック編集、ドラッグ&ドロップ順調整、ワードが選定された場合、右クリックプロンプト強度調整。
 
 ## 機能
 
