@@ -182,10 +182,10 @@ export function WordItem({
           word.selected ? focusSelectedWord(word.id) : undefined;
         }}
         className={[
-          "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer transition-all max-w-[260px] relative select-none",
+          "group flex items-center gap-2 border px-2.5 py-1.5 cursor-pointer transition-all max-w-[260px] relative select-none",
           word.selected
             ? "word-selected bg-eva-bg-panel-2"
-            : "border-eva-line-soft bg-eva-bg-panel/60 hover:border-eva-purple-bright",
+            : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
           dimmed ? "opacity-30" : "opacity-100",
         ].join(" ")}
       >
@@ -193,7 +193,9 @@ export function WordItem({
         <div className="flex-1 min-w-0">
           <div
             className={`truncate text-[13px] ${
-              word.selected ? "text-eva-green-soft font-medium" : "text-eva-ink"
+              word.selected
+                ? "text-eva-green-soft font-medium"
+                : "text-eva-ink group-hover:text-[#07ff77]"
             }`}
             title={`+${word.strength}; ${word.text}`}
           >
@@ -208,7 +210,7 @@ export function WordItem({
               e.stopPropagation();
               focusSelectedWord(word.id);
             }}
-            className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[9px] leading-none w-[1rem] aspect-square flex items-center justify-center"
+            className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[0.7rem] leading-none w-[1rem] aspect-square flex items-center justify-center"
           >
             +{word.strength}
           </span>
