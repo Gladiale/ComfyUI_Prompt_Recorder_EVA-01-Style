@@ -28,14 +28,8 @@ export function GroupNode({
   isDraggingGroup,
   setIsDraggingGroup,
 }: Props) {
-  const {
-    toggleCollapse,
-    renameGroup,
-    addGroup,
-    deleteGroup,
-    reorderWords,
-    moveGroup,
-  } = usePrompt();
+  const { toggleCollapse, renameGroup, addGroup, deleteGroup, reorderWords, moveGroup } =
+    usePrompt();
   const confirm = useConfirm();
   const { openAdd } = useWordEditor();
   const [editing, setEditing] = useState(false);
@@ -224,7 +218,7 @@ export function GroupNode({
           onDragStart={onGroupDragStart}
           onDragEnd={onGroupDragEnd}
           onClick={onNameClick}
-          // group 親要素 peer 兄弟要素
+          // group 親として peer 兄弟として
           className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group peer hover:bg-[#c28bc5] transition-colors duration-200"
           style={{ paddingLeft: 8 + depth * 14 }}
         >
@@ -329,7 +323,7 @@ export function GroupNode({
             >
               {/* ワード群（ブロック配置・HTML5 DnDで2D並替） */}
               <div
-                className="flex flex-wrap gap-1 py-1"
+                className="flex flex-wrap gap-1 py-1.5"
                 style={{ paddingLeft: 14 + depth * 0 }}
                 onDragOver={onWordsContainerDragOver}
                 onDrop={onWordsDrop}
@@ -351,7 +345,9 @@ export function GroupNode({
               </div>
 
               {/* 子グループ群（再帰） */}
-              <div className="flex flex-col gap-1.5 pb-1.5">
+              <div
+                className={`flex flex-col gap-1.5 ${group.groups.length > 0 ? "pb-1.5" : ""}`}
+              >
                 {group.groups.map((child) => (
                   <GroupNode
                     key={child.id}

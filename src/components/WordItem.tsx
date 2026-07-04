@@ -176,6 +176,11 @@ export function WordItem({
         onDrop={onDrop}
         onDragEnd={onWordDragEnd}
         onClick={onClick}
+        onContextMenu={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          word.selected ? focusSelectedWord(word.id) : undefined;
+        }}
         className={[
           "group flex items-center gap-2 border rounded-sm px-2.5 py-1.5 cursor-pointer transition-all max-w-[260px] relative select-none",
           word.selected
@@ -184,41 +189,36 @@ export function WordItem({
           dimmed ? "opacity-30" : "opacity-100",
         ].join(" ")}
       >
-        {/* ドラッグハンドル風の縦線（初号機装甲継ぎ目）
-            選択中ワードならクリックで選択一覧へフォーカス（点滅＋スクロール）。
-            親の選択切替クリックは発火させない。 */}
-        <span
-          role={word.selected ? "button" : undefined}
-          aria-label={word.selected ? "選択一覧でこのワードにフォーカス" : undefined}
-          onClick={
-            word.selected
-              ? (e) => {
-                  e.stopPropagation();
-                  focusSelectedWord(word.id);
-                }
-              : undefined
-          }
-          className={`w-[3px] self-stretch rounded-full bg-eva-line group-hover:bg-eva-green/60 transition-colors${
-            word.selected ? " cursor-pointer group-hover:hover:bg-[#f6cff9]" : ""
-          }`}
-        />
-
+        {/* ワード */}
         <div className="flex-1 min-w-0">
           <div
             className={`truncate text-[13px] ${
               word.selected ? "text-eva-green-soft font-medium" : "text-eva-ink"
             }`}
-            title={word.text}
+            title={`+${word.strength}; ${word.text}`}
           >
             {word.text || <span className="text-eva-ink-dim italic">（empty）</span>}
           </div>
         </div>
 
+        {/* strength数値の表示と調整 */}
+        {word.strength !== 0 && word.selected && (
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              focusSelectedWord(word.id);
+            }}
+            className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[9px] leading-none w-[1rem] aspect-square flex items-center justify-center"
+          >
+            +{word.strength}
+          </span>
+        )}
+
         {/* 注釈/画像の有無を示す小さな緑の印：ホバーで画像と注釈を表示 */}
         {hasInfo && (
           <span
             ref={markRef}
-            className="relative w-1.5 h-1.5 rounded-full shrink-0 flex items-center justify-center cursor-help"
+            className="relative w-1.5 h-1.5 rounded-full shrink-0 hover:text-[#ff92de] flex items-center justify-center cursor-help"
             style={{ boxShadow: "0 0 6px var(--eva-green)" }}
             onMouseEnter={enterInfo}
             onMouseLeave={leaveInfo}
@@ -228,14 +228,13 @@ export function WordItem({
             }}
           >
             ✦
-            {/* <span className="text-[8px] leading-none text-eva-green-soft">✦</span> */}
           </span>
         )}
 
         {/* 削除（ホバー時） */}
         <button
           onClick={onDelete}
-          className="absolute right-0 bottom-0 opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0"
+          className="absolute right-0 -bottom-[0.1rem] opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0"
           title="削除"
         >
           <RiDeleteBin2Line size={13} />
