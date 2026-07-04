@@ -4,6 +4,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -36,9 +37,16 @@ import {
   updateWord as treeUpdateWord,
   type GroupDropTarget,
 } from '@/lib/tree'
-import { debounce, loadState, saveState } from '@/lib/storage'
+import { debounce, loadSnapshot, loadState, saveSnapshot, saveState } from '@/lib/storage'
 import { normalizeText } from '@/lib/normalize'
 import { clampStrength, formatWordWithStrength } from '@/lib/strength'
+import {
+  computeDiff,
+  makeSnapshot,
+  type PromptDiff,
+  type SelectedRef,
+  type Snapshot,
+} from '@/lib/diff'
 
 type Separator = 'comma' | 'newline'
 
@@ -50,11 +58,17 @@ interface PromptContextValue extends PromptActions {
   // 派生：重複排除済み最終プロンプト（出現順維持）
   synthesis: string
   // 派生：選択ワード参照（右下一覧用）
-  selectedRefs: { word: Word; groupId: string; groupPath: string[] }[]
+  selectedRefs: SelectedRef[]
   // 選択一覧へのフォーカス要求（同一ワードの連続クリックでも再発火させるため nonce を併用）
   focusWordId: string | null
   focusNonce: number
   focusSelectedWord: (wordId: string) => void
+  // コピー基準：最後にコピーした瞬間のスナップショット
+  lastSnapshot: Snapshot | null
+  // 派生：現在のプロンプトと lastSnapshot の差分
+  diff: PromptDiff
+  // 現在の選択ワードでスナップショット基準を更新する（コピー時に呼ぶ）
+  captureSnapshot: () => void
 }
 
 export interface PromptActions {
@@ -99,15 +113,19 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     setFocusNonce((n) => n + 1)
   }
 
+  // コピー基準：最後にコピーした瞬間のスナップショット（セッション内で保持）
+  const [lastSnapshot, setLastSnapshot] = useState<Snapshot | null>(null)
+
   // 初回マウント：ストレージから復元
   useEffect(() => {
     let cancelled = false
-    loadState().then((loaded) => {
+    Promise.all([loadState(), loadSnapshot()]).then(([loaded, snap]) => {
       if (cancelled) return
       // ルート直下にグループがあるかだけ検査して、空ならデフォルトを維持
       if (loaded && loaded.rootGroups) {
         setState(loaded)
       }
+      if (snap) setLastSnapshot(snap)
       setReady(true)
     })
     return () => {
@@ -126,6 +144,16 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     if (!readyRef.current) return
     persist(state)
   }, [state, persist])
+
+  // 永続化：スナップショット（コピー基準）変更を debounce して保存
+  const persistSnapshot = useMemo(
+    () => debounce((s: Snapshot | null) => void (s ? saveSnapshot(s) : Promise.resolve()), 220),
+    [],
+  )
+  useEffect(() => {
+    if (!readyRef.current) return
+    persistSnapshot(lastSnapshot)
+  }, [lastSnapshot, persistSnapshot])
 
   // ---- Actions（全て immutable 更新） ----
   const actions: PromptActions = {
@@ -157,6 +185,17 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   // ---- 派生値 ----
   const selectedRefs = useMemo(() => collectSelected(state), [state])
 
+  // コピー基準の更新：現在の選択ワードでスナップショットを撮る
+  const captureSnapshot = useCallback(() => {
+    setLastSnapshot(makeSnapshot(selectedRefs, separator))
+  }, [selectedRefs, separator])
+
+  // 現在のプロンプトと基準の差分
+  const diff = useMemo(
+    () => computeDiff(selectedRefs, lastSnapshot),
+    [selectedRefs, lastSnapshot],
+  )
+
   const synthesis = useMemo(() => {
     // 出現順を維持しつつ、整形後テキストで重複排除
     const seen = new Set<string>()
@@ -182,6 +221,9 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     focusWordId,
     focusNonce,
     focusSelectedWord,
+    lastSnapshot,
+    diff,
+    captureSnapshot,
     ...actions,
   }
 

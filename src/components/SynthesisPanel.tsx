@@ -1,12 +1,16 @@
 // 右上：総括欄 / SynthesisPanel
-import { useState } from "react";
-import { FiCopy, FiCheck, FiMinus, FiMoreHorizontal } from "react-icons/fi";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { FiCopy, FiCheck, FiMinus, FiMoreHorizontal, FiActivity } from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
+import type { DiffItem } from "@/lib/diff";
 
 export function SynthesisPanel() {
-  const { synthesis, separator, setSeparator } = usePrompt();
+  const { synthesis, separator, setSeparator, lastSnapshot, diff, captureSnapshot } =
+    usePrompt();
   const [copied, setCopied] = useState(false);
+  const [diffOpen, setDiffOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   const onCopy = async () => {
     if (!synthesis) return;
@@ -21,9 +25,24 @@ export function SynthesisPanel() {
       document.execCommand("copy");
       ta.remove();
     }
+    // コピーした瞬間を基準（スナップショット）として記録
+    captureSnapshot();
+    setDiffOpen(false);
     setCopied(true);
     setTimeout(() => setCopied(false), 1400);
   };
+
+  // ポップアップ外部クリックで閉じる
+  useEffect(() => {
+    if (!diffOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setDiffOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [diffOpen]);
 
   const count =
     separator === "comma"
@@ -34,9 +53,15 @@ export function SynthesisPanel() {
         ? synthesis.split("\n").length
         : 0;
 
+  const hasBaseline = !!lastSnapshot;
+  const glow = hasBaseline && diff.hasChanges;
+
   return (
     <section className="flex flex-col h-full min-h-0 rounded-sm border border-eva-line bg-eva-bg-panel/70">
-      <header className="flex items-center gap-2 px-3 py-1.5 border-b border-eva-line-soft">
+      <header
+        ref={headerRef}
+        className="relative flex items-center gap-2 px-3 py-1.5 border-b border-eva-line-soft"
+      >
         <h2 className="font-cinzel-deco tracking-[0.18em] text-[12px] text-eva-green glow-text">
           SYNTHESIS
         </h2>
@@ -53,6 +78,26 @@ export function SynthesisPanel() {
           }
         >
           {separator === "comma" ? <FiMoreHorizontal size={13} /> : <FiMinus size={13} />}
+        </button>
+        {/* 差分検知：前回コピーフ基準からの変化を表示 */}
+        <button
+          onClick={() => setDiffOpen((o) => !o)}
+          className={`p-1 transition-all ${
+            glow
+              ? "text-eva-green shadow-glow-green animate-flicker"
+              : hasBaseline
+                ? "text-eva-ink-dim hover:text-eva-green"
+                : "text-eva-ink-dim/50 hover:text-eva-ink-dim"
+          }`}
+          title={
+            !hasBaseline
+              ? "まだコピーフ基準がありません"
+              : glow
+                ? "前回コピーから変化があります"
+                : "前回コピーから変化なし"
+          }
+        >
+          <FiActivity size={13} />
         </button>
         <button
           onClick={onCopy}
@@ -85,6 +130,22 @@ export function SynthesisPanel() {
             )}
           </AnimatePresence>
         </button>
+
+        {/* 差分ポップアップ */}
+        <AnimatePresence>
+          {diffOpen && (
+            <DiffPopup
+              hasBaseline={hasBaseline}
+              takenAt={lastSnapshot?.takenAt ?? 0}
+              baselineCount={lastSnapshot?.count ?? 0}
+              diff={diff}
+              onRefresh={() => {
+                captureSnapshot();
+                setDiffOpen(false);
+              }}
+            />
+          )}
+        </AnimatePresence>
       </header>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
@@ -104,5 +165,175 @@ export function SynthesisPanel() {
         )}
       </div>
     </section>
+  );
+}
+
+// ---- 差分ポップアップ ----
+
+function DiffPopup({
+  hasBaseline,
+  takenAt,
+  baselineCount,
+  diff,
+  onRefresh,
+}: {
+  hasBaseline: boolean;
+  takenAt: number;
+  baselineCount: number;
+  diff: ReturnType<typeof usePrompt>["diff"];
+  onRefresh: () => void;
+}) {
+  const time = takenAt
+    ? new Date(takenAt).toLocaleString("ja-JP", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.14 }}
+      className="absolute right-0 top-full mt-0 z-30 w-80 max-h-[490px] overflow-y-auto rounded-sm border border-eva-line bg-eva-bg-void/95 backdrop-blur shadow-glow-purple"
+    >
+      {/* ヘッダ：基準情報 */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-eva-line-soft">
+        <div className="min-w-0">
+          <div className="font-cinzel-deco tracking-[0.14em] text-[10px] text-eva-green glow-text">
+            DIFF
+          </div>
+          <div className="font-mono text-[10px] text-eva-ink-dim truncate">
+            {hasBaseline ? `基準 ${baselineCount}pt · ${time}` : "基準なし"}
+          </div>
+        </div>
+        {hasBaseline && (
+          <button
+            onClick={onRefresh}
+            className="shrink-0 px-1.5 py-0.5 rounded-sm border border-eva-line text-[10px] text-eva-ink-dim hover:text-eva-green hover:border-eva-green/60 transition-colors"
+            title="現在のプロンプトで基準を更新"
+          >
+            基準を更新
+          </button>
+        )}
+      </div>
+
+      {/* 本体 */}
+      <div className="p-2 space-y-2">
+        {!hasBaseline ? (
+          <p className="text-eva-ink-dim italic font-garamond text-[12px] px-1 py-2">
+            コピーすると、その瞬間のプロンプトが基準として記録されます。
+          </p>
+        ) : !diff.hasChanges ? (
+          <p className="text-eva-ink-dim italic font-garamond text-[12px] px-1 py-2">
+            前回コピーから変化はありません。
+          </p>
+        ) : (
+          <>
+            {diff.added.length > 0 && (
+              <DiffSection
+                label="追加"
+                count={diff.added.length}
+                accent="text-eva-green"
+                items={diff.added}
+                render={(it) => (
+                  <span className="text-eva-green-soft">{it.after?.formatted}</span>
+                )}
+              />
+            )}
+            {diff.removed.length > 0 && (
+              <DiffSection
+                label="削除"
+                count={diff.removed.length}
+                accent="text-eva-magenta"
+                items={diff.removed}
+                render={(it) => (
+                  <span className="line-through text-eva-magenta/90">
+                    {it.before?.formatted}
+                  </span>
+                )}
+              />
+            )}
+            {diff.modified.filter((i) => i.kind === "strength").length > 0 && (
+              <DiffSection
+                label="強度変更"
+                count={diff.modified.filter((i) => i.kind === "strength").length}
+                accent="text-eva-amber"
+                items={diff.modified.filter((i) => i.kind === "strength")}
+                render={(it) => (
+                  <span className="text-eva-amber">
+                    <span className="line-through opacity-60">
+                      {it.before?.formatted}
+                    </span>
+                    <span className="text-eva-ink-dim mx-1">→</span>
+                    {it.after?.formatted}
+                  </span>
+                )}
+              />
+            )}
+            {diff.modified.filter((i) => i.kind === "text").length > 0 && (
+              <DiffSection
+                label="テキスト変更"
+                count={diff.modified.filter((i) => i.kind === "text").length}
+                accent="text-eva-purple-bright"
+                items={diff.modified.filter((i) => i.kind === "text")}
+                render={(it) => (
+                  <span className="text-eva-purple-bright">
+                    <span className="line-through opacity-60">
+                      {it.before?.formatted}
+                    </span>
+                    <span className="text-eva-ink-dim mx-1">→</span>
+                    {it.after?.formatted}
+                  </span>
+                )}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function DiffSection({
+  label,
+  count,
+  accent,
+  items,
+  render,
+}: {
+  label: string;
+  count: number;
+  accent: string;
+  items: DiffItem[];
+  render: (it: DiffItem) => ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 px-1 mb-1">
+        <span className={`font-mono text-[10px] ${accent}`}>{label}</span>
+        <span className="font-mono text-[10px] text-eva-ink-dim">×{count}</span>
+      </div>
+      <ul className="space-y-0.5">
+        {items.map((it) => (
+          <li
+            key={`${it.kind}-${it.wordId}`}
+            className="flex items-start gap-1.5 px-1.5 py-0.5 rounded-sm hover:bg-eva-line-soft/40"
+          >
+            <span className="font-mono text-[11px] leading-relaxed break-all">
+              {render(it)}
+            </span>
+            {it.groupPath.length > 0 && (
+              <span className="ml-auto shrink-0 font-mono text-[9px] text-eva-ink-dim/70 self-center">
+                {it.groupPath[it.groupPath.length - 1]}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

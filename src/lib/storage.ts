@@ -3,8 +3,10 @@
 // ============================================================
 
 import type { RootState } from '@/types'
+import type { Snapshot } from '@/lib/diff'
 
 const STORAGE_KEY = 'comfy_prompt_recorder_state_v1'
+const SNAPSHOT_KEY = 'comfy_prompt_recorder_snapshot_v1'
 
 /**
  * chrome.storage が利用可能か（拡張機能実環境 / 通常のブラウザ）。
@@ -61,6 +63,22 @@ export async function loadState(): Promise<RootState | null> {
 
 export async function saveState(state: RootState): Promise<void> {
   await setRaw(STORAGE_KEY, JSON.stringify(state))
+}
+
+export async function loadSnapshot(): Promise<Snapshot | null> {
+  const raw = await getRaw(SNAPSHOT_KEY)
+  if (!raw) return null
+  try {
+    const v = JSON.parse(raw) as Snapshot
+    if (!v || !Array.isArray(v.entries)) return null
+    return v
+  } catch {
+    return null
+  }
+}
+
+export async function saveSnapshot(snapshot: Snapshot): Promise<void> {
+  await setRaw(SNAPSHOT_KEY, JSON.stringify(snapshot))
 }
 
 // ---- debounce ヘルパ ----
