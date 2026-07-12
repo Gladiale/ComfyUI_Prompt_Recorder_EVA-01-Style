@@ -49,6 +49,7 @@ export function WordItem({
   const [popPos, setPopPos] = useState<{
     left: number;
     top: number;
+    x: string;
   } | null>(null);
 
   // ポップオーバーの位置を計算（印と実ポップ寸法から）。bodyの560px枠外へ
@@ -56,32 +57,49 @@ export function WordItem({
   const measure = useCallback(() => {
     const el = markRef.current;
     if (!el) return;
+
     const GAP = 8;
+    const PADDING = 4; // 画面端からの安全マージン
     const r = el.getBoundingClientRect();
     const pop = popRef.current;
+
     // 実寸法（未描画フォールバック）
     const popW = pop ? pop.offsetWidth : 200;
     const popH = pop ? pop.offsetHeight : hasImage ? 230 : 70;
 
-    // 水平：印の中心に合わせ、画面左右端でクランプ
-    const halfW = popW / 2;
-    const left = Math.max(
-      halfW + 4,
-      Math.min(window.innerWidth - halfW - 4, r.left + r.width / 2),
-    );
+    // 1. 垂直位置（top）の基本計算：基本は印の上。上に収まらなければ下。
+    let top = r.top - GAP - popH < PADDING ? r.bottom + GAP : r.top - GAP - popH;
 
-    // 垂直：基本は印の上。上に収まらなければ下。
-    let top = r.top - GAP - popH < 4 ? r.bottom + GAP : r.top - GAP - popH;
+    // ポップアップの基準（x軸）：デフォルトは中央揃え（-50%）
+    let x = "-50%";
 
+    // 2. 垂直位置のクランプ（上下のはみ出し調整）
     // 下方向へはみ出す場合は画面下端にクランプ（上に寄せる）
-    if (top + popH > window.innerHeight - 4) {
-      top = Math.max(4, window.innerHeight - 4 - popH);
+    if (top + popH > window.innerHeight - PADDING) {
+      top = Math.max(PADDING, window.innerHeight - PADDING - popH);
+      x = "0";
     }
     // 上方向へはみ出す場合は画面上端にクランプ
-    if (top < 4) {
-      top = 4;
+    if (top < PADDING) {
+      top = PADDING;
+      x = "0";
     }
-    setPopPos({ left, top });
+
+    // 3. 水平位置（left）の計算
+    const halfW = popW / 2;
+    let left = r.left + r.width / 2; // 基本は印の中心位置
+
+    // 中央揃えの場合で、左側が画面端（PADDING）をはみ出す場合
+    if (x !== "0" && halfW >= r.left) {
+      left = halfW + PADDING;
+    }
+
+    // 【補完】右側へのはみ出し対策（画面右端を超えないように制限）
+    if (x !== "0" && left + halfW > window.innerWidth - PADDING) {
+      left = window.innerWidth - PADDING - halfW;
+    }
+
+    setPopPos({ left, top, x });
   }, [hasImage]);
 
   // ポップオーバー表示中：初回・スクロール・リサイズで再計算。
@@ -261,7 +279,7 @@ export function WordItem({
                   position: "fixed",
                   left: popPos.left,
                   top: popPos.top,
-                  transform: "translateX(-50%)",
+                  x: popPos.x,
                   zIndex: 9999,
                 }}
                 className="w-fit max-w-[300px] rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
