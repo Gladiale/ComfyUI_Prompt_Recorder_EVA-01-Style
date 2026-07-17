@@ -26,9 +26,9 @@ export function WordPanel() {
   };
 
   return (
-    <section className="flex flex-col h-full min-h-0">
+    <section className="flex flex-col h-full">
       {/* ヘッダ：タイトル + IO + 検索 */}
-      <header className="flex items-center gap-2 pb-2 mb-2 border-b border-eva-line justify-between">
+      <header className="flex items-center justify-between pb-2 mb-2 border-b border-eva-line">
         <h2 className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] glow-text whitespace-nowrap">
           WORDS
         </h2>
