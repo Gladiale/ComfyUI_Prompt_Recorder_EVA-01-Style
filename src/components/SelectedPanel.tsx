@@ -234,7 +234,7 @@ export function SelectedPanel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-2 top-full mt-1 z-20 w-[95%] max-h-56 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
+              className="absolute right-2 top-full mt-1 z-20 w-[95%] max-h-64 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {presets.length === 0 ? (

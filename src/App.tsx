@@ -11,7 +11,7 @@ function Shell() {
   const { ready } = usePrompt();
 
   return (
-    <div className="relative z-10 w-[760px] h-[560px] flex flex-col">
+    <div className="relative z-10 w-full h-full flex flex-col">
       {/* クレストバー */}
       <div className="flex items-center gap-2 px-3 py-1 border-b border-eva-line bg-eva-bg-panel/40">
         <span className="font-cinzel-deco tracking-[0.3em] text-[10px] text-eva-green">

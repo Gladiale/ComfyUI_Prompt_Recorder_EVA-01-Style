@@ -28,8 +28,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  width: 760px;
-  height: 560px;
+  width: fit-content;
+  height: fit-content;
   overflow: hidden;
   background: var(--bg-void);
   color: var(--ink);
@@ -40,8 +40,8 @@ body {
 }
 
 #root {
-  width: 760px;
-  height: 560px;
+  width: 800px;
+  height: 600px;
 }
 
 /* 深淵のハロー + 格子 */
@@ -212,6 +212,7 @@ body::before {
       0 0 14px rgba(255, 46, 136, 0.55);
   }
 }
+
 .sel-row.focused-flash {
   animation: focusedFlash 1.1s ease-out 1;
 }
