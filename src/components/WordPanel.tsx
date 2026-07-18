@@ -5,9 +5,11 @@ import { usePrompt } from "@/context/PromptContext";
 import { GroupNode } from "./GroupNode";
 import { SearchBox } from "./SearchBox";
 import { IOButtons } from "./IOButtons";
+import { useClockNav } from "./ClockNav";
 
 export function WordPanel() {
   const { state, addGroup, moveGroup } = usePrompt();
+  const { open: openClockNav } = useClockNav();
   const [query, setQuery] = useState("");
   const [draggingGroup, setDraggingGroup] = useState<string | null>(null);
 
@@ -29,9 +31,13 @@ export function WordPanel() {
     <section className="flex flex-col h-full">
       {/* ヘッダ：タイトル + IO + 検索 */}
       <header className="flex items-center justify-between pb-2 mb-2 border-b border-eva-line">
-        <h2 className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] glow-text whitespace-nowrap">
+        <button
+          onClick={openClockNav}
+          title="時計ロードマップを開く"
+          className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] hover:text-eva-green glow-text whitespace-nowrap cursor-pointer transition-colors"
+        >
           WORDS
-        </h2>
+        </button>
         {/* <div className="flex-1" /> */}
         <SearchBox query={query} onChange={setQuery} />
         <IOButtons />

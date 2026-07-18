@@ -20,6 +20,7 @@ import {
   collectSelected,
   createDefaultState,
   deleteGroup as treeDeleteGroup,
+  expandGroupPath as treeExpandGroupPath,
   deletePreset as treeDeletePreset,
   deleteWord as treeDeleteWord,
   moveGroup as treeMoveGroup,
@@ -82,6 +83,8 @@ export interface PromptActions {
   renameGroup: (id: string, name: string) => void;
   toggleCollapse: (id: string) => void;
   setCollapsed: (id: string, collapsed: boolean) => void;
+  /** 指定グループとその全祖先を展開（時計ロードマップのジャンプ先展開用）。 */
+  expandGroupPath: (id: string) => void;
   deleteGroup: (id: string) => void;
   addWord: (
     groupId: string,
@@ -171,6 +174,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     renameGroup: (id, name) => setState((s) => treeRenameGroup(s, id, name)),
     toggleCollapse: (id) => setState((s) => treeToggleCollapse(s, id)),
     setCollapsed: (id, collapsed) => setState((s) => treeSetCollapsed(s, id, collapsed)),
+    expandGroupPath: (id) => setState((s) => treeExpandGroupPath(s, id)),
     deleteGroup: (id) => setState((s) => treeDeleteGroup(s, id)),
     addWord: (groupId, data) => setState((s) => treeAddWord(s, groupId, data)),
     updateWord: (groupId, wordId, patch) =>

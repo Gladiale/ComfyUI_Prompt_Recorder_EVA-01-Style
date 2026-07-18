@@ -199,7 +199,11 @@ export function GroupNode({
   // ルート領域へのドロップ（親がいないグループをルートへ戻す用）は WordPanel で処理
 
   return (
-    <motion.div layout className="select-none bg-[#371029]">
+    <motion.div
+      layout
+      data-group-id={group.id}
+      className="select-none bg-[#371029] scroll-mt-2"
+    >
       <div
         onDragOver={onGroupDragOver}
         onDragLeave={() => setDropInfo(null)}
