@@ -203,18 +203,19 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             {/* 12時基準マーカー */}
             <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-3 bg-eva-green/60" />
 
-            {/* インデックス：各層の半径に配置。親(depth偶数)=緑大、子(depth奇数)=紫小 */}
+            {/* インデックス：各層の半径に配置。親(depth偶数)=緑の正六角形、子(depth奇数)=紫の円 */}
             {groups.map((g, i) => {
               const a = i * step;
               const isParent = g.depth % 2 === 0;
               const isActive = i === activeIdx;
               const r = radiusOf(g.depth);
-              const size = isParent ? 20 : 18;
+              const size = isParent ? 22 : 18;
+              const initial = Array.from(g.name)[0]?.toUpperCase() ?? "";
               return (
                 <button
                   key={g.id}
                   title={g.path.join(" / ")}
-                  className="absolute left-1/2 top-1/2 flex items-center justify-center rounded-full transition-transform cursor-crosshair"
+                  className="absolute left-1/2 top-1/2 flex items-center justify-center transition-transform cursor-crosshair"
                   style={{
                     transform: `rotate(${a}deg) translateY(-${r}px) rotate(${-a}deg)`,
                     transformOrigin: "center",
@@ -224,23 +225,47 @@ function ClockDial({ onClose }: { onClose: () => void }) {
                     marginTop: -size / 2,
                   }}
                 >
+                  {isParent ? (
+                    // ボーダー付き正六角形。
+                    // clip-path では box-shadow(shadow-glow-green) が切り抜かれて効かなくなるため、
+                    // SVG polygon + stroke で縁を描き、グローは filter: drop-shadow で六角形形状に追従させる。
+                    <svg
+                      viewBox="0 0 100 100"
+                      width={size}
+                      height={size}
+                      className="absolute inset-0 block overflow-visible transition-transform"
+                      style={{
+                        transform: isActive ? "scale(1.25)" : "none",
+                        filter: isActive
+                          ? "drop-shadow(0 0 6px rgba(57,255,20,0.85))"
+                          : "none",
+                      }}
+                    >
+                      <polygon
+                        points="50,3 90.7,26.5 90.7,73.5 50,97 9.3,73.5 9.3,26.5"
+                        fill="rgba(57,255,20,0.3)"
+                        stroke="var(--color-eva-green)"
+                        strokeWidth={3}
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    <span
+                      className={[
+                        "absolute inset-0 block rounded-full border transition-all aspect-square",
+                        "bg-eva-purple/30 border-eva-purple-bright",
+                        isActive ? "shadow-glow-purple scale-125" : "",
+                      ].join(" ")}
+                      style={{ width: size, height: size }}
+                    />
+                  )}
                   <span
                     className={[
-                      "block rounded-full border transition-all aspect-square",
-                      isParent
-                        ? "bg-eva-green/30 border-eva-green text-eva-green"
-                        : "bg-eva-purple/30 border-eva-purple-bright text-eva-ink-dim",
-                      isActive
-                        ? isParent
-                          ? "shadow-glow-green scale-125"
-                          : "shadow-glow-purple scale-125"
-                        : "",
+                      "relative flex items-center justify-center w-full h-full text-[9px] font-mono leading-none pointer-events-none",
+                      isParent ? "text-eva-green" : "text-eva-ink-dim",
                     ].join(" ")}
-                    style={{ width: size, height: size }}
                   >
-                    <span className="flex items-center justify-center w-full h-full text-[9px] font-mono leading-none">
-                      {Array.from(g.name)[0]?.toUpperCase() ?? ""}
-                    </span>
+                    {initial}
                   </span>
                 </button>
               );
