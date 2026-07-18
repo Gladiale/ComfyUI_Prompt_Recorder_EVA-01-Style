@@ -256,7 +256,7 @@ export function SelectedPanel() {
                         <button
                           onClick={() => movePreset(p.id, -1)}
                           disabled={idx === 0}
-                          className="p-[1px] text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
+                          className="p-px text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
                           title="上へ"
                         >
                           <FiChevronUp size={11} />
@@ -264,7 +264,7 @@ export function SelectedPanel() {
                         <button
                           onClick={() => movePreset(p.id, 1)}
                           disabled={idx === presets.length - 1}
-                          className="p-[1px] text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
+                          className="p-1px text-eva-ink-dim hover:text-eva-green transition-colors disabled:opacity-20 disabled:hover:text-eva-ink-dim leading-none"
                           title="下へ"
                         >
                           <FiChevronDown size={11} />

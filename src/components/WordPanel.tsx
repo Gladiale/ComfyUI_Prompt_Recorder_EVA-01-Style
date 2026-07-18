@@ -37,7 +37,7 @@ export function WordPanel() {
         <IOButtons />
         <button
           onClick={() => addGroup(null)}
-          className="group h-full aspect-square rounded-full active:scale-90 flex items-center justify-center p-1 border border-eva-purple hover:border-eva-green text-eva-green-soft hover:text-eva-green hover:shadow-glow-green transition-all"
+          className="group h-full aspect-square rounded-full active:scale-90 flex items-center justify-center p-1 border border-eva-purple hover:border-eva-green text-eva-green-soft hover:text-eva-green hover:shadow-glow-green transition-all cursor-pointer"
           title="ルートグループ追加"
         >
           <FiPlus size={15} className="absolute group-hover:opacity-0 transition-all" />

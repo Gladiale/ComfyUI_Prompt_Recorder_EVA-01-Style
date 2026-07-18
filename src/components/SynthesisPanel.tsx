@@ -148,7 +148,7 @@ export function SynthesisPanel() {
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {synthesis ? (
           <pre
-            className={`font-mono text-[12px] leading-relaxed whitespace-pre-wrap break-words text-eva-green-soft/95 ${
+            className={`font-mono text-[12px] leading-relaxed whitespace-pre-wrap wrap-break-word text-eva-green-soft/95 ${
               separator === "comma" ? "" : ""
             }`}
             style={{ textShadow: "0 0 8px rgba(57,255,20,0.18)" }}
@@ -195,7 +195,7 @@ function DiffPopup({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.14 }}
-      className="absolute right-0 top-full mt-0 z-30 w-80 max-h-[530px] overflow-y-auto rounded-sm border border-eva-line bg-eva-bg-void/95 backdrop-blur shadow-glow-purple"
+      className="absolute right-0 top-full mt-0 z-30 w-80 max-h-132.5 overflow-y-auto rounded-sm border border-eva-line bg-eva-bg-void/95 backdrop-blur shadow-glow-purple"
     >
       {/* ヘッダ：基準情報 */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-eva-line-soft">

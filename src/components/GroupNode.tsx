@@ -261,7 +261,7 @@ export function GroupNode({
               {/* 選択内包の徽章：配下の選択ワード数を表示 */}
               {selectedCount > 0 && (
                 <span
-                  className="badge-pulse shrink-0 min-w-[16px] h-[16px] px-1 rounded-full bg-eva-green/15 border border-eva-green/60 text-eva-green-soft text-[10px] font-mono leading-none flex items-center justify-center"
+                  className="badge-pulse shrink-0 min-w-4 h-4 px-1 rounded-full bg-eva-green/15 border border-eva-green/60 text-eva-green-soft text-[10px] font-mono leading-none flex items-center justify-center"
                   title={`内に選択ワード ${selectedCount} 件`}
                 >
                   {selectedCount}

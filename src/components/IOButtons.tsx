@@ -49,14 +49,14 @@ export function IOButtons() {
       <button
         onClick={onExport}
         title="書き出し (Export)"
-        className="active:scale-90 h-full p-1.5 rounded-sm bg-eva-line hover:bg-eva-green/50 text-eva-green-soft hover:text-eva-green transition-all [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]"
+        className="active:scale-90 h-full p-1.5 rounded-sm bg-eva-line hover:bg-eva-green/50 text-eva-green-soft hover:text-eva-green transition-all [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)] cursor-pointer"
       >
         <FiUpload size={15} />
       </button>
       <button
         onClick={onImportClick}
         title="読み込み (Import)"
-        className="active:scale-90 h-full p-1.5 rounded-sm bg-eva-line hover:bg-eva-magenta/50 text-eva-magenta/80 hover:text-eva-magenta transition-all [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]"
+        className="active:scale-90 h-full p-1.5 rounded-sm bg-eva-line hover:bg-eva-magenta/50 text-eva-magenta/80 hover:text-eva-magenta transition-all [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)] cursor-pointer"
         style={{ boxShadow: "none" }}
       >
         <FiDownload size={15} />

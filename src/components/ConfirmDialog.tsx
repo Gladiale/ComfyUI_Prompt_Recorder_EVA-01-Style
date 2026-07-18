@@ -1,53 +1,44 @@
 // 確認ダイアログ / ConfirmDialog
 // window.confirm の代替：アプリ内モーダルで Promise<boolean> を返す
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  type ReactNode,
-} from 'react'
-import { AnimatePresence, motion } from 'motion/react'
-import { FiAlertTriangle } from 'react-icons/fi'
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { FiAlertTriangle } from "react-icons/fi";
 
 interface ConfirmOptions {
-  title?: string
-  message: string
-  confirmLabel?: string
-  cancelLabel?: string
-  danger?: boolean // 削除など破壊的操作：確認ボタンを赤紫に
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  danger?: boolean; // 削除など破壊的操作：確認ボタンを赤紫に
 }
 
-type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>
+type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
 
-const ConfirmContext = createContext<ConfirmFn | null>(null)
+const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 interface PendingState extends ConfirmOptions {
-  resolve: (ok: boolean) => void
+  resolve: (ok: boolean) => void;
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const [pending, setPending] = useState<PendingState | null>(null)
+  const [pending, setPending] = useState<PendingState | null>(null);
 
   // confirm() 呼び出しでモーダルを開き、ユーザー操作で解決する
   const confirm = useCallback<ConfirmFn>((options) => {
     return new Promise<boolean>((resolve) => {
-      setPending({ ...options, resolve })
-    })
-  }, [])
+      setPending({ ...options, resolve });
+    });
+  }, []);
 
-  const close = useCallback(
-    (ok: boolean) => {
-      setPending((cur) => {
-        cur?.resolve(ok)
-        return null
-      })
-    },
-    [],
-  )
+  const close = useCallback((ok: boolean) => {
+    setPending((cur) => {
+      cur?.resolve(ok);
+      return null;
+    });
+  }, []);
 
   return (
-    <ConfirmContext.Provider value={confirm}>
+    <ConfirmContext value={confirm}>
       {children}
       <AnimatePresence>
         {pending && (
@@ -56,7 +47,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
+            className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
             onClick={() => close(false)}
           >
             <motion.div
@@ -71,10 +62,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               <div className="flex items-center gap-2 px-3 py-2 border-b border-eva-line-soft">
                 <FiAlertTriangle
                   size={14}
-                  className={pending.danger ? 'text-eva-magenta' : 'text-eva-amber'}
+                  className={pending.danger ? "text-eva-magenta" : "text-eva-amber"}
                 />
                 <span className="font-cinzel tracking-widest text-[11px] text-eva-ink">
-                  {pending.title ?? 'CONFIRM'}
+                  {pending.title ?? "CONFIRM"}
                 </span>
               </div>
 
@@ -90,30 +81,30 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   onClick={() => close(false)}
                   className="flex-1 rounded-sm border border-eva-line px-2 py-1.5 text-[12px] text-eva-ink-dim hover:text-eva-ink hover:border-eva-purple-bright transition-colors"
                 >
-                  {pending.cancelLabel ?? 'キャンセル'}
+                  {pending.cancelLabel ?? "キャンセル"}
                 </button>
                 <button
                   onClick={() => close(true)}
                   className={[
-                    'flex-1 rounded-sm border px-2 py-1.5 text-[12px] font-medium transition-colors',
+                    "flex-1 rounded-sm border px-2 py-1.5 text-[12px] font-medium transition-colors",
                     pending.danger
-                      ? 'border-eva-magenta/60 text-eva-magenta hover:bg-eva-magenta/15 hover:shadow-glow-green'
-                      : 'border-eva-green/60 text-eva-green-soft hover:bg-eva-green/15 hover:shadow-glow-green',
-                  ].join(' ')}
+                      ? "border-eva-magenta/60 text-eva-magenta hover:bg-eva-magenta/15 hover:shadow-glow-green"
+                      : "border-eva-green/60 text-eva-green-soft hover:bg-eva-green/15 hover:shadow-glow-green",
+                  ].join(" ")}
                 >
-                  {pending.confirmLabel ?? 'OK'}
+                  {pending.confirmLabel ?? "OK"}
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </ConfirmContext.Provider>
-  )
+    </ConfirmContext>
+  );
 }
 
 export function useConfirm(): ConfirmFn {
-  const ctx = useContext(ConfirmContext)
-  if (!ctx) throw new Error('useConfirm must be used within ConfirmProvider')
-  return ctx
+  const ctx = useContext(ConfirmContext);
+  if (!ctx) throw new Error("useConfirm must be used within ConfirmProvider");
+  return ctx;
 }

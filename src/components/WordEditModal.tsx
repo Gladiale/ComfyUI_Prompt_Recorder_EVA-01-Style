@@ -8,30 +8,41 @@ import {
   useRef,
   useState,
   type ReactNode,
-} from 'react'
-import { AnimatePresence, motion } from 'motion/react'
-import { FiImage, FiX } from 'react-icons/fi'
-import { usePrompt } from '@/context/PromptContext'
-import { fileToCompressedDataURL } from '@/lib/image'
+} from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { FiImage, FiX } from "react-icons/fi";
+import { usePrompt } from "@/context/PromptContext";
+import { fileToCompressedDataURL } from "@/lib/image";
 
 type Mode =
-  | { kind: 'add'; groupId: string }
-  | { kind: 'edit'; groupId: string; wordId: string; text: string; note: string; image?: string }
+  | { kind: "add"; groupId: string }
+  | {
+      kind: "edit";
+      groupId: string;
+      wordId: string;
+      text: string;
+      note: string;
+      image?: string;
+    };
 
 interface WordEditorValue {
-  openAdd: (groupId: string) => void
-  openEdit: (groupId: string, wordId: string, initial: { text: string; note: string; image?: string }) => void
+  openAdd: (groupId: string) => void;
+  openEdit: (
+    groupId: string,
+    wordId: string,
+    initial: { text: string; note: string; image?: string },
+  ) => void;
 }
 
-const WordEditorContext = createContext<WordEditorValue | null>(null)
+const WordEditorContext = createContext<WordEditorValue | null>(null);
 
 export function WordEditorProvider({ children }: { children: ReactNode }) {
-  const { addWord, updateWord } = usePrompt()
-  const [mode, setMode] = useState<Mode | null>(null)
+  const { addWord, updateWord } = usePrompt();
+  const [mode, setMode] = useState<Mode | null>(null);
 
   const openAdd = useCallback((groupId: string) => {
-    setMode({ kind: 'add', groupId })
-  }, [])
+    setMode({ kind: "add", groupId });
+  }, []);
 
   const openEdit = useCallback(
     (
@@ -40,112 +51,112 @@ export function WordEditorProvider({ children }: { children: ReactNode }) {
       initial: { text: string; note: string; image?: string },
     ) => {
       setMode({
-        kind: 'edit',
+        kind: "edit",
         groupId,
         wordId,
         text: initial.text,
         note: initial.note,
         image: initial.image,
-      })
+      });
     },
     [],
-  )
+  );
 
-  const close = useCallback(() => setMode(null), [])
+  const close = useCallback(() => setMode(null), []);
 
   const submit = useCallback(
     (data: { text: string; note: string; image?: string }) => {
-      if (!mode) return
-      if (mode.kind === 'add') {
-        addWord(mode.groupId, data)
+      if (!mode) return;
+      if (mode.kind === "add") {
+        addWord(mode.groupId, data);
       } else {
-        updateWord(mode.groupId, mode.wordId, data)
+        updateWord(mode.groupId, mode.wordId, data);
       }
-      close()
+      close();
     },
     [mode, addWord, updateWord, close],
-  )
+  );
 
-  const value: WordEditorValue = { openAdd, openEdit }
+  const value: WordEditorValue = { openAdd, openEdit };
 
   return (
-    <WordEditorContext.Provider value={value}>
+    <WordEditorContext value={value}>
       {children}
       <AnimatePresence>
         {mode && (
           <WordEditModalView
             key="modal"
-            title={mode.kind === 'add' ? 'NEW WORD' : 'EDIT WORD'}
+            title={mode.kind === "add" ? "NEW WORD" : "EDIT WORD"}
             initial={{
-              text: mode.kind === 'add' ? '' : mode.text,
-              note: mode.kind === 'add' ? '' : mode.note,
-              image: mode.kind === 'add' ? undefined : mode.image,
+              text: mode.kind === "add" ? "" : mode.text,
+              note: mode.kind === "add" ? "" : mode.note,
+              image: mode.kind === "add" ? undefined : mode.image,
             }}
             onSubmit={submit}
             onClose={close}
           />
         )}
       </AnimatePresence>
-    </WordEditorContext.Provider>
-  )
+    </WordEditorContext>
+  );
 }
 
 export function useWordEditor(): WordEditorValue {
-  const ctx = useContext(WordEditorContext)
-  if (!ctx) throw new Error('useWordEditor must be used within WordEditorProvider')
-  return ctx
+  const ctx = useContext(WordEditorContext);
+  if (!ctx) throw new Error("useWordEditor must be used within WordEditorProvider");
+  return ctx;
 }
 
 // ---- モーダル本体 ----
 
 interface ViewProps {
-  title: string
-  initial: { text: string; note: string; image?: string }
-  onSubmit: (data: { text: string; note: string; image?: string }) => void
-  onClose: () => void
+  title: string;
+  initial: { text: string; note: string; image?: string };
+  onSubmit: (data: { text: string; note: string; image?: string }) => void;
+  onClose: () => void;
 }
 
 function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
-  const [text, setText] = useState(initial.text)
-  const [note, setNote] = useState(initial.note)
-  const [image, setImage] = useState<string | undefined>(initial.image)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [text, setText] = useState(initial.text);
+  const [note, setNote] = useState(initial.note);
+  const [image, setImage] = useState<string | undefined>(initial.image);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // Esc で閉じる
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setBusy(true)
-    setError(null)
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    setError(null);
     try {
-      const dataUrl = await fileToCompressedDataURL(file)
-      setImage(dataUrl)
+      const dataUrl = await fileToCompressedDataURL(file);
+      setImage(dataUrl);
     } catch {
-      setError('画像の読み込みに失敗しました')
+      setError("画像の読み込みに失敗しました");
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
-  const removeImage = () => setImage(undefined)
+  const removeImage = () => setImage(undefined);
 
-  const canSubmit = text.trim().length > 0 && !busy
+  const canSubmit = text.trim().length > 0 && !busy;
 
   const submit = () => {
-    if (!canSubmit) return
-    onSubmit({ text: text.trim(), note: note.trim(), image })
-  }
+    if (!canSubmit) return;
+    onSubmit({ text: text.trim(), note: note.trim(), image });
+  };
 
   return (
     <motion.div
@@ -153,7 +164,7 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <motion.div
@@ -162,11 +173,13 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
         exit={{ scale: 0.95, opacity: 0, y: 8 }}
         transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="w-[340px] rounded-sm border border-eva-line bg-eva-bg-panel-2 shadow-glow-purple"
+        className="w-85 rounded-sm border border-eva-line bg-eva-bg-panel-2 shadow-glow-purple"
       >
         {/* ヘッダ */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-eva-line-soft">
-          <span className="font-cinzel tracking-widest text-[11px] text-eva-green">{title}</span>
+          <span className="font-cinzel tracking-widest text-[11px] text-eva-green">
+            {title}
+          </span>
           <button
             onClick={onClose}
             className="text-eva-ink-dim hover:text-eva-magenta transition-colors"
@@ -179,13 +192,16 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
         {/* 本文 */}
         <div className="px-3 py-3 flex flex-col gap-2">
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">WORD</span>
+            <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
+              WORD
+            </span>
             <input
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) submit()
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey || !e.shiftKey))
+                  submit();
               }}
               className="ev-input rounded-sm px-1.5 py-1 text-[13px]"
               placeholder="word"
@@ -203,7 +219,7 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
               className="ev-input rounded-sm px-1.5 py-1 text-[11px] font-mono resize-none"
               placeholder="注釈"
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit()
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
               }}
             />
           </label>
@@ -218,7 +234,7 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
                 <img
                   src={image}
                   alt="preview"
-                  className="max-h-[160px] max-w-full rounded-sm border border-eva-line-soft"
+                  className="max-h-40 max-w-full rounded-sm border border-eva-line-soft"
                 />
                 <button
                   onClick={removeImage}
@@ -235,7 +251,7 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
                 className="flex items-center gap-1.5 rounded-sm border border-dashed border-eva-line px-2 py-2 text-[11px] text-eva-ink-dim hover:text-eva-green hover:border-eva-green transition-colors disabled:opacity-50"
               >
                 <FiImage size={13} />
-                {busy ? '圧縮中…' : '画像を選択'}
+                {busy ? "圧縮中…" : "画像を選択"}
               </button>
             )}
             <input
@@ -262,10 +278,10 @@ function WordEditModalView({ title, initial, onSubmit, onClose }: ViewProps) {
             disabled={!canSubmit}
             className="flex-1 rounded-sm border border-eva-green/60 px-2 py-1.5 text-[12px] font-medium text-eva-green-soft hover:bg-eva-green/15 hover:shadow-glow-green transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:shadow-none"
           >
-            {busy ? '処理中…' : '保存'}
+            {busy ? "処理中…" : "保存"}
           </button>
         </div>
       </motion.div>
     </motion.div>
-  )
+  );
 }

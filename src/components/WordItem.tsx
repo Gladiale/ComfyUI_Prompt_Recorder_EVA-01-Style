@@ -65,7 +65,7 @@ export function WordItem({
 
     // 実寸法（未描画フォールバック）
     const popW = pop ? pop.offsetWidth : 200;
-    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 70;
+    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 17;
 
     // 1. 垂直位置（top）の基本計算：基本は印の上。上に収まらなければ下。
     let top = r.top - GAP - popH < PADDING ? r.bottom + GAP : r.top - GAP - popH;
@@ -200,7 +200,7 @@ export function WordItem({
           word.selected ? focusSelectedWord(word.id) : undefined;
         }}
         className={[
-          "group flex items-center gap-2 border px-2.5 py-1.5 cursor-pointer transition-all max-w-[260px] relative select-none",
+          "group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
           word.selected
             ? "word-selected bg-eva-bg-panel-2"
             : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
@@ -228,7 +228,7 @@ export function WordItem({
               e.stopPropagation();
               focusSelectedWord(word.id);
             }}
-            className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[0.7rem] leading-none w-[1rem] aspect-square flex items-center justify-center"
+            className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[0.7rem] leading-none w-4 aspect-square flex items-center justify-center"
           >
             +{word.strength}
           </span>
@@ -254,7 +254,7 @@ export function WordItem({
         {/* 削除（ホバー時） */}
         <button
           onClick={onDelete}
-          className="absolute right-0 -bottom-[0.1rem] opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0"
+          className="absolute right-0 bottom-[-0.1rem] opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0 cursor-pointer"
           title="削除"
         >
           <RiDeleteBin2Line size={13} />
@@ -282,7 +282,7 @@ export function WordItem({
                   x: popPos.x,
                   zIndex: 9999,
                 }}
-                className="w-fit max-w-[300px] rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
+                className="w-fit max-w-80 rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
               >
                 {hasImage && (
                   <img
@@ -293,7 +293,7 @@ export function WordItem({
                   />
                 )}
                 {hasNote && (
-                  <p className="text-[11px] font-mono text-eva-purple whitespace-pre-wrap break-words">
+                  <p className="text-[11px] font-mono text-eva-purple whitespace-pre-wrap wrap-break-word">
                     {word.note}
                   </p>
                 )}
