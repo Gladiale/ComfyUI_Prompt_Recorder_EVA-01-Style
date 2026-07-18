@@ -145,7 +145,7 @@ export function SynthesisPanel() {
         </AnimatePresence>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2">
         {synthesis ? (
           <pre
             className={`font-mono text-[12px] leading-relaxed whitespace-pre-wrap wrap-break-word text-eva-green-soft/95 ${
