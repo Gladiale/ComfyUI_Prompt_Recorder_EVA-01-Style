@@ -27,14 +27,13 @@ const ClockNavContext = createContext<ClockNavValue | null>(null);
 
 export function ClockNavProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const value = useMemo<ClockNavValue>(
-    () => ({ open: () => setIsOpen(true) }),
-    [],
-  );
+  const value = useMemo<ClockNavValue>(() => ({ open: () => setIsOpen(true) }), []);
   return (
     <ClockNavContext value={value}>
       {children}
-      <AnimatePresence>{isOpen && <ClockDial onClose={() => setIsOpen(false)} />}</AnimatePresence>
+      <AnimatePresence>
+        {isOpen && <ClockDial onClose={() => setIsOpen(false)} />}
+      </AnimatePresence>
     </ClockNavContext>
   );
 }
@@ -99,7 +98,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
 
   const nearestIndex = (deg: number): number => {
     if (N <= 0) return 0;
-    return (Math.round(deg / step) % N + N) % N;
+    return ((Math.round(deg / step) % N) + N) % N;
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -232,11 +231,9 @@ function ClockDial({ onClose }: { onClose: () => void }) {
                       height: isRoot ? 22 : 14,
                     }}
                   >
-                    {isRoot && (
-                      <span className="flex items-center justify-center w-full h-full text-[10px] font-mono leading-none">
-                        {g.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                    <span className="flex items-center justify-center w-full h-full text-[10px] font-mono leading-none">
+                      {Array.from(g.name)[0].toUpperCase()}
+                    </span>
                   </span>
                 </button>
               );
@@ -263,7 +260,10 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-eva-green shadow-glow-green" />
           </div>
         ) : (
-          <div className="flex items-center justify-center text-eva-ink-dim italic font-garamond text-[13px]" style={{ width: DIAL_SIZE, height: DIAL_SIZE }}>
+          <div
+            className="flex items-center justify-center text-eva-ink-dim italic font-garamond text-[13px]"
+            style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
+          >
             グループがありません。
           </div>
         )}
