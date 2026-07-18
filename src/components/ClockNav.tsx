@@ -54,6 +54,13 @@ const R_OUTER = 150; // 最外層のインデックス配置半径
 const R_INNER_MIN = 26; // 最内層の最低半径（中心軸との干渉回避）
 const RING_GAP_MAX = 22; // 層間の間隔（最大値）
 
+// 魔法陣ポップアップ（一番外枠）のサイズ
+const NAV_PANEL = 500;
+// 正十二角形の clip-path（頂点12個が30°間隔）。
+// 3つの正方形（0°/30°/60°回転）を重ねた十二角星の外接輪郭と一致する形状。
+const CLIP_DODECAGON =
+  "polygon(50% 0%, 75% 6.7%, 93.3% 25%, 100% 50%, 93.3% 75%, 75% 93.3%, 50% 100%, 25% 93.3%, 6.7% 75%, 0% 50%, 6.7% 25%, 25% 6.7%)";
+
 function ClockDial({ onClose }: { onClose: () => void }) {
   const { state, expandGroupPath } = usePrompt();
   const groups = useMemo(() => collectAllGroups(state), [state]);
@@ -170,10 +177,49 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         exit={{ scale: 0.95, opacity: 0, y: 8 }}
         transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col items-center gap-3 p-5 rounded-sm border border-eva-line bg-eva-bg-panel-2 shadow-glow-purple"
+        className="relative flex flex-col items-center justify-center gap-3"
+        style={{
+          width: NAV_PANEL,
+          height: NAV_PANEL,
+          // clip-path で box-shadow が切り抜かれるため、十二角形形状に追従する drop-shadow でグローを表現
+          filter: "drop-shadow(0 0 16px rgba(180,120,255,0.55))",
+        }}
       >
-        <span className="font-cinzel-deco tracking-[0.25em] text-[11px] text-eva-green glow-text">
-          ◇ NAVIGATION DIAL ◇
+        {/* 背景: 正十二角形でクリップしたパネル */}
+        <div
+          className="absolute inset-0 bg-eva-bg-panel-2/95"
+          style={{ clipPath: CLIP_DODECAGON }}
+        />
+        {/* 魔法陣装飾: 外周円 + 3つの正方形(0°/30°/60°回転 → 十二角星) + 内円 */}
+        <svg
+          viewBox="0 0 100 100"
+          className="absolute inset-0 w-full h-full overflow-visible"
+          aria-hidden="true"
+        >
+          {/* 外周二重円 */}
+          <circle cx={50} cy={50} r={49} fill="none" stroke="var(--color-eva-purple-bright)" strokeWidth={0.4} opacity={0.55} />
+          <circle cx={50} cy={50} r={47.5} fill="none" stroke="var(--color-eva-line)" strokeWidth={0.25} opacity={0.6} />
+          {/* 3つの正方形: 頂点が円周上(半径≈46)、0°/30°/60°回転で計12頂点が30°間隔になる */}
+          {[0, 30, 60].map((rot) => (
+            <rect
+              key={rot}
+              x={50 - 32.53}
+              y={50 - 32.53}
+              width={65.06}
+              height={65.06}
+              transform={`rotate(${rot} 50 50)`}
+              fill="none"
+              stroke="var(--color-eva-green)"
+              strokeWidth={0.35}
+              opacity={0.6}
+            />
+          ))}
+          {/* 内円 */}
+          <circle cx={50} cy={50} r={31} fill="none" stroke="var(--color-eva-purple-bright)" strokeWidth={0.25} opacity={0.4} />
+        </svg>
+
+        <span className="relative font-cinzel-deco tracking-[0.15em] text-[10px] text-eva-green glow-text">
+          ◇ NAVIGATION ◇
         </span>
 
         {N > 0 ? (
@@ -308,7 +354,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               // transition={{ duration: 0.2 }}
-              className="text-center min-h-[2.5em]"
+              className="relative text-center min-h-[2.5em]"
             >
               <div
                 className={`font-cinzel tracking-widest text-[13px] ${
@@ -326,8 +372,8 @@ function ClockDial({ onClose }: { onClose: () => void }) {
           )}
         </AnimatePresence>
 
-        <span className="font-mono text-[9px] text-eva-ink-dim tracking-widest">
-          マウスを動かして針を合わせ・クリックでジャンプ
+        <span className="relative font-mono text-[8px] text-eva-ink-dim tracking-widest">
+          マウスで合わせ・クリックで jump
         </span>
       </motion.div>
     </motion.div>
