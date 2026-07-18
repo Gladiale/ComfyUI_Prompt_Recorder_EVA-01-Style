@@ -1,6 +1,6 @@
 // 時計の指針型ロードマップ / ClockNav
-// WORDS ラベルから起動。針1本をドラッグ回転（or インデックスクリック）で
-// 該当グループへスクロールし、閉じていれば祖先ごと自動展開する。
+// WORDS ラベルから起動。マウスの動きに合わせて針が回転し、
+// クリックで該当グループへスクロール（閉じていれば祖先ごと自動展開）。
 import {
   createContext,
   useCallback,
@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type PointerEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -60,9 +61,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
   // 針の角度（度・連続値）。0=12時方向、時計回りに増加。
   // 0..360 で折り返さず連続させることで、境界越え時に逆回りアニメしない。
   const [needleAngle, setNeedleAngle] = useState(0);
-  // ドラッグ中か。ドラッグ中はインデックスホバーを無視。
-  const [dragging, setDragging] = useState(false);
-  // ハイライト中インデックス（ドラッグ or ホバー）
+  // ハイライト中インデックス（マウスホバー位置から算出）
   const [activeIdx, setActiveIdx] = useState(0);
 
   const dialRef = useRef<HTMLDivElement>(null);
@@ -101,39 +100,21 @@ function ClockDial({ onClose }: { onClose: () => void }) {
     return ((Math.round(deg / step) % N) + N) % N;
   };
 
-  const onPointerDown = (e: PointerEvent) => {
-    if (N <= 0) return;
-    e.preventDefault();
-    setDragging(true);
-    const a = angleFromPointer(e.clientX, e.clientY);
-    setAngleShort(a);
-    setActiveIdx(nearestIndex(a));
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
+  // マウスの動きに合わせて針を回転（ドラッグ不要）。
   const onPointerMove = (e: PointerEvent) => {
-    if (!dragging) return;
+    if (N <= 0) return;
     const a = angleFromPointer(e.clientX, e.clientY);
     setAngleShort(a);
     setActiveIdx(nearestIndex(a));
   };
-  const onPointerUp = (e: PointerEvent) => {
-    if (!dragging) return;
-    setDragging(false);
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+
+  // クリックで現在針が指すインデックスへジャンプ確定。
+  const onClick = (e: ReactMouseEvent) => {
+    if (N <= 0) return;
     const a = angleFromPointer(e.clientX, e.clientY);
     const idx = nearestIndex(a);
     const target = groups[idx];
     if (target) jumpTo(target);
-  };
-
-  // インデックス直接クリック / ホバー
-  const onIndexEnter = (i: number) => {
-    if (dragging) return;
-    setActiveIdx(i);
-    setAngleShort(i * step);
-  };
-  const onIndexClick = (g: GroupRef) => {
-    jumpTo(g);
   };
 
   const jumpTo = useCallback(
@@ -178,10 +159,9 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         {N > 0 ? (
           <div
             ref={dialRef}
-            onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            className="relative touch-none cursor-grab active:cursor-grabbing"
+            onClick={onClick}
+            className="relative touch-none cursor-crosshair"
             style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
           >
             {/* 外周リング */}
@@ -201,10 +181,8 @@ function ClockDial({ onClose }: { onClose: () => void }) {
               return (
                 <button
                   key={g.id}
-                  onPointerEnter={() => onIndexEnter(i)}
-                  onClick={() => onIndexClick(g)}
                   title={g.path.join(" / ")}
-                  className="absolute left-1/2 top-1/2 flex items-center justify-center rounded-full transition-transform"
+                  className="absolute left-1/2 top-1/2 flex items-center justify-center rounded-full transition-transform cursor-crosshair"
                   style={{
                     transform: `rotate(${a}deg) translateY(-${RADIUS}px) rotate(${-a}deg)`,
                     transformOrigin: "center",
@@ -296,7 +274,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         </AnimatePresence>
 
         <span className="font-mono text-[9px] text-eva-ink-dim tracking-widest">
-          針をドラッグ or インデックスをクリック
+          マウスを動かして針を合わせ・クリックでジャンプ
         </span>
       </motion.div>
     </motion.div>
