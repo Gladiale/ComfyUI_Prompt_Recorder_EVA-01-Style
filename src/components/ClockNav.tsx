@@ -177,7 +177,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         exit={{ scale: 0.95, opacity: 0, y: 8 }}
         transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col items-center justify-center gap-3"
+        className="relative flex flex-col items-center justify-around"
         style={{
           width: NAV_PANEL,
           height: NAV_PANEL,
@@ -197,30 +197,57 @@ function ClockDial({ onClose }: { onClose: () => void }) {
           aria-hidden="true"
         >
           {/* 外周二重円 */}
-          <circle cx={50} cy={50} r={49} fill="none" stroke="var(--color-eva-purple-bright)" strokeWidth={0.4} opacity={0.55} />
-          <circle cx={50} cy={50} r={47.5} fill="none" stroke="var(--color-eva-line)" strokeWidth={0.25} opacity={0.6} />
+          {/* <circle
+            cx={50}
+            cy={50}
+            r={49}
+            fill="none"
+            stroke="var(--color-eva-purple-bright)"
+            strokeWidth={0.4}
+            opacity={0.55}
+          /> */}
+          <circle
+            cx={50}
+            cy={50}
+            r={47.5}
+            fill="none"
+            stroke="var(--color-eva-line)"
+            strokeWidth={0.25}
+            opacity={0.6}
+          />
           {/* 3つの正方形: 頂点が円周上(半径≈46)、0°/30°/60°回転で計12頂点が30°間隔になる */}
           {[0, 30, 60].map((rot) => (
             <rect
               key={rot}
-              x={50 - 32.53}
-              y={50 - 32.53}
-              width={65.06}
-              height={65.06}
+              x={50 - 33.53}
+              y={50 - 33.53}
+              width={67}
+              height={67}
               transform={`rotate(${rot} 50 50)`}
               fill="none"
-              stroke="var(--color-eva-green)"
-              strokeWidth={0.35}
+              stroke="rgba(255, 220, 254, 0.884)"
+              strokeWidth={0.1}
               opacity={0.6}
             />
           ))}
           {/* 内円 */}
-          <circle cx={50} cy={50} r={31} fill="none" stroke="var(--color-eva-purple-bright)" strokeWidth={0.25} opacity={0.4} />
+          {/* <circle
+            cx={50}
+            cy={50}
+            r={31}
+            fill="none"
+            stroke="var(--color-eva-purple-bright)"
+            strokeWidth={0.25}
+            opacity={0.4}
+          /> */}
         </svg>
 
-        <span className="relative font-cinzel-deco tracking-[0.15em] text-[10px] text-eva-green glow-text">
+        <div className="relative font-cinzel-deco tracking-[0.15em] text-[10px] text-eva-green glow-text flex flex-col items-center justify-center h-7 mt-2.5">
           ◇ NAVIGATION ◇
-        </span>
+          <span className="relative font-mono text-[8px] text-eva-ink-dim tracking-widest">
+            マウスで合わせ・クリックでジャンプ
+          </span>
+        </div>
 
         {N > 0 ? (
           <div
@@ -334,6 +361,15 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             />
             {/* 中心軸 */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-eva-green shadow-glow-green" />
+            {active && (
+              <div
+                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-7 font-cinzel tracking-widest text-[13px] transition-all ${
+                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-purple-bright"
+                }`}
+              >
+                {active.name}
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -354,7 +390,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               // transition={{ duration: 0.2 }}
-              className="relative text-center min-h-[2.5em]"
+              className="relative text-center h-7 mb-2.5"
             >
               <div
                 className={`font-cinzel tracking-widest text-[13px] ${
@@ -371,10 +407,6 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <span className="relative font-mono text-[8px] text-eva-ink-dim tracking-widest">
-          マウスで合わせ・クリックで jump
-        </span>
       </motion.div>
     </motion.div>
   );
