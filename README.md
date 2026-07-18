@@ -68,7 +68,6 @@ npm run build      # dist/ に拡張機能を出力
 |---|---|
 | `npm run dev` | Vite 開発サーバ（ブラウザで UI 確認用） |
 | `npm run build` | 型チェック + 本番ビルド → `dist/` |
-| `npm run typecheck` | TypeScript 型チェックのみ |
 
 ## ファイル構成
 
