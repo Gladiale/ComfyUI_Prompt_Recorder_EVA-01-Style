@@ -34,9 +34,9 @@ export function WordPanel() {
         <button
           onClick={openClockNav}
           title="時計ロードマップを開く"
-          className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] hover:text-eva-green glow-text whitespace-nowrap cursor-pointer transition-colors"
+          className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] hover:text-eva-green glow-text whitespace-nowrap cursor-pointer transition-colors select-none"
         >
-          WORDS
+          🕆WORDS🕆
         </button>
         {/* <div className="flex-1" /> */}
         <SearchBox query={query} onChange={setQuery} />

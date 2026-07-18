@@ -197,7 +197,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
           aria-hidden="true"
         >
           {/* 外周二重円 */}
-          {/* <circle
+          <circle
             cx={50}
             cy={50}
             r={49}
@@ -205,7 +205,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             stroke="var(--color-eva-purple-bright)"
             strokeWidth={0.4}
             opacity={0.55}
-          /> */}
+          />
           <circle
             cx={50}
             cy={50}
@@ -231,15 +231,15 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             />
           ))}
           {/* 内円 */}
-          {/* <circle
+          <circle
             cx={50}
             cy={50}
-            r={31}
+            r={33.5}
             fill="none"
             stroke="var(--color-eva-purple-bright)"
             strokeWidth={0.25}
             opacity={0.4}
-          /> */}
+          />
         </svg>
 
         <div className="relative font-cinzel-deco tracking-[0.15em] text-[10px] text-eva-green glow-text flex flex-col items-center justify-center h-7 mt-2.5">
@@ -363,7 +363,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-eva-green shadow-glow-green" />
             {active && (
               <div
-                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-7 font-cinzel tracking-widest text-[13px] transition-all ${
+                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-nowrap mt-7 font-cinzel tracking-widest text-[13px] transition-all ${
                   active.depth % 2 === 0 ? "text-eva-green" : "text-eva-purple-bright"
                 }`}
               >
