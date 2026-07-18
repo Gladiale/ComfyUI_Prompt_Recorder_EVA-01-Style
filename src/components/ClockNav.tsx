@@ -58,8 +58,9 @@ function ClockDial({ onClose }: { onClose: () => void }) {
   const groups = useMemo(() => collectAllGroups(state), [state]);
   const N = groups.length;
 
-  // 針の角度（度）。0=12時方向、時計回りに増加。
-  const [angle, setAngle] = useState(0);
+  // 針の角度（度・連続値）。0=12時方向、時計回りに増加。
+  // 0..360 で折り返さず連続させることで、境界越え時に逆回りアニメしない。
+  const [needleAngle, setNeedleAngle] = useState(0);
   // ドラッグ中か。ドラッグ中はインデックスホバーを無視。
   const [dragging, setDragging] = useState(false);
   // ハイライト中インデックス（ドラッグ or ホバー）
@@ -68,6 +69,18 @@ function ClockDial({ onClose }: { onClose: () => void }) {
   const dialRef = useRef<HTMLDivElement>(null);
 
   const step = N > 0 ? 360 / N : 360;
+
+  // 0..360 の正規化角度へ。
+  const norm = (a: number) => ((a % 360) + 360) % 360;
+
+  // target(0..360) へ最短回転で針角度（連続値）を更新。
+  const setAngleShort = (target: number) => {
+    setNeedleAngle((prev) => {
+      const cur = norm(prev);
+      const diff = ((target - cur + 540) % 360) - 180; // -180..180 の最短差
+      return prev + diff;
+    });
+  };
 
   // ポインタ位置から針角度（0=12時, 時計回り）を計算
   const angleFromPointer = (clientX: number, clientY: number): number => {
@@ -94,21 +107,22 @@ function ClockDial({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     setDragging(true);
     const a = angleFromPointer(e.clientX, e.clientY);
-    setAngle(a);
+    setAngleShort(a);
     setActiveIdx(nearestIndex(a));
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: PointerEvent) => {
     if (!dragging) return;
     const a = angleFromPointer(e.clientX, e.clientY);
-    setAngle(a);
+    setAngleShort(a);
     setActiveIdx(nearestIndex(a));
   };
   const onPointerUp = (e: PointerEvent) => {
     if (!dragging) return;
     setDragging(false);
     (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-    const idx = nearestIndex(angle);
+    const a = angleFromPointer(e.clientX, e.clientY);
+    const idx = nearestIndex(a);
     const target = groups[idx];
     if (target) jumpTo(target);
   };
@@ -117,7 +131,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
   const onIndexEnter = (i: number) => {
     if (dragging) return;
     setActiveIdx(i);
-    setAngle(i * step);
+    setAngleShort(i * step);
   };
   const onIndexClick = (g: GroupRef) => {
     jumpTo(g);
@@ -231,7 +245,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             {/* 針（指針1本）：下端をダイヤル中心に合わせ、12時方向へ伸ばす */}
             <motion.div
               className="absolute left-1/2"
-              animate={{ rotate: angle }}
+              animate={{ rotate: needleAngle }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
               style={{
                 top: "50%",
