@@ -49,9 +49,10 @@ export function useClockNav(): ClockNavValue {
 // ダイヤル
 // ============================================================
 
-const DIAL_SIZE = 280; // ダイヤル全体のサイズ (px)
-const RADIUS = 112; // インデックス配置半径
-const HAND_LEN = RADIUS - 6; // 針の長さ
+const DIAL_SIZE = 360; // ダイヤル全体のサイズ (px)
+const R_OUTER = 150; // 最外層のインデックス配置半径
+const R_INNER_MIN = 26; // 最内層の最低半径（中心軸との干渉回避）
+const RING_GAP_MAX = 22; // 層間の間隔（最大値）
 
 function ClockDial({ onClose }: { onClose: () => void }) {
   const { state, expandGroupPath } = usePrompt();
@@ -67,6 +68,25 @@ function ClockDial({ onClose }: { onClose: () => void }) {
   const dialRef = useRef<HTMLDivElement>(null);
 
   const step = N > 0 ? 360 / N : 360;
+
+  // ---- 階層（同心円リング）構造 ----
+  // 層 = floor(depth/2)。層0が最外層。
+  //   層0: depth0(親=A) と depth1(子=B)
+  //   層1: depth2(親=C) と depth3(子)
+  // 各インデックスに一意の角度を割り当て、層ごとに半径を変えて配置する。
+  // 針は1本で、指しているインデックスの層半径に長さを追従させる。
+  const layerOf = (depth: number) => Math.floor(depth / 2);
+  const maxLayer = useMemo(
+    () => (N > 0 ? groups.reduce((m, g) => Math.max(m, layerOf(g.depth)), 0) : 0),
+    [groups, N],
+  );
+  const ringGap =
+    maxLayer > 0
+      ? Math.min(RING_GAP_MAX, (R_OUTER - R_INNER_MIN) / maxLayer)
+      : RING_GAP_MAX;
+  const radiusOf = (depth: number) => R_OUTER - layerOf(depth) * ringGap;
+  // 針の長さ = 現在指しているインデックスの層半径
+  const handLen = (N > 0 ? radiusOf(groups[activeIdx].depth) : R_OUTER) - 6;
 
   // 0..360 の正規化角度へ。
   const norm = (a: number) => ((a % 360) + 360) % 360;
@@ -164,70 +184,77 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             className="relative touch-none cursor-crosshair"
             style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
           >
-            {/* 外周リング */}
-            <div className="absolute inset-0 rounded-full border border-eva-line" />
-            <div
-              className="absolute rounded-full border border-eva-purple/40"
-              style={{ inset: (DIAL_SIZE - RADIUS * 2) / 2 - 8 }}
-            />
+            {/* 階層リング（同心円）：各層の境界を視覚化。層間の一本線。 */}
+            {Array.from({ length: maxLayer + 1 }).map((_, k) => {
+              const r = R_OUTER - k * ringGap;
+              return (
+                <div
+                  key={k}
+                  className="absolute left-1/2 top-1/2 rounded-full border border-eva-purple/25"
+                  style={{
+                    width: r * 2,
+                    height: r * 2,
+                    marginLeft: -r,
+                    marginTop: -r,
+                  }}
+                />
+              );
+            })}
             {/* 12時基準マーカー */}
-            <div className="absolute left-1/2 top-1 -translate-x-1/2 w-px h-3 bg-eva-green/60" />
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-3 bg-eva-green/60" />
 
-            {/* インデックス */}
+            {/* インデックス：各層の半径に配置。親(depth偶数)=緑大、子(depth奇数)=紫小 */}
             {groups.map((g, i) => {
               const a = i * step;
-              const isRoot = g.depth === 0;
+              const isParent = g.depth % 2 === 0;
               const isActive = i === activeIdx;
+              const r = radiusOf(g.depth);
+              const size = isParent ? 20 : 18;
               return (
                 <button
                   key={g.id}
                   title={g.path.join(" / ")}
                   className="absolute left-1/2 top-1/2 flex items-center justify-center rounded-full transition-transform cursor-crosshair"
                   style={{
-                    transform: `rotate(${a}deg) translateY(-${RADIUS}px) rotate(${-a}deg)`,
+                    transform: `rotate(${a}deg) translateY(-${r}px) rotate(${-a}deg)`,
                     transformOrigin: "center",
-                    width: isRoot ? 22 : 14,
-                    height: isRoot ? 22 : 14,
-                    marginLeft: isRoot ? -11 : -7,
-                    marginTop: isRoot ? -11 : -7,
+                    width: size,
+                    height: size,
+                    marginLeft: -size / 2,
+                    marginTop: -size / 2,
                   }}
                 >
                   <span
                     className={[
-                      "block rounded-full border transition-all",
-                      isRoot
+                      "block rounded-full border transition-all aspect-square",
+                      isParent
                         ? "bg-eva-green/30 border-eva-green text-eva-green"
                         : "bg-eva-purple/30 border-eva-purple-bright text-eva-ink-dim",
                       isActive
-                        ? isRoot
+                        ? isParent
                           ? "shadow-glow-green scale-125"
                           : "shadow-glow-purple scale-125"
                         : "",
                     ].join(" ")}
-                    style={{
-                      width: isRoot ? 22 : 14,
-                      height: isRoot ? 22 : 14,
-                    }}
+                    style={{ width: size, height: size }}
                   >
-                    <span className="flex items-center justify-center w-full h-full text-[10px] font-mono leading-none">
-                      {Array.from(g.name)[0].toUpperCase()}
+                    <span className="flex items-center justify-center w-full h-full text-[9px] font-mono leading-none">
+                      {Array.from(g.name)[0]?.toUpperCase() ?? ""}
                     </span>
                   </span>
                 </button>
               );
             })}
 
-            {/* 針（指針1本）：下端をダイヤル中心に合わせ、12時方向へ伸ばす */}
+            {/* 針（指針1本）：下端をダイヤル中心に合わせ、指す層の半径に長さを追従 */}
             <motion.div
               className="absolute left-1/2"
-              animate={{ rotate: needleAngle }}
+              animate={{ rotate: needleAngle, height: handLen, marginTop: -handLen }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
               style={{
                 top: "50%",
                 width: 2,
-                height: HAND_LEN,
                 marginLeft: -1,
-                marginTop: -HAND_LEN,
                 transformOrigin: "bottom center",
                 background:
                   "linear-gradient(to top, rgba(57,255,20,0.15), var(--color-eva-green))",
@@ -260,7 +287,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             >
               <div
                 className={`font-cinzel tracking-widest text-[13px] ${
-                  active.depth === 0 ? "text-eva-green" : "text-eva-purple-bright"
+                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-purple-bright"
                 }`}
               >
                 {active.name}
