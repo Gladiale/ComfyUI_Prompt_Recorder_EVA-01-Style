@@ -234,7 +234,7 @@ export function SelectedPanel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-2 top-full mt-1 z-20 w-[95%] max-h-64 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
+              className="absolute right-2 top-full z-20 w-[95%] max-h-63 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {presets.length === 0 ? (
@@ -351,10 +351,10 @@ export function SelectedPanel() {
                 exit={{ opacity: 0, x: 12, height: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 24 }}
                 onClick={() => deselectWord(ref.groupId, ref.word.id)}
-                className="sel-row group w-full flex items-center gap-2 px-2 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 mb-1 text-left cursor-pointer"
+                className="sel-row group w-full flex items-center gap-2 px-1.5 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 mb-1 text-left cursor-pointer"
                 title="クリックで選択解除"
               >
-                <span className="font-mono text-[9px] text-eva-purple-bright w-5 text-right shrink-0">
+                <span className="font-mono text-[9px] text-eva-purple-bright w-4 text-left shrink-0">
                   {i + 1}
                 </span>
                 <span
