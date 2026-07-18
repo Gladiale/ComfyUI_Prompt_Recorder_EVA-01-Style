@@ -34,7 +34,7 @@ export function WordPanel() {
         <button
           onClick={openClockNav}
           title="時計ロードマップを開く"
-          className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] hover:text-eva-green glow-text whitespace-nowrap cursor-pointer transition-colors select-none"
+          className="font-cinzel-deco tracking-[0.2em] text-[13px] text-[#d08be3] hover:text-eva-green glow-text whitespace-nowrap cursor-pointer transition-all select-none active:scale-95"
         >
           🕆WORDS🕆
         </button>

@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
 import { collectAllGroups, type GroupRef } from "@/lib/tree";
+import { fadeInOutSpring } from "@/lib/motions";
 
 // ============================================================
 // Provider / Hook
@@ -172,10 +173,14 @@ function ClockDial({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.92, opacity: 0, y: 8 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 8 }}
-        transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+        // initial={{ scale: 0.92, opacity: 0, y: 8 }}
+        // animate={{ scale: 1, opacity: 1, y: 0 }}
+        // exit={{ scale: 0.95, opacity: 0, y: 8 }}
+        // transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+        variants={fadeInOutSpring(0.4, 40, 1)}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         onClick={(e) => e.stopPropagation()}
         className="relative flex flex-col items-center justify-around"
         style={{
