@@ -247,14 +247,15 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         )}
 
         {/* グループ名ポップアップ */}
-        <AnimatePresence mode="wait">
+        {/* mode="wait"の場合 短時間に active.id が大量に変化すると、アニメーションの「渋滞」が発生し、レンダリングが追いつかなくなったり、表示が消えたり（死んでしまう現象）します */}
+        <AnimatePresence mode="popLayout">
           {active && (
             <motion.div
               key={active.id}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.12 }}
+              // transition={{ duration: 0.2 }}
               className="text-center min-h-[2.5em]"
             >
               <div
