@@ -16,14 +16,11 @@ export function SynthesisPanel() {
     if (!synthesis) return;
     try {
       await navigator.clipboard.writeText(synthesis);
-    } catch {
-      // フォールバック
-      const ta = document.createElement("textarea");
-      ta.value = synthesis;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
+    } catch (e) {
+      // Chrome 拡張ポップアップでは実質成功するはずだが、念のためログ出力
+      console.error("クリップボードへのコピーに失敗しました:", e);
+      alert("クリップボードへのコピーに失敗しました！");
+      return;
     }
     // コピーした瞬間を基準（スナップショット）として記録
     captureSnapshot();
