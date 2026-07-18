@@ -32,11 +32,13 @@
 ## レイアウト
 
 黄金比（1.618:1）。左 61.8% = ワード画面、右上 = 総括欄、右下 = 選択ワード一覧。
-ポップアップサイズは 760×560px（Chrome popup 上限 800×600 内）。
+ポップアップサイズは 800×600px（Chrome popup 上限 800×600 内）。
 
 ## 技術スタック
 
-React 18 / Vite / TypeScript / Tailwind CSS / Motion / React Icons
+React 19 / Vite / TypeScript / Tailwind CSS / Motion / React Icons / Manifest V3 / CRXJS Vite Plugin  
+
+ReactCompilerは未使用
 
 ## 開発モード
 
