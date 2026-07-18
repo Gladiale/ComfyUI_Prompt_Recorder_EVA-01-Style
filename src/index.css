@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* ローカルフォント（Google Fonts の latin サブセットを同梱） */
+@import "./fonts.generated.css";
 
 @theme {
   /* --- 初号機パレット (カラー設定) --- */
