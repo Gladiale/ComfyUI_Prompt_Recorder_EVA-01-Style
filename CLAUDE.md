@@ -4,77 +4,122 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-エヴァンゲリオン初号機（EVA-01）をテーマにした ComfyUI プロンプト記録 Chrome 拡張機能（Manifest V3）。プロンプトワードを階層化されたグループへ記録・選定し、重複を排除した最終プロンプトを生成するポップアップ UI。仕様は [specification.html](specification.html) に基づく。
+ComfyUI用プロンプトワード記録Chrome拡張機能（Manifest V3）。エヴァンゲリオン初号機テーマのUI。階層的なグループ構造でワードを管理し、重複排除した最終プロンプトを生成する。
 
-## コマンド
+## 開発コマンド
 
 ```bash
-npm install
-npm run dev          # Vite 開発サーバ (http://localhost:5173/src/popup.html) — UI 確認用
-npm run build        # tsc -b && vite build → dist/ に拡張機能を出力
-npm run typecheck    # tsc -b --noEmit（型チェックのみ）
+# 開発サーバ起動（ブラウザで UI 確認）
+npm run dev
+# → http://localhost:5173/src/popup.html
+
+# 本番ビルド（型チェック + ビルド）
+npm run build
+# → dist/ に拡張機能を出力
+
+# リント
+npm run lint
 ```
 
-Chrome への読み込み：`npm run build` 後、`chrome://extensions` のデベロッパーモードから `dist/` を「パッケージ化されていない拡張機能」として読み込む。
+## Chrome拡張機能の読み込み
 
-**テストフレームワークは存在しない。** 動作確認はビルドして Chrome に読み込むか `npm run dev` で行う。
+1. `npm run build` 実行
+2. Chrome で `chrome://extensions` を開く
+3. 「デベロッパー モード」を有効化
+4. 「パッケージ化されていない拡張機能を読み込む」→ `dist/` フォルダを選択
 
-## ビルドの重要な挙動
+## 技術スタック
 
-[vite.config.ts](vite.config.ts) の `popupToRoot` プラグインが `closeBundle` で `dist/src/popup.html` を `dist/popup.html` へ移動し、HTML 内の相対参照 `../assets/` を `./assets/` に書き換える。これは Manifest V3 の `default_popup` がルート相対を前提とするため。ビルド出力構造を触る場合はこの補正ロジックを維持すること。
+- **フレームワーク**: React 19 + Vite + TypeScript
+- **スタイル**: Tailwind CSS 4 (エヴァンゲリオン初号機カラーテーマ)
+- **アニメーション**: Motion (framer-motion の軽量版)
+- **アイコン**: React Icons
+- **状態管理**: React Context API
+- **永続化**: chrome.storage.local
+- **拡張機能ビルド**: @crxjs/vite-plugin
+
+**注意**: React Compiler (babel-plugin-react-compiler) は未使用。
 
 ## アーキテクチャ
 
-### 状態管理の中核：`PromptContext` + 純粋関数ツリー操作
+### 状態管理の中核
 
-すべてのアプリ状態は [src/context/PromptContext.tsx](src/context/PromptContext.tsx) の `PromptProvider` が単一の `useState<RootState>` として保持する。コンポーネントは `usePrompt()` から `state`（参照）と `actions`（ミューテータ）を取得する。
+**[src/context/PromptContext.tsx](src/context/PromptContext.tsx)** がグローバル状態を管理：
+- `RootState`: ルートグループ配列 + プリセット
+- 全ての更新操作は immutable（structuredClone ベース）
+- debounce（220ms）で chrome.storage.local へ自動保存
+- 選択ワードの収集・重複排除・差分計算は useMemo で派生
 
-**重要な不変量**：状態変更は必ず [src/lib/tree.ts](src/lib/tree.ts) の純粋関数（`addGroup`, `toggleWord`, `moveGroup`, `savePreset` 等）経由で行う。これらは内部で `structuredClone` による immutable 更新を行い、新しい `RootState` を返す。`PromptContext` の `actions` は単に `setState((s) => treeXxx(s, ...))` を呼ぶだけの薄いラッパー。ツリー操作のロジックをコンポーネントに書かず、`tree.ts` の関数を追加・編集すること。
+### データモデル ([src/types.ts](src/types.ts))
 
-データモデル（[src/types.ts](src/types.ts)）：`RootState` が `rootGroups: Group[]` と `presets?: PromptPreset[]` を持つ。`Group` は `groups: Group[]`（任意の深さで再帰）と `words: Word[]` を持つ。`Word` は `selected`, `strength`(0..10), `image?`(Base64 data URL), `note` を持つ。
+```typescript
+RootState {
+  version: number
+  rootGroups: Group[]
+  presets?: PromptPreset[]
+}
 
-### 永続化：chrome.storage.local + フォールバック
+Group {
+  id, name, collapsed
+  groups: Group[]    // 無制限ネスト可能
+  words: Word[]
+}
 
-[src/lib/storage.ts](src/lib/storage.ts) が `chrome.storage.local` のラッパ。`chrome.storage` が未定義な通常ブラウザ（`npm run dev` 等）では `localStorage` へ、さらに無ければメモリ `Map` へフォールバックする。`PromptContext` は `state` 変更を 220ms debounce で保存。ストレージキーは `comfy_prompt_recorder_state_v1`（スナップショットは `_snapshot_v1`）。
+Word {
+  id, text, note, selected
+  strength?: number  // 0..10（0=デフォルト / 1=() / 2..10=(text:1.x)）
+  image?: string     // Base64 data URL（最大420×420）
+}
+```
 
-### 派生値の計算（重複排除ルール）
+### ツリー操作 ([src/lib/tree.ts](src/lib/tree.ts))
 
-`PromptContext` が `useMemo` で派生値を計算する。以下の3つは**同一の重複排除ルール**を共有する：選択ワードを深さ優先・出現順で収集し、`formatWordWithStrength` で整形したテキストを `normalizeText`（[src/lib/normalize.ts](src/lib/normalize.ts)：trim + 小文字化 + 連続空白圧縮）で正規化したキーで最初の出現のみ残す。
+純粋関数による immutable 更新：
+- `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
+- `moveGroup()`: ドラッグ&ドロップ移動（循環検出付き、アンカーID基準で挿入位置決定）
+- `reorderWords()`: 同一グループ内でのワード並替（Motion Reorder 対応）
+- プリセット操作: savePreset / applyPreset / deletePreset / renamePreset / reorderPresets
 
-- `synthesis`（総括欄テキスト）— [PromptContext.tsx](src/context/PromptContext.tsx) 内
-- `buildSnapshotEntries` / `makeSnapshot`（コピーボタン押下時の基準）— [src/lib/diff.ts](src/lib/diff.ts)
-- `computeDiff`（基準スナップショットと現在選択の差分：added/removed/strength/text）
+### 重複排除 ([src/lib/normalize.ts](src/lib/normalize.ts))
 
-重複排除ルールを変更する場合はこの3箇所を一致させること。`diff.ts` のコメントにも明記されている。
+`normalizeText()`: trim + 小文字化 + 連続空白圧縮で重複判定キーを生成。総括欄（SynthesisPanel）で使用。
 
-### 強度（Strength）のフォーマット
+### 強度調整 ([src/lib/strength.ts](src/lib/strength.ts))
 
-[src/lib/strength.ts](src/lib/strength.ts)：`strength` 0→そのまま、1→`(text)`、2..10→`(text:1.x)`（重み = 1.0 + (n-1)*0.1）。`clampStrength` で 0..10 に丸める。総括欄への出力は選択時のみ反映。
+- 0 = そのまま
+- 1 = `(text)`
+- 2..10 = `(text:1.1)` .. `(text:1.9)`
 
-### ドラッグ&ドロップ（2系統の自前実装）
+### 差分検出 ([src/lib/diff.ts](src/lib/diff.ts))
 
-**Motion（`motion/react`）の `Reorder` は flex-wrap の2D配置だと行内並替が壊れるため、ワードの並替は HTML5 DnD を自前で実装している**（[GroupNode.tsx](src/components/GroupNode.tsx) の `handleWordDragOver`：ポインタが要素中央より左か右かで前/後を挿入）。これは意図的な設計で、Motion に戻さないこと。
+コピーボタン押下時にスナップショットを保存し、以降の変更（追加・削除・強度変更）を検出。
 
-グループ自体の移動も HTML5 DnD（同ファイル `onGroupDrop`）で、展開時は上22%/中央56%/下22%で before/into/after を判定し、折り畳み時は中央で二分する。`moveGroup`（[tree.ts](src/lib/tree.ts)）は循環判定（自分や子孫への移動禁止）とアンカー基準の安全な挿入位置計算を行う。ドラッグ中データは `text/word` / `text/group` の dataTransfer types でワードDnDとグループDnDを区別。
+### コンポーネント構成
 
-### クリック判別
+- **[src/App.tsx](src/App.tsx)**: 黄金比レイアウト（左61.8% / 右38.2%）
+- **[src/components/WordPanel.tsx](src/components/WordPanel.tsx)**: 左側ワード画面
+  - GroupNode.tsx: 再帰的グループ表示（折り畳み・ドラッグ&ドロップ）
+  - WordItem.tsx: ワード行（シングルクリック=選択、ダブルクリック=編集、右クリック=強度調整）
+  - SearchBox.tsx: ワード本文と注釈を横断検索
+- **[src/components/SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)**: 右上総括欄（重複排除済み最終プロンプト、カンマ/改行切替、コピー）
+- **[src/components/SelectedPanel.tsx](src/components/SelectedPanel.tsx)**: 右下選択ワード一覧（クリックで選択解除）
+- **[src/components/IOButtons.tsx](src/components/IOButtons.tsx)**: Import（赤紫↓）/ Export（緑↑）アイコン
 
-シングルクリックとダブルクリックを 230ms のタイマー遅延で判別（`DBL_CLICK_DELAY`、[WordItem.tsx](src/components/WordItem.tsx) と [GroupNode.tsx](src/components/GroupNode.tsx)）。シングル=選択切替/折り畳み、ダブル=編集モーダル。
+### 操作仕様
 
-### レイアウト（黄金比）
+- **グループ**: シングルクリック=折り畳み、ダブルクリック=編集、ドラッグ&ドロップ=順調整＆入れ子移動
+- **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、選択時右クリック=強度調整
+- **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
+- **検索**: ワード本文と注釈を検索、非ヒットを淡色化
+- **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
 
-[App.tsx](src/App.tsx)：固定 760×560px（Chrome popup 上限 800×600 内）。左 61.8% = `WordPanel`（ワードツリー）、右上 = `SynthesisPanel`（総括欄）、右下 = `SelectedPanel`（選択一覧）。`flexBasis` で黄金比を指定。
+### 画像処理 ([src/lib/image.ts](src/lib/image.ts))
 
-## スタイリング（EVA-01 テーマ）
+ユーザー提供画像を最大420×420pxに縮小（比率維持）、JPEG圧縮（quality=0.7）、Base64 data URLとして保存。
 
-Tailwind CSS + カスタムテーマ（[tailwind.config.js](tailwind.config.js)）。`eva-*` カラーパレット（purple/green/magenta/ink）、カスタムフォント（Cinzel / Cinzel Decorative / EB Garamond / JetBrains Mono）、`shadow-glow-green/purple`、`flicker` アニメーションを定義。グローバルスタイルとテーマ変数は [src/index.css](src/index.css)。コンポーネント内ではこれらの `eva-*` クラスを使う。
+### 永続化 ([src/lib/storage.ts](src/lib/storage.ts))
 
-## データのインポート/エクスポート
-
-[IOButtons.tsx](src/components/IOButtons.tsx) が JSON の Export/Import を扱う。Import 時は `normalizeImportedState`（[tree.ts](src/lib/tree.ts)）が未知データを検証付きで `RootState` へ正規化する（各フィールドの型チェック・`strength` の 0..10 クランプ・不正エントリの除外）。`replaceState` action 経由で適用。
-
-## 備考
-
-- 画像は [src/lib/image.ts](src/lib/image.ts) で縦横最大420px・JPEG強圧縮の Base64 data URL に変換して `chrome.storage` に収める（サイズ優先）。透過JPEGの黒潰れ防止で白背景を敷く。
-- ID 生成（[tree.ts](src/lib/tree.ts) `genId`）は `Date.now` + カウンタ + 乱数の組合せ。
-- 全コードコメントは日本語で書かれている。新規コードも日本語コメントを踏襲すること。
+- `chrome.storage.local` に JSON 保存
+- `PROMPT_STATE_KEY`: メイン状態
+- `PROMPT_SNAPSHOT_KEY`: 差分検出用スナップショット
+- debounce 関数による書き込み頻度制御
