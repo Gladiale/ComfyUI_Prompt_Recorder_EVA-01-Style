@@ -65,7 +65,7 @@ export function WordItem({
 
     // 実寸法（未描画フォールバック）
     const popW = pop ? pop.offsetWidth : 200;
-    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 17;
+    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 27;
 
     // 1. 垂直位置（top）の基本計算：基本は印の上。上に収まらなければ下。
     let top = r.top - GAP - popH < PADDING ? r.bottom + GAP : r.top - GAP - popH;
@@ -200,7 +200,7 @@ export function WordItem({
           word.selected ? focusSelectedWord(word.id) : undefined;
         }}
         className={[
-          "group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
+          "font-garamond group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
           word.selected
             ? "word-selected bg-eva-bg-panel-2"
             : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
@@ -238,7 +238,7 @@ export function WordItem({
         {hasInfo && (
           <span
             ref={markRef}
-            className="relative w-1.5 h-1.5 rounded-full shrink-0 hover:text-[#ff92de] flex items-center justify-center cursor-help"
+            className="relative w-1.5 h-1.5 text-[13px] rounded-full shrink-0 hover:text-[#ff92de] flex items-center justify-center cursor-help"
             style={{ boxShadow: "0 0 6px var(--eva-green)" }}
             onMouseEnter={enterInfo}
             onMouseLeave={leaveInfo}

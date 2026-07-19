@@ -358,7 +358,7 @@ export function SelectedPanel() {
                   {i + 1}
                 </span>
                 <span
-                  className="flex-1 min-w-0 truncate text-[12px] text-eva-green-soft"
+                  className="flex-1 min-w-0 truncate text-[12px] text-eva-green-soft font-garamond"
                   title={preview}
                 >
                   {ref.word.text}
