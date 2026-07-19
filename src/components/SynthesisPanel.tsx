@@ -81,7 +81,7 @@ export function SynthesisPanel() {
           onClick={() => setDiffOpen((o) => !o)}
           className={`p-1 transition-all ${
             glow
-              ? "text-eva-green shadow-glow-green animate-flicker"
+              ? "text-eva-green"
               : hasBaseline
                 ? "text-eva-ink-dim hover:text-eva-green"
                 : "text-eva-ink-dim/50 hover:text-eva-ink-dim"
@@ -94,7 +94,14 @@ export function SynthesisPanel() {
                 : "前回コピーから変化なし"
           }
         >
-          <FiActivity size={13} />
+          <FiActivity
+            size={13}
+            className={
+              glow
+                ? "animate-flicker drop-shadow-[0_0_5px_rgba(57,255,20,0.7)]"
+                : ""
+            }
+          />
         </button>
         <button
           onClick={onCopy}
