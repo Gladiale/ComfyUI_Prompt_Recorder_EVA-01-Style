@@ -65,7 +65,7 @@ export function WordItem({
 
     // 実寸法（未描画フォールバック）
     const popW = pop ? pop.offsetWidth : 200;
-    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 27;
+    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 30;
 
     // 1. 垂直位置（top）の基本計算：基本は印の上。上に収まらなければ下。
     let top = r.top - GAP - popH < PADDING ? r.bottom + GAP : r.top - GAP - popH;
