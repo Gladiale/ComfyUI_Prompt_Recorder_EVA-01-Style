@@ -41,6 +41,7 @@ export function GroupNode({
   // 深いネスト時、ドロップ先が子グループになり親の onDrop が発火しないケースでも
   // 緑枠が残らないようにする安全網。
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ドラッグ終了時に残ったドロップ表示を消す安全網
     if (!isDraggingGroup) setDropInfo(null);
   }, [isDraggingGroup]);
 
