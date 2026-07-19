@@ -7,10 +7,10 @@
  * trim + 小文字化 + 連続空白の圧縮。
  */
 export function normalizeText(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, ' ')
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 /** 2つのワードテキストが同一（正規化後等価）かを判定する。 */
 export function isSameWord(a: string, b: string): boolean {
-  return normalizeText(a) === normalizeText(b)
+  return normalizeText(a) === normalizeText(b);
 }

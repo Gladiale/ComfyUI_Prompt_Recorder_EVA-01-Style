@@ -97,9 +97,7 @@ export function SynthesisPanel() {
           <FiActivity
             size={13}
             className={
-              glow
-                ? "animate-flicker drop-shadow-[0_0_5px_rgba(57,255,20,0.7)]"
-                : ""
+              glow ? "animate-flicker drop-shadow-[0_0_5px_rgba(57,255,20,0.7)]" : ""
             }
           />
         </button>

@@ -11,14 +11,14 @@
 //   10          -> (school_uniform:1.9)
 // n>=2 の重み = 1.0 + (n - 1) * 0.1
 
-export const MAX_STRENGTH = 10
-export const DEFAULT_STRENGTH = 0
+export const MAX_STRENGTH = 10;
+export const DEFAULT_STRENGTH = 0;
 
 /** 強度を 0..MAX_STRENGTH の整数に収める。非数値は 0 扱い。 */
 export function clampStrength(n: unknown): number {
-  const v = typeof n === 'number' ? n : Number(n)
-  if (!Number.isFinite(v)) return DEFAULT_STRENGTH
-  return Math.max(0, Math.min(MAX_STRENGTH, Math.round(v)))
+  const v = typeof n === "number" ? n : Number(n);
+  if (!Number.isFinite(v)) return DEFAULT_STRENGTH;
+  return Math.max(0, Math.min(MAX_STRENGTH, Math.round(v)));
 }
 
 /**
@@ -26,10 +26,10 @@ export function clampStrength(n: unknown): number {
  * text は前後空白を除去してから整形する。
  */
 export function formatWordWithStrength(text: string, strength: unknown): string {
-  const s = clampStrength(strength)
-  const t = text.trim()
-  if (s <= 0) return t
-  if (s === 1) return `(${t})`
-  const weight = (1.0 + (s - 1) * 0.1).toFixed(1)
-  return `(${t}:${weight})`
+  const s = clampStrength(strength);
+  const t = text.trim();
+  if (s <= 0) return t;
+  if (s === 1) return `(${t})`;
+  const weight = (1.0 + (s - 1) * 0.1).toFixed(1);
+  return `(${t}:${weight})`;
 }

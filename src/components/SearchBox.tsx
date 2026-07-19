@@ -1,16 +1,19 @@
 // 検索欄 / SearchBox — ワード本文と注釈を横断検索
-import { FiSearch, FiX } from 'react-icons/fi'
-import { motion, AnimatePresence } from 'motion/react'
+import { FiSearch, FiX } from "react-icons/fi";
+import { motion, AnimatePresence } from "motion/react";
 
 interface Props {
-  query: string
-  onChange: (q: string) => void
+  query: string;
+  onChange: (q: string) => void;
 }
 
 export function SearchBox({ query, onChange }: Props) {
   return (
     <div className="relative flex items-center">
-      <FiSearch className="absolute left-3 text-eva-ink-dim pointer-events-none" size={14} />
+      <FiSearch
+        className="absolute left-3 text-eva-ink-dim pointer-events-none"
+        size={14}
+      />
       <input
         value={query}
         onChange={(e) => onChange(e.target.value)}
@@ -23,7 +26,7 @@ export function SearchBox({ query, onChange }: Props) {
             initial={{ opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.6 }}
-            onClick={() => onChange('')}
+            onClick={() => onChange("")}
             className="absolute right-2 text-eva-ink-dim hover:text-eva-green transition-colors"
             title="クリア"
           >
@@ -32,5 +35,5 @@ export function SearchBox({ query, onChange }: Props) {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
