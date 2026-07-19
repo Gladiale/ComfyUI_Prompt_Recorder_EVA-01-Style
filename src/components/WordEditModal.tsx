@@ -101,6 +101,7 @@ export function WordEditorProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWordEditor(): WordEditorValue {
   const ctx = useContext(WordEditorContext);
   if (!ctx) throw new Error("useWordEditor must be used within WordEditorProvider");

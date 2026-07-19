@@ -40,6 +40,7 @@ export function ClockNavProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useClockNav(): ClockNavValue {
   const ctx = useContext(ClockNavContext);
   if (!ctx) throw new Error("useClockNav must be used within ClockNavProvider");
