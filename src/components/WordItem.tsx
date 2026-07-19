@@ -197,7 +197,7 @@ export function WordItem({
         onContextMenu={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          word.selected ? focusSelectedWord(word.id) : undefined;
+          if (word.selected) focusSelectedWord(word.id);
         }}
         className={[
           "font-garamond group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
