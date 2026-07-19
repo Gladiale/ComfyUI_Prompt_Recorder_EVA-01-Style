@@ -331,7 +331,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
                     <span
                       className={[
                         "absolute inset-0 block rounded-full border transition-all aspect-square",
-                        "bg-eva-purple/30 border-eva-purple-bright",
+                        "bg-eva-purple/30 border-eva-lilac",
                         isActive ? "shadow-glow-purple scale-125" : "",
                       ].join(" ")}
                       style={{ width: size, height: size }}
@@ -340,7 +340,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
                   <span
                     className={[
                       "relative flex items-center justify-center w-full h-full text-[9px] font-mono leading-none pointer-events-none",
-                      isParent ? "text-eva-green" : "text-eva-ink-dim",
+                      isParent ? "text-eva-green" : "text-eva-lavender",
                     ].join(" ")}
                   >
                     {initial}
@@ -369,7 +369,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             {active && (
               <div
                 className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-nowrap mt-7 font-cinzel tracking-widest text-[13px] transition-all ${
-                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-purple-bright"
+                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-lavender"
                 }`}
               >
                 {active.name}
@@ -399,7 +399,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
             >
               <div
                 className={`font-cinzel tracking-widest text-[13px] ${
-                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-purple-bright"
+                  active.depth % 2 === 0 ? "text-eva-green" : "text-eva-lavender"
                 }`}
               >
                 {active.name}
