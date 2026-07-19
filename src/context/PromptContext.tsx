@@ -148,7 +148,9 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   // 永続化：state 変更を debounce して保存（ready後のみ）
   const persist = useMemo(() => debounce((s: RootState) => void saveState(s), 220), []);
   const readyRef = useRef(ready);
-  readyRef.current = ready;
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
   useEffect(() => {
     if (!readyRef.current) return;
     persist(state);
@@ -247,6 +249,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   return <PromptContext value={value}>{children}</PromptContext>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePrompt(): PromptContextValue {
   const ctx = useContext(PromptContext);
   if (!ctx) throw new Error("usePrompt must be used within PromptProvider");
