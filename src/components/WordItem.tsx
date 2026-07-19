@@ -239,7 +239,7 @@ export function WordItem({
           <span
             ref={markRef}
             className="relative w-1.5 h-1.5 text-[13px] rounded-full shrink-0 hover:text-[#ff92de] flex items-center justify-center cursor-help"
-            style={{ boxShadow: "0 0 6px var(--eva-green)" }}
+            style={{ boxShadow: "0 0 6px var(--color-eva-green)" }}
             onMouseEnter={enterInfo}
             onMouseLeave={leaveInfo}
             onClick={(e) => {

@@ -202,7 +202,7 @@ export function GroupNode({
     <motion.div
       layout
       data-group-id={group.id}
-      className="select-none bg-[#371029] scroll-mt-2"
+      className="select-none bg-eva-claret scroll-mt-2"
     >
       <div
         onDragOver={onGroupDragOver}

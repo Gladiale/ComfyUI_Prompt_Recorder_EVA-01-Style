@@ -214,7 +214,7 @@ export function SelectedPanel() {
             <button
               onClick={() => setPresetOpen((v) => !v)}
               className={`flex items-center gap-0.5 p-0.5 transition-colors ${
-                presetOpen ? "text-eva-green" : "text-[#cb73dc] hover:text-eva-green"
+                presetOpen ? "text-eva-green" : "text-eva-lilac hover:text-eva-green"
               }`}
               title="保存済みプリセット"
             >
@@ -234,7 +234,7 @@ export function SelectedPanel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-2 top-full z-20 w-[95%] max-h-63 overflow-y-auto rounded-sm border border-[#cb73dc] bg-[#fccbfc] shadow-lg"
+              className="absolute right-2 top-full z-20 w-[95%] max-h-63 overflow-y-auto rounded-sm border border-eva-lilac bg-eva-lavender shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {presets.length === 0 ? (
@@ -245,7 +245,7 @@ export function SelectedPanel() {
                 presets.map((p, idx) => (
                   <div
                     key={p.id}
-                    className="group flex items-center gap-1 px-2 py-1.5 border-b border-eva-line-soft/50 last:border-0 hover:bg-[#7c3678] text-left group"
+                    className="group flex items-center gap-1 px-2 py-1.5 border-b border-eva-line-soft/50 last:border-0 hover:bg-eva-plum text-left group"
                   >
                     {/* 順序調整 ↑↓ */}
                     {renamingId === p.id ? null : (

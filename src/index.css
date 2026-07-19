@@ -2,6 +2,10 @@
 /* ローカルフォント（Google Fonts の latin サブセットを同梱） */
 @import "./fonts.generated.css";
 
+/* ============================================================
+  EVA-01 テーマ / Theme
+============================================================ */
+
 @theme {
   /* --- 初号機パレット (カラー設定) --- */
   --color-eva-purple-deep: #2a0a4a;
@@ -18,6 +22,10 @@
   --color-eva-ink-dim: #9a86c8;
   --color-eva-line: #3a1f5e;
   --color-eva-line-soft: #241244;
+  --color-eva-claret: #371029; /* 深みのある赤ワイン色 */
+  --color-eva-lavender: #fccbfc; /* 淡い紫の代表的な表現です。少し青みや白みがかった上品な色合いを指します。*/
+  --color-eva-lilac: #cb73dc; /* ラベンダーと似ていますが、よりピンクや赤みがかった淡い紫を指す際によく使われます。*/
+  --color-eva-plum: #7c3678; /* プラム（すもも）のような、少し赤みがかった濃い紫色。*/
 
   /* --- フォントファミリー設定 --- */
   --font-cinzel: "Cinzel", serif;
@@ -44,35 +52,14 @@
   }
 }
 
-/* ============================================================
-     EVA-01 テーマ / Theme
-     ============================================================ */
-:root {
-  --eva-purple-deep: #2a0a4a;
-  --eva-purple: #5b1f8e;
-  --eva-purple-bright: #8a3fc8;
-  --eva-green: #39ff14;
-  --eva-green-soft: #7dff5c;
-  --eva-magenta: #ff2e88;
-  --bg-void: #070310;
-  --bg-panel: #0f0820;
-  --bg-panel-2: #160a2e;
-  --ink: #e9dcff;
-  --ink-dim: #9a86c8;
-  --line: #3a1f5e;
-  --line-soft: #241244;
-}
-
 @layer base {
   html,
   body {
-    margin: 0;
-    padding: 0;
     width: fit-content;
     height: fit-content;
     overflow: hidden;
-    background: var(--bg-void);
-    color: var(--ink);
+    background: var(--color-eva-bg-void);
+    color: var(--color-eva-ink);
     font-family: "EB Garamond", "Times New Roman", serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -87,7 +74,7 @@
     background:
       radial-gradient(720px 420px at 82% -8%, rgba(139, 63, 200, 0.22), transparent 60%),
       radial-gradient(560px 360px at 0% 100%, rgba(57, 255, 20, 0.06), transparent 55%),
-      var(--bg-void);
+      var(--color-eva-bg-void);
     position: relative;
   }
   body::before {
@@ -134,7 +121,7 @@
   .word-selected {
     /* border: none; */
     border-color: #e6ff2878;
-    color: var(--eva-green-soft);
+    color: var(--color-eva-green-soft);
     box-shadow:
       inset 0 0 10px rgba(57, 255, 20, 0.28),
       0 0 10px rgba(57, 255, 20, 0.22);
@@ -146,39 +133,39 @@
       background-image:
         linear-gradient(
           to right,
-          var(--eva-green),
-          var(--eva-green) 20%,
+          var(--color-eva-green),
+          var(--color-eva-green) 20%,
           transparent 40%,
           transparent 60%,
-          var(--eva-green) 80%,
-          var(--eva-green) 100%
+          var(--color-eva-green) 80%,
+          var(--color-eva-green) 100%
         ),
         linear-gradient(
           to right,
-          var(--eva-green),
-          var(--eva-green) 20%,
+          var(--color-eva-green),
+          var(--color-eva-green) 20%,
           transparent 40%,
           transparent 60%,
-          var(--eva-green) 80%,
-          var(--eva-green) 100%
+          var(--color-eva-green) 80%,
+          var(--color-eva-green) 100%
         ),
         linear-gradient(
           to bottom,
-          var(--eva-green),
-          var(--eva-green) 20%,
+          var(--color-eva-green),
+          var(--color-eva-green) 20%,
           transparent 40%,
           transparent 60%,
-          var(--eva-green) 80%,
-          var(--eva-green) 100%
+          var(--color-eva-green) 80%,
+          var(--color-eva-green) 100%
         ),
         linear-gradient(
           to bottom,
-          var(--eva-green),
-          var(--eva-green) 20%,
+          var(--color-eva-green),
+          var(--color-eva-green) 20%,
           transparent 40%,
           transparent 60%,
-          var(--eva-green) 80%,
-          var(--eva-green) 100%
+          var(--color-eva-green) 80%,
+          var(--color-eva-green) 100%
         );
       background-size:
         100% 1px,
@@ -203,9 +190,9 @@
   /* 挿入位置インジケータ：緑の発光ライン */
   .drop-indicator {
     height: 2px;
-    background: var(--eva-green);
+    background: var(--color-eva-green);
     box-shadow:
-      0 0 8px var(--eva-green),
+      0 0 8px var(--color-eva-green),
       0 0 16px rgba(57, 255, 20, 0.6);
     border-radius: 1px;
   }
@@ -227,15 +214,15 @@
   /* 編集入力のフォーカス */
   .ev-input {
     background: rgba(7, 3, 16, 0.8);
-    border: 1px solid var(--line);
-    color: var(--ink);
+    border: 1px solid var(--color-eva-line);
+    color: var(--color-eva-ink);
     outline: none;
     transition:
       border-color 0.15s,
       box-shadow 0.15s;
 
     &:focus {
-      border-color: var(--eva-green);
+      border-color: var(--color-eva-green);
       box-shadow:
         0 0 0 1px rgba(57, 255, 20, 0.35),
         inset 0 0 8px rgba(57, 255, 20, 0.12);
@@ -246,12 +233,12 @@
   @keyframes focusedFlash {
     0%,
     100% {
-      border-color: var(--line-soft);
+      border-color: var(--color-eva-line-soft);
       box-shadow: none;
     }
     20%,
     60% {
-      border-color: var(--eva-magenta);
+      border-color: var(--color-eva-magenta);
       box-shadow:
         0 0 0 1px rgba(255, 46, 136, 0.5),
         0 0 14px rgba(255, 46, 136, 0.55);
