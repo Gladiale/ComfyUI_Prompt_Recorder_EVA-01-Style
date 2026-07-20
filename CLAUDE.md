@@ -72,13 +72,58 @@ Word {
 }
 ```
 
-### ツリー操作 ([src/lib/tree.ts](src/lib/tree.ts))
+### ツリー操作 ([src/lib/tree/](src/lib/tree/))
 
-純粋関数による immutable 更新：
-- `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
-- `moveGroup()`: ドラッグ&ドロップ移動（循環検出付き、アンカーID基準で挿入位置決定）
-- `reorderWords()`: 同一グループ内でのワード並替（Motion Reorder 対応）
-- プリセット操作: savePreset / applyPreset / deletePreset / renamePreset / reorderPresets
+単一責任の原則（SRP）に基づき、機能ごとにモジュール分割された純粋関数群。すべての更新は immutable（structuredClone ベース）。
+
+**モジュール構成**:
+
+- **[tree/id.ts](src/lib/tree/id.ts)** (18行): ID生成
+  - `genId()`: ユニークID生成（タイムスタンプ + カウンタ + ランダム）
+
+- **[tree/factory.ts](src/lib/tree/factory.ts)** (58行): オブジェクト生成
+  - `createWord()`, `createGroup()`: 新規オブジェクト生成
+  - `createDefaultState()`: 初期状態生成（サンプルデータ）
+
+- **[tree/search.ts](src/lib/tree/search.ts)** (42行): ツリー検索
+  - `findGroup()`: グループをIDで検索
+  - `isDescendant()`: 子孫関係判定（循環参照防止）
+
+- **[tree/immutable.ts](src/lib/tree/immutable.ts)** (25行): immutable更新ヘルパ
+  - `clone()`: structuredCloneによる深いコピー
+  - `mutateGroup()`: グループを安全に更新
+
+- **[tree/group.ts](src/lib/tree/group.ts)** (161行): グループ操作
+  - `addGroup()`, `renameGroup()`, `deleteGroup()`
+  - `toggleCollapse()`, `setCollapsed()`
+  - `moveGroup()`: ドラッグ&ドロップ対応の複雑な移動ロジック（循環検出、アンカーID基準で挿入位置決定）
+  - `GroupDropTarget`: 移動先の型定義（into / before / after / root）
+
+- **[tree/word.ts](src/lib/tree/word.ts)** (87行): ワード操作
+  - `addWord()`, `updateWord()`, `deleteWord()`
+  - `toggleWord()`, `setWordSelected()`, `setWordStrength()`
+  - `reorderWords()`: 同一グループ内の並替（Motion Reorder 対応）
+
+- **[tree/collector.ts](src/lib/tree/collector.ts)** (52行): 選択ワード収集
+  - `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
+  - `groupHasSelection()`: 選択ワード存在チェック（折り畳み徽章用）
+  - `countSelectedWords()`: 選択ワード数カウント
+  - `SelectedWordRef`: 選択ワード参照の型定義
+
+- **[tree/navigation.ts](src/lib/tree/navigation.ts)** (71行): グループ列挙・展開
+  - `collectAllGroups()`: 全グループを平坦化（時計ロードマップ用）
+  - `expandGroupPath()`: 指定グループとその祖先を展開
+  - `GroupRef`: グループ参照の型定義
+
+- **[tree/preset.ts](src/lib/tree/preset.ts)** (118行): プリセット操作
+  - `savePreset()`: 現在の選択状態を保存（同名なら上書き）
+  - `applyPreset()`: プリセットを復元（完全置換）
+  - `deletePreset()`, `renamePreset()`, `reorderPresets()`
+
+- **[tree/normalize.ts](src/lib/tree/normalize.ts)** (93行): Import/Export正規化
+  - `normalizeImportedState()`: 外部データを検証・正規化
+
+**メインファイル [tree.ts](src/lib/tree.ts)** (63行): 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
 
 ### 重複排除 ([src/lib/normalize.ts](src/lib/normalize.ts))
 
