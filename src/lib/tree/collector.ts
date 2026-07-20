@@ -50,3 +50,8 @@ export function countSelectedWords(g: Group): number {
   for (const child of g.groups) n += countSelectedWords(child);
   return n;
 }
+
+/** 該当グループのみの選択ワード数（サブグループを含まない）。 */
+export function countSelectedWordsInGroup(g: Group): number {
+  return g.words.filter((w) => w.selected).length;
+}

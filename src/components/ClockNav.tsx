@@ -14,7 +14,12 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
-import { collectAllGroups, type GroupRef } from "@/lib/tree";
+import {
+  collectAllGroups,
+  countSelectedWordsInGroup,
+  findGroup,
+  type GroupRef,
+} from "@/lib/tree";
 import { fadeInOutSpring } from "@/lib/motions";
 
 // ============================================================
@@ -289,7 +294,11 @@ function ClockDial({ onClose }: { onClose: () => void }) {
               const isActive = i === activeIdx;
               const r = radiusOf(g.depth);
               const size = isParent ? 22 : 18;
-              const initial = Array.from(g.name)[0]?.toUpperCase() ?? "";
+              const groupObj = findGroup(state, g.id);
+              const selectedCount = groupObj ? countSelectedWordsInGroup(groupObj) : 0;
+              const initial = isActive && selectedCount > 0
+                ? String(selectedCount)
+                : Array.from(g.name)[0]?.toUpperCase() ?? "";
               return (
                 <button
                   key={g.id}

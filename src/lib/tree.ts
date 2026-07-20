@@ -40,6 +40,7 @@ export {
   collectSelected,
   groupHasSelection,
   countSelectedWords,
+  countSelectedWordsInGroup,
   type SelectedWordRef,
 } from "./tree/collector";
 
