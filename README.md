@@ -72,23 +72,43 @@ npm run build      # dist/ に拡張機能を出力
 ```
 src/
 ├─ main.tsx                 # React エントリ
-├─ App.tsx                  # 黄金比レイアウト
+├─ App.tsx                  # 黄金比レイアウト（左61.8% / 右38.2%）
 ├─ popup.html               # Vite 入力 HTML
-├─ context/PromptContext.tsx# グローバル状態 + chrome.storage 永続化
+├─ context/
+│  └─ PromptContext.tsx     # グローバル状態 + chrome.storage 永続化
 ├─ components/
-│  ├─ WordPanel.tsx         # 左：ワード画面
-│  ├─ SynthesisPanel.tsx    # 右上：総括欄
-│  ├─ SelectedPanel.tsx     # 右下：選択ワード
-│  ├─ GroupNode.tsx         # 再帰的グループ表示
-│  ├─ WordItem.tsx          # ワード行（選択/編集/DnD）
-│  ├─ SearchBox.tsx         # 検索欄
-│  └─ IOButtons.tsx         # Import/Export アイコン
+│  ├─ WordPanel.tsx         # 左：ワード画面統括
+│  ├─ SynthesisPanel.tsx    # 右上：総括欄（重複排除・プリセット）
+│  ├─ SelectedPanel.tsx     # 右下：選択ワード一覧
+│  ├─ GroupNode.tsx         # 再帰的グループ表示（折り畳み・DnD）
+│  ├─ WordItem.tsx          # ワード行（選択/編集/強度調整/DnD）
+│  ├─ SearchBox.tsx         # 検索欄（ワード本文+注釈横断）
+│  ├─ IOButtons.tsx         # Import/Export アイコン
+│  ├─ WordEditModal.tsx     # ワード追加・編集モーダル
+│  ├─ ConfirmDialog.tsx     # 確認ダイアログ（エヴァ風デザイン）
+│  └─ ClockNav.tsx          # 時計の指針型ロードマップ
 ├─ lib/
-│  ├─ tree.ts               # ツリー操作（追加/移動/並替/集約）
-│  ├─ normalize.ts          # 重複判定
-│  └─ storage.ts            # chrome.storage ラッパ
-├─ types.ts                 # Group / Word 型定義
-└─ index.css                # Tailwind + EVA テーマ
+│  ├─ tree.ts               # ツリー操作（全モジュールを再エクスポート）
+│  ├─ tree/                 # ツリー操作モジュール（SRP分割）
+│  │  ├─ id.ts              # ID生成
+│  │  ├─ factory.ts         # オブジェクト生成
+│  │  ├─ search.ts          # ツリー検索
+│  │  ├─ immutable.ts       # immutable更新ヘルパ
+│  │  ├─ group.ts           # グループ操作
+│  │  ├─ word.ts            # ワード操作
+│  │  ├─ collector.ts       # 選択ワード収集
+│  │  ├─ navigation.ts      # グループ列挙・展開
+│  │  ├─ preset.ts          # プリセット操作
+│  │  └─ normalize.ts       # Import/Export正規化
+│  ├─ normalize.ts          # 重複判定（trim+小文字化+空白圧縮）
+│  ├─ strength.ts           # 強度調整（0..10 → ()/(text:1.x)）
+│  ├─ diff.ts               # 差分検出（追加/削除/強度変更）
+│  ├─ image.ts              # 画像圧縮（最大420×420px, JPEG 0.7）
+│  ├─ storage.ts            # chrome.storage ラッパ + debounce
+│  └─ motions.ts            # Motion用アニメーション定義
+├─ types.ts                 # 型定義（RootState/Group/Word/Preset）
+└─ index.css                # Tailwind + EVA-01 テーマ
 public/
-└─ manifest.json
+├─ manifest.json            # Chrome拡張機能マニフェスト（V3）
+└─ icons/                   # アイコン画像（16/48/128px）
 ```

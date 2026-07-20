@@ -141,14 +141,71 @@ Word {
 
 ### コンポーネント構成
 
-- **[src/App.tsx](src/App.tsx)**: 黄金比レイアウト（左61.8% / 右38.2%）
-- **[src/components/WordPanel.tsx](src/components/WordPanel.tsx)**: 左側ワード画面
-  - GroupNode.tsx: 再帰的グループ表示（折り畳み・ドラッグ&ドロップ）
-  - WordItem.tsx: ワード行（シングルクリック=選択、ダブルクリック=編集、右クリック=強度調整）
-  - SearchBox.tsx: ワード本文と注釈を横断検索
-- **[src/components/SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)**: 右上総括欄（重複排除済み最終プロンプト、カンマ/改行切替、コピー）
-- **[src/components/SelectedPanel.tsx](src/components/SelectedPanel.tsx)**: 右下選択ワード一覧（クリックで選択解除）
-- **[src/components/IOButtons.tsx](src/components/IOButtons.tsx)**: Import（赤紫↓）/ Export（緑↑）アイコン
+**メインレイアウト**:
+
+- **[App.tsx](src/App.tsx)** (63行): ルートコンポーネント
+  - 黄金比レイアウト（左61.8% / 右38.2%）
+  - 各種Providerでラップ（PromptContext, ClockNav, WordEditor, Confirm）
+
+**左側パネル - ワード管理**:
+
+- **[WordPanel.tsx](src/components/WordPanel.tsx)** (84行): 左側ワード画面の統括
+  - 検索ボックス、グループツリー、Import/Exportボタンを配置
+
+- **[SearchBox.tsx](src/components/SearchBox.tsx)** (39行): 検索UI
+  - ワード本文と注釈を横断検索
+  - 非ヒットグループ/ワードを淡色化
+
+- **[GroupNode.tsx](src/components/GroupNode.tsx)** (376行): 再帰的グループ表示
+  - 折り畳み/展開（選択ワード内包時に緑徽章表示）
+  - ドラッグ&ドロップでグループ移動・ネスト化
+  - ダブルクリックで名前編集
+  - コンテキストメニュー（削除、全展開/全折り畳み）
+
+- **[WordItem.tsx](src/components/WordItem.tsx)** (307行): ワード行の表示と操作
+  - シングルクリック=選択トグル
+  - ダブルクリック=編集モーダル起動
+  - 選択時右クリック=強度調整（0..10）
+  - ドラッグ&ドロップで同一グループ内並替（Motion Reorder）
+  - 注釈アイコン（緑）ホバーで画像+注釈ポップアップ
+
+- **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
+  - Import（赤紫↓）: JSONファイル読み込み
+  - Export（緑↑）: 現在の状態をJSON保存
+
+**右側パネル - プロンプト生成**:
+
+- **[SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)** (341行): 右上総括欄
+  - 選択ワードを重複排除して最終プロンプト生成
+  - カンマ区切り/改行区切り切替
+  - コピーボタン（スナップショット保存 → 差分検出開始）
+  - 差分表示（追加=緑、削除=赤、強度変更=黄）
+  - プリセット管理（保存・適用・並替・削除）
+
+- **[SelectedPanel.tsx](src/components/SelectedPanel.tsx)** (426行): 右下選択ワード一覧
+  - 選択中ワードをグループパス付きで表示
+  - クリックで選択解除
+  - グループ名クリックでジャンプ（祖先ごと展開+スクロール）
+
+**モーダル・ダイアログ**:
+
+- **[WordEditModal.tsx](src/components/WordEditModal.tsx)** (288行): ワード追加・編集モーダル
+  - ワード本文、注釈、画像（最大420×420px）を編集
+  - Provider + Context で呼び出し
+  - 画像は自動圧縮（JPEG quality=0.7）
+
+- **[ConfirmDialog.tsx](src/components/ConfirmDialog.tsx)** (111行): 確認ダイアログ
+  - `window.confirm`の代替（エヴァ風デザイン）
+  - Promise<boolean>で結果を返す
+  - 破壊的操作（削除）は赤紫の確認ボタン
+
+**ナビゲーション**:
+
+- **[ClockNav.tsx](src/components/ClockNav.tsx)** (419行): 時計の指針型ロードマップ
+  - 「WORDS」ラベルから起動
+  - マウスの動きに合わせて針が回転
+  - クリックで該当グループへジャンプ（祖先展開+スクロール）
+  - 深度別の色分けリング表示
 
 ### 操作仕様
 
