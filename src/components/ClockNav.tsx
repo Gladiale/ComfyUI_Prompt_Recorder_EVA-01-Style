@@ -183,7 +183,7 @@ function ClockDial({ onClose }: { onClose: () => void }) {
         animate="visible"
         exit="exit"
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col items-center justify-around"
+        className="relative flex flex-col items-center justify-around select-none rounded-full overflow-hidden"
         style={{
           width: NAV_PANEL,
           height: NAV_PANEL,
