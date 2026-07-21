@@ -67,7 +67,7 @@ export function SynthesisPanel() {
         {/* 区切り切替：アイコンのみ（カンマ/改行） */}
         <button
           onClick={() => setSeparator(separator === "comma" ? "newline" : "comma")}
-          className="p-1 text-eva-ink-dim hover:text-eva-green transition-colors"
+          className="p-1 text-eva-ink-dim hover:text-eva-lavender transition-colors"
           title={
             separator === "comma"
               ? "カンマ区切り（改行へ切替）"
@@ -83,7 +83,7 @@ export function SynthesisPanel() {
             glow
               ? "text-eva-green"
               : hasBaseline
-                ? "text-eva-ink-dim hover:text-eva-green"
+                ? "text-eva-ink-dim hover:text-eva-lavender"
                 : "text-eva-ink-dim/50 hover:text-eva-ink-dim"
           }`}
           title={
@@ -103,10 +103,10 @@ export function SynthesisPanel() {
         </button>
         <button
           onClick={onCopy}
-          className={`p-1 transition-all ${
+          className={`p-1 transition-all flex items-center justify-center ${
             copied
               ? "text-eva-green"
-              : "text-eva-ink-dim hover:text-eva-green hover:shadow-glow-green"
+              : "text-eva-ink-dim hover:text-eva-lavender hover:drop-shadow-[0_0_5px_rgba(238,55,255,0.888)]"
           }`}
           title="コピー"
         >
@@ -114,18 +114,19 @@ export function SynthesisPanel() {
             {copied ? (
               <motion.span
                 key="ok"
-                initial={{ scale: 0.4, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ scale: 0, rotate: -45, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
                 <FiCheck size={13} />
               </motion.span>
             ) : (
               <motion.span
                 key="copy"
-                initial={{ scale: 0.4, opacity: 0 }}
+                initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ opacity: 0 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
                 <FiCopy size={13} />
               </motion.span>
