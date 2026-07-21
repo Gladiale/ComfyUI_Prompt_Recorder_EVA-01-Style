@@ -198,17 +198,35 @@
   }
 
   /* 微かな徽章発光 */
-  @keyframes badgePulse {
-    0%,
-    100% {
-      box-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
-    }
-    50% {
-      box-shadow: 0 0 12px rgba(57, 255, 20, 0.9);
+  .badge-pulse {
+    position: relative; /* 擬似要素の位置調整用 */
+    z-index: 1;
+    /* 本体の初期影（固定にしておく） */
+    box-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
+
+    /* 擬似要素で「大きい影」を作っておく */
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit; /* 親要素と同じ角丸を適用 */
+      box-shadow: 0 0 11px rgba(55, 255, 20, 0.632);
+      z-index: -1;
+      opacity: 0; /* 最初は消しておく */
+      animation: badgePulseFast 2.2s ease-in-out infinite;
+      will-change: opacity; /* ブラウザに事前最適化を指示 */
     }
   }
-  .badge-pulse {
-    animation: badgePulse 2.2s ease-in-out infinite;
+
+  /* 影の「見えやすさ（透明度）」だけを滑らかに変化させる */
+  @keyframes badgePulseFast {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   /* 編集入力のフォーカス */
