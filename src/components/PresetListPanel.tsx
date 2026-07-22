@@ -771,7 +771,7 @@ function PresetDetailCard({
     const rect = el.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
-    // 3D 傾きのみ（光エフェクトなし）
+    // 3D 傾きのみ（光エフェクトなし）／表面・裏面共通
     setTilt({
       rx: (0.5 - py) * 22,
       ry: (px - 0.5) * 28,
@@ -799,12 +799,9 @@ function PresetDetailCard({
           ref={cardRef}
           onMouseMove={onMove}
           onMouseLeave={onLeave}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setFlipped((f) => !f);
-          }}
+          onClick={() => setFlipped((f) => !f)}
           animate={{
-            rotateX: flipped ? 0 : tilt.rx,
+            rotateX: tilt.rx,
             rotateY: flipped ? 180 + tilt.ry : tilt.ry,
             scale: 1,
           }}
@@ -822,6 +819,8 @@ function PresetDetailCard({
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
+              // 裏面表示中は表面のヒット判定を完全に無効化（還元ボタン誤作動防止）
+              pointerEvents: flipped ? "none" : "auto",
             }}
           >
             <div
@@ -854,21 +853,33 @@ function PresetDetailCard({
 
             <div className="absolute top-3 left-3 flex gap-1.5">
               <button
-                onClick={onApply}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApply();
+                }}
                 className="p-1.5 rounded-sm border border-eva-green/50 bg-black/55 text-eva-green hover:bg-eva-green/20 hover:shadow-glow-green transition-all"
                 title="還元"
               >
                 <FiCheck size={13} />
               </button>
               <button
-                onClick={onEdit}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
                 className="p-1.5 rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-green transition-colors"
                 title="編集"
               >
                 <FiEdit2 size={13} />
               </button>
               <button
-                onClick={() => setFlipped(true)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFlipped(true);
+                }}
                 className="p-1.5 rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-lavender transition-colors"
                 title="裏面を表示（右クリックでも可）"
               >
@@ -884,17 +895,24 @@ function PresetDetailCard({
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
+              // 裏面表示中は表面のヒット判定を完全に無効化（還元ボタン誤作動防止）
+              pointerEvents: !flipped ? "none" : "auto",
             }}
           >
             <div className="relative h-full flex flex-col p-4 overflow-y-auto">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 shrink-0">
                 <span className="font-cinzel tracking-widest text-[11px] text-eva-green">
                   DETAILS
                 </span>
                 <button
-                  onClick={() => setFlipped(false)}
-                  className="p-1 text-eva-ink-dim hover:text-eva-lavender transition-colors"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFlipped(false);
+                  }}
+                  className="p-1.5 min-w-8 min-h-8 inline-flex items-center justify-center rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-lavender hover:border-eva-lilac/50 transition-colors"
                   title="表面に戻る"
+                  aria-label="表面に戻る"
                 >
                   <FiRotateCw size={13} />
                 </button>
