@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { usePrompt } from "@/context/PromptContext";
 import { useConfirm } from "@/components/ConfirmDialog";
 import type { PromptPreset } from "@/types";
-import { formatUpdateDiffMessage } from "@/components/preset/formatUpdateDiffMessage";
+import { UpdateDiffBody } from "@/components/preset/UpdateDiffBody";
 
 export function usePresetListActions(options: {
   detailId: string | null;
@@ -95,13 +95,13 @@ export function usePresetListActions(options: {
         return;
       }
 
-      const message = formatUpdateDiffMessage(p.name, diff);
       const ok = await confirm({
         title: "PRESET UPDATE",
-        message,
+        message: <UpdateDiffBody name={p.name} diff={diff} />,
         confirmLabel: "更新する",
         cancelLabel: "キャンセル",
         danger: true,
+        width: 360,
       });
       if (ok) updatePresetEntries(p.id);
     },
