@@ -34,12 +34,35 @@ export interface Group {
 }
 
 /**
- * プリセット（選択状態の組み合わせ）の1エントリ。
- * 復元時は wordId で現ツリーのワードを探し selected/strength を当てはめる。
+ * プリセットに保存する LoRA / ControlNet 参照。
+ */
+export interface PresetModelRef {
+  model: string;
+  strength: number;
+}
+
+/**
+ * 生成メタデータ（ComfyUI パラメータのメモ）。
+ * width/height は画像選択時に元解像度から自動記入される。
+ */
+export interface PresetMetadata {
+  steps: number;
+  cfg: number;
+  sampler: string;
+  scheduler: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * プリセット内の選択ワード1件。
+ * 復元時は wordId で現ツリーのワードを探す。
+ * text は復元には使わず、id 欠落・テキスト変更の通知用に保持する。
  */
 export interface PresetEntry {
   wordId: string;
-  selected: boolean;
+  /** 保存時点のテキスト（復元には使わない・差分通知用）。 */
+  text: string;
   strength: number;
 }
 
@@ -47,8 +70,29 @@ export interface PresetEntry {
 export interface PromptPreset {
   id: string;
   name: string;
+  baseModel: string;
+  baseModelKind: string;
+  loras?: PresetModelRef[];
+  controlNets?: PresetModelRef[];
+  metadata: PresetMetadata;
+  /** プレビュー画像（最大560px JPEG の data URL）。 */
+  image: string;
+  description?: string;
   entries: PresetEntry[];
   createdAt: number;
+  updatedAt?: number;
+}
+
+/** プリセット新規保存・上書き時の入力（id/createdAt 以外）。 */
+export interface PresetFormData {
+  name: string;
+  baseModel: string;
+  baseModelKind: string;
+  loras?: PresetModelRef[];
+  controlNets?: PresetModelRef[];
+  metadata: PresetMetadata;
+  image: string;
+  description?: string;
 }
 
 /** ルート構造。chrome.storage.local に永続化される。 */
@@ -58,3 +102,13 @@ export interface RootState {
   /** 保存済みの選択組み合わせ一覧。旧データは undefined 可。 */
   presets?: PromptPreset[];
 }
+
+/** メタデータのデフォルト値。 */
+export const DEFAULT_PRESET_METADATA: PresetMetadata = {
+  steps: 20,
+  cfg: 7,
+  sampler: "euler",
+  scheduler: "normal",
+  width: 1024,
+  height: 1024,
+};

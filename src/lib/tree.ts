@@ -58,6 +58,13 @@ export {
   deletePreset,
   renamePreset,
   reorderPresets,
+  updatePresetMeta,
+  updatePresetEntries,
+  collectPresetEntries,
+  analyzePresetApply,
+  diffPresetEntries,
+  type PresetApplyReport,
+  type PresetUpdateDiff,
 } from "./tree/preset";
 
 // Import / Export

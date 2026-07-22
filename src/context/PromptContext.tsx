@@ -12,17 +12,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Group, RootState, Word } from "@/types";
+import type { Group, PresetFormData, RootState, Word } from "@/types";
 import {
   addGroup as treeAddGroup,
   addWord as treeAddWord,
   applyPreset as treeApplyPreset,
+  analyzePresetApply as treeAnalyzePresetApply,
   collectSelected,
   createDefaultState,
   deleteGroup as treeDeleteGroup,
   expandGroupPath as treeExpandGroupPath,
   deletePreset as treeDeletePreset,
   deleteWord as treeDeleteWord,
+  diffPresetEntries as treeDiffPresetEntries,
   moveGroup as treeMoveGroup,
   normalizeImportedState,
   reorderWords as treeReorderWords,
@@ -35,8 +37,12 @@ import {
   toggleWord as treeToggleWord,
   setWordSelected as treeSetWordSelected,
   setWordStrength as treeSetWordStrength,
+  updatePresetEntries as treeUpdatePresetEntries,
+  updatePresetMeta as treeUpdatePresetMeta,
   updateWord as treeUpdateWord,
   type GroupDropTarget,
+  type PresetApplyReport,
+  type PresetUpdateDiff,
 } from "@/lib/tree";
 import {
   debounce,
@@ -76,6 +82,10 @@ interface PromptContextValue extends PromptActions {
   diff: PromptDiff;
   // 現在の選択ワードでスナップショット基準を更新する（コピー時に呼ぶ）
   captureSnapshot: () => void;
+  // プリセット還元前の分析（id欠落・text変更）
+  analyzePresetApply: (presetId: string) => PresetApplyReport | null;
+  // プリセット更新前の差分
+  diffPresetEntries: (presetId: string) => PresetUpdateDiff | null;
 }
 
 export interface PromptActions {
@@ -101,11 +111,16 @@ export interface PromptActions {
   deleteWord: (groupId: string, wordId: string) => void;
   reorderWords: (groupId: string, newWords: Word[]) => void;
   moveGroup: (draggedId: string, target: GroupDropTarget) => void;
-  savePreset: (name: string) => void;
+  /** フォーム情報 + 現在の選択ワードでプリセット保存（同名は上書き）。 */
+  savePreset: (form: PresetFormData) => void;
   applyPreset: (presetId: string) => void;
   deletePreset: (presetId: string) => void;
   renamePreset: (presetId: string, name: string) => void;
   reorderPresets: (newIds: string[]) => void;
+  /** メタ情報のみ編集（entries は維持）。 */
+  updatePresetMeta: (presetId: string, form: PresetFormData) => void;
+  /** ワード情報のみ現在の選択で更新。 */
+  updatePresetEntries: (presetId: string) => void;
   replaceState: (raw: unknown) => void;
   exportState: () => RootState;
 }
@@ -128,14 +143,14 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   // コピー基準：最後にコピーした瞬間のスナップショット（セッション内で保持）
   const [lastSnapshot, setLastSnapshot] = useState<Snapshot | null>(null);
 
-  // 初回マウント：ストレージから復元
+  // 初回マウント：ストレージから復元（旧プリセット形式も正規化）
   useEffect(() => {
     let cancelled = false;
     Promise.all([loadState(), loadSnapshot()]).then(([loaded, snap]) => {
       if (cancelled) return;
       // ルート直下にグループがあるかだけ検査して、空ならデフォルトを維持
       if (loaded && loaded.rootGroups) {
-        setState(loaded);
+        setState(normalizeImportedState(loaded));
       }
       if (snap) setLastSnapshot(snap);
       setReady(true);
@@ -191,12 +206,16 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       setState((s) => treeReorderWords(s, groupId, newWords)),
     moveGroup: (draggedId, target) =>
       setState((s) => treeMoveGroup(s, draggedId, target)),
-    savePreset: (name) => setState((s) => treeSavePreset(s, name)),
+    savePreset: (form) => setState((s) => treeSavePreset(s, form)),
     applyPreset: (presetId) => setState((s) => treeApplyPreset(s, presetId)),
     deletePreset: (presetId) => setState((s) => treeDeletePreset(s, presetId)),
     renamePreset: (presetId, name) =>
       setState((s) => treeRenamePreset(s, presetId, name)),
     reorderPresets: (newIds) => setState((s) => treeReorderPresets(s, newIds)),
+    updatePresetMeta: (presetId, form) =>
+      setState((s) => treeUpdatePresetMeta(s, presetId, form)),
+    updatePresetEntries: (presetId) =>
+      setState((s) => treeUpdatePresetEntries(s, presetId)),
     replaceState: (raw) => setState(() => normalizeImportedState(raw)),
     exportState: () => state,
   };
@@ -213,6 +232,16 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   const diff = useMemo(
     () => computeDiff(selectedRefs, lastSnapshot),
     [selectedRefs, lastSnapshot],
+  );
+
+  const analyzePresetApply = useCallback(
+    (presetId: string) => treeAnalyzePresetApply(state, presetId),
+    [state],
+  );
+
+  const diffPresetEntries = useCallback(
+    (presetId: string) => treeDiffPresetEntries(state, presetId),
+    [state],
   );
 
   const synthesis = useMemo(() => {
@@ -243,6 +272,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     lastSnapshot,
     diff,
     captureSnapshot,
+    analyzePresetApply,
+    diffPresetEntries,
     ...actions,
   };
 
