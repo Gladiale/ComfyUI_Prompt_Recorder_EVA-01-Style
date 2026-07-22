@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { FiX, FiMinus, FiPlus, FiBookmark, FiLayers } from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
-import { usePresetForm } from "./PresetFormModal";
+import { usePresetForm } from "@/context/PresetFormContext";
 import { usePresetList } from "./PresetListPanel";
 import { MAX_STRENGTH, clampStrength, formatWordWithStrength } from "@/lib/strength";
 

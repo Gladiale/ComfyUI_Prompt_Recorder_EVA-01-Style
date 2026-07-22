@@ -4,7 +4,7 @@ import { PromptProvider, usePrompt } from "@/context/PromptContext";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { WordEditorProvider } from "@/components/WordEditModal";
 import { ClockNavProvider } from "@/components/ClockNav";
-import { PresetFormProvider } from "@/components/PresetFormModal";
+import { PresetFormProvider } from "@/context/PresetFormContext";
 import { PresetListProvider } from "@/components/PresetListPanel";
 import { WordPanel } from "@/components/WordPanel";
 import { SynthesisPanel } from "@/components/SynthesisPanel";
