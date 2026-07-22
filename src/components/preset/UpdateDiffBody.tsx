@@ -33,23 +33,19 @@ function DiffRow({ children }: { children: ReactNode }) {
   );
 }
 
-const PREVIEW_LIMIT = 8;
+const PREVIEW_LIMIT = 9;
 
 function MoreHint({ rest }: { rest: number }) {
   if (rest <= 0) return null;
   return (
-    <li className="px-1.5 py-0.5 font-mono text-[10px] text-eva-ink-dim">…他 {rest} 件</li>
+    <li className="px-1.5 py-0.5 font-mono text-[10px] text-eva-ink-dim">
+      …他 {rest} 件
+    </li>
   );
 }
 
 /** プリセット更新確認ダイアログ本体（DiffPopup 風レイアウト）。 */
-export function UpdateDiffBody({
-  name,
-  diff,
-}: {
-  name: string;
-  diff: PresetUpdateDiff;
-}) {
+export function UpdateDiffBody({ name, diff }: { name: string; diff: PresetUpdateDiff }) {
   const added = diff.added.slice(0, PREVIEW_LIMIT);
   const removed = diff.removed.slice(0, PREVIEW_LIMIT);
   const strength = diff.strengthChanged.slice(0, PREVIEW_LIMIT);
