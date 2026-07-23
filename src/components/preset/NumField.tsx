@@ -13,10 +13,13 @@ export function NumField({
   className = "",
   inputClassName = "",
   title,
+  allowEmpty = false,
 }: {
   label?: string;
-  value: number;
-  onChange: (v: number) => void;
+  /** undefined のとき空欄表示（allowEmpty 時） */
+  value: number | undefined;
+  /** allowEmpty 時は undefined（クリア）も受け取る */
+  onChange: (v: number | undefined) => void;
   min?: number;
   step?: number;
   /** 外側ラッパー用（例: w-16） */
@@ -24,11 +27,13 @@ export function NumField({
   /** input 要素用 */
   inputClassName?: string;
   title?: string;
+  /** true のとき未入力を空欄で表示し、クリアも許可 */
+  allowEmpty?: boolean;
 }) {
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const valueRef = useRef(value);
-  valueRef.current = value;
+  const valueRef = useRef(value ?? 0);
+  valueRef.current = value ?? 0;
 
   const clearHold = useCallback(() => {
     if (holdTimer.current) {
@@ -72,8 +77,9 @@ export function NumField({
     [applyStep, clearHold],
   );
 
-  const display = Number.isFinite(value) ? value : 0;
-  const atMin = min !== undefined && display <= min;
+  const hasValue = value !== undefined && Number.isFinite(value);
+  const display = hasValue ? value : 0;
+  const atMin = min !== undefined && hasValue && display <= min;
   const ariaBase = label ?? title ?? "数値";
 
   return (
@@ -84,13 +90,19 @@ export function NumField({
       <div className="ev-num-field group relative flex items-stretch overflow-hidden rounded-sm">
         <input
           type="number"
-          value={display}
+          value={allowEmpty && !hasValue ? "" : display}
           min={min}
           step={step}
           title={title}
+          placeholder={allowEmpty ? "—" : undefined}
           onChange={(e) => {
-            const n = Number(e.target.value);
-            onChange(Number.isFinite(n) ? n : 0);
+            const raw = e.target.value;
+            if (allowEmpty && raw === "") {
+              onChange(undefined);
+              return;
+            }
+            const n = Number(raw);
+            onChange(Number.isFinite(n) ? n : allowEmpty ? undefined : 0);
           }}
           className={`ev-input ev-num-input min-w-0 flex-1 px-1.5 py-0.5 text-[11px] font-mono tabular-nums ${inputClassName}`.trim()}
         />

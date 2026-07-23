@@ -13,7 +13,6 @@ import type {
   RootState,
   Word,
 } from "@/types";
-import { DEFAULT_PRESET_METADATA } from "@/types";
 import { clone } from "./immutable";
 import { genId } from "./id";
 
@@ -57,28 +56,25 @@ function normalizeModelList(list?: PresetModelRef[]): PresetModelRef[] | undefin
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
+/** 未設定・不正値は 0 / 空文字へ落とす（フォーム未入力を許容）。 */
 function normalizeMetadata(meta?: Partial<PresetMetadata>): PresetMetadata {
-  const d = DEFAULT_PRESET_METADATA;
   return {
     steps:
       typeof meta?.steps === "number" && Number.isFinite(meta.steps)
-        ? Math.max(1, Math.round(meta.steps))
-        : d.steps,
+        ? Math.max(0, Math.round(meta.steps))
+        : 0,
     cfg:
-      typeof meta?.cfg === "number" && Number.isFinite(meta.cfg) ? meta.cfg : d.cfg,
-    sampler: typeof meta?.sampler === "string" && meta.sampler ? meta.sampler : d.sampler,
-    scheduler:
-      typeof meta?.scheduler === "string" && meta.scheduler
-        ? meta.scheduler
-        : d.scheduler,
+      typeof meta?.cfg === "number" && Number.isFinite(meta.cfg) ? meta.cfg : 0,
+    sampler: typeof meta?.sampler === "string" ? meta.sampler : "",
+    scheduler: typeof meta?.scheduler === "string" ? meta.scheduler : "",
     width:
       typeof meta?.width === "number" && Number.isFinite(meta.width)
-        ? Math.max(1, Math.round(meta.width))
-        : d.width,
+        ? Math.max(0, Math.round(meta.width))
+        : 0,
     height:
       typeof meta?.height === "number" && Number.isFinite(meta.height)
-        ? Math.max(1, Math.round(meta.height))
-        : d.height,
+        ? Math.max(0, Math.round(meta.height))
+        : 0,
   };
 }
 
@@ -122,7 +118,7 @@ export function savePreset(root: RootState, form: PresetFormData): RootState {
       name: trimmed || `PRESET ${(next.presets?.length ?? 0) + 1}`,
       baseModel: "",
       baseModelKind: "",
-      metadata: { ...DEFAULT_PRESET_METADATA },
+      metadata: normalizeMetadata(form.metadata),
       image: "",
       entries: [],
       createdAt: Date.now(),

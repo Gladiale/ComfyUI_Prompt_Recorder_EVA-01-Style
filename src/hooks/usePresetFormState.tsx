@@ -7,7 +7,9 @@ import type {
   PresetModelRef,
   PromptPreset,
 } from "@/types";
-import { DEFAULT_PRESET_METADATA } from "@/types";
+
+/** フォーム編集用。未入力フィールドは undefined。 */
+export type FormMetadata = Partial<PresetMetadata>;
 
 export function emptyForm(): PresetFormData {
   return {
@@ -16,7 +18,6 @@ export function emptyForm(): PresetFormData {
     baseModelKind: "",
     loras: [],
     controlNets: [],
-    metadata: { ...DEFAULT_PRESET_METADATA },
     image: "",
     description: "",
   };
@@ -32,6 +33,26 @@ export function presetToForm(p: PromptPreset): PresetFormData {
     metadata: { ...p.metadata },
     image: p.image,
     description: p.description ?? "",
+  };
+}
+
+/** 編集中の Partial を、何か入力があれば PresetMetadata にまとめる。未入力のみなら undefined。 */
+function toFormMetadata(m: FormMetadata): PresetMetadata | undefined {
+  const hasAny =
+    m.steps != null ||
+    m.cfg != null ||
+    (typeof m.sampler === "string" && m.sampler.length > 0) ||
+    (typeof m.scheduler === "string" && m.scheduler.length > 0) ||
+    m.width != null ||
+    m.height != null;
+  if (!hasAny) return undefined;
+  return {
+    steps: m.steps ?? 0,
+    cfg: m.cfg ?? 0,
+    sampler: m.sampler ?? "",
+    scheduler: m.scheduler ?? "",
+    width: m.width ?? 0,
+    height: m.height ?? 0,
   };
 }
 
@@ -57,7 +78,9 @@ export function usePresetFormState({
   const [controlNets, setControlNets] = useState<PresetModelRef[]>(
     initial.controlNets ?? [],
   );
-  const [metadata, setMetadata] = useState<PresetMetadata>(initial.metadata);
+  const [metadata, setMetadata] = useState<FormMetadata>(
+    initial.metadata ?? {},
+  );
   const [image, setImage] = useState(initial.image);
   const [description, setDescription] = useState(initial.description ?? "");
   const [busy, setBusy] = useState(false);
@@ -100,7 +123,7 @@ export function usePresetFormState({
       baseModelKind: baseModelKind.trim(),
       loras,
       controlNets,
-      metadata,
+      metadata: toFormMetadata(metadata),
       image,
       description: description.trim() || undefined,
     });
@@ -108,9 +131,16 @@ export function usePresetFormState({
 
   const setMeta = <K extends keyof PresetMetadata>(
     key: K,
-    value: PresetMetadata[K],
+    value: PresetMetadata[K] | undefined,
   ) => {
-    setMetadata((m) => ({ ...m, [key]: value }));
+    setMetadata((m) => {
+      if (value === undefined) {
+        const next = { ...m };
+        delete next[key];
+        return next;
+      }
+      return { ...m, [key]: value };
+    });
   };
 
   return {

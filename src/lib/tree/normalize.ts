@@ -16,7 +16,7 @@ import type {
   RootState,
   Word,
 } from "@/types";
-import { DEFAULT_PRESET_METADATA, ROOT_VERSION } from "@/types";
+import { ROOT_VERSION } from "@/types";
 import { clampStrength } from "@/lib/strength";
 import { genId } from "./id";
 import { createDefaultState } from "./factory";
@@ -79,17 +79,26 @@ function normalizePreset(raw: unknown): PromptPreset | null {
   return preset;
 }
 
+/** 未設定・不正値は 0 / 空文字へ落とす。 */
 function normalizeMetadata(raw: unknown): PresetMetadata {
-  const d = DEFAULT_PRESET_METADATA;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { ...d };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {
+      steps: 0,
+      cfg: 0,
+      sampler: "",
+      scheduler: "",
+      width: 0,
+      height: 0,
+    };
+  }
   const obj = raw as Record<string, unknown>;
   return {
-    steps: readPositiveInt(obj.steps, d.steps),
-    cfg: readFiniteNumber(obj.cfg, d.cfg),
-    sampler: readNonEmptyString(obj.sampler, d.sampler),
-    scheduler: readNonEmptyString(obj.scheduler, d.scheduler),
-    width: readPositiveInt(obj.width, d.width),
-    height: readPositiveInt(obj.height, d.height),
+    steps: readNonNegativeInt(obj.steps, 0),
+    cfg: readFiniteNumber(obj.cfg, 0),
+    sampler: typeof obj.sampler === "string" ? obj.sampler.trim() : "",
+    scheduler: typeof obj.scheduler === "string" ? obj.scheduler.trim() : "",
+    width: readNonNegativeInt(obj.width, 0),
+    height: readNonNegativeInt(obj.height, 0),
   };
 }
 
@@ -175,11 +184,7 @@ function readFiniteNumber(v: unknown, fallback: number): number {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-function readPositiveInt(v: unknown, fallback: number): number {
+function readNonNegativeInt(v: unknown, fallback: number): number {
   if (typeof v !== "number" || !Number.isFinite(v)) return fallback;
-  return Math.max(1, Math.round(v));
-}
-
-function readNonEmptyString(v: unknown, fallback: string): string {
-  return typeof v === "string" && v.trim() ? v.trim() : fallback;
+  return Math.max(0, Math.round(v));
 }

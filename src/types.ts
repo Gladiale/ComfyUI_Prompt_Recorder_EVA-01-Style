@@ -90,7 +90,8 @@ export interface PresetFormData {
   baseModelKind: string;
   loras?: PresetModelRef[];
   controlNets?: PresetModelRef[];
-  metadata: PresetMetadata;
+  /** ユーザー入力前は未設定。保存時に正規化して PromptPreset.metadata へ落とす。 */
+  metadata?: PresetMetadata;
   image: string;
   description?: string;
 }
@@ -102,13 +103,3 @@ export interface RootState {
   /** 保存済みの選択組み合わせ一覧。旧データは undefined 可。 */
   presets?: PromptPreset[];
 }
-
-/** メタデータのデフォルト値。 */
-export const DEFAULT_PRESET_METADATA: PresetMetadata = {
-  steps: 0,
-  cfg: 0,
-  sampler: "euler_ancestral",
-  scheduler: "karras",
-  width: 0,
-  height: 0,
-};

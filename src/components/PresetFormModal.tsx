@@ -129,8 +129,9 @@ export function PresetFormModal({
                 label="Steps"
                 value={form.metadata.steps}
                 onChange={(v) => form.setMeta("steps", v)}
-                min={1}
+                min={0}
                 step={1}
+                allowEmpty
               />
               <NumField
                 label="CFG"
@@ -138,15 +139,17 @@ export function PresetFormModal({
                 onChange={(v) => form.setMeta("cfg", v)}
                 min={0}
                 step={0.5}
+                allowEmpty
               />
               <div className="flex flex-col gap-0.5">
                 <span className="font-mono text-[9px] text-eva-ink-dim/80">
                   Sampler
                 </span>
                 <input
-                  value={form.metadata.sampler}
+                  value={form.metadata.sampler ?? ""}
                   onChange={(e) => form.setMeta("sampler", e.target.value)}
                   className="ev-input rounded-sm px-1 py-0.5 text-[11px] w-full"
+                  placeholder="—"
                 />
               </div>
               <div className="flex flex-col gap-0.5">
@@ -154,24 +157,27 @@ export function PresetFormModal({
                   Scheduler
                 </span>
                 <input
-                  value={form.metadata.scheduler}
+                  value={form.metadata.scheduler ?? ""}
                   onChange={(e) => form.setMeta("scheduler", e.target.value)}
                   className="ev-input rounded-sm px-1 py-0.5 text-[11px] w-full"
+                  placeholder="—"
                 />
               </div>
               <NumField
                 label="Width"
                 value={form.metadata.width}
                 onChange={(v) => form.setMeta("width", v)}
-                min={1}
+                min={0}
                 step={8}
+                allowEmpty
               />
               <NumField
                 label="Height"
                 value={form.metadata.height}
                 onChange={(v) => form.setMeta("height", v)}
-                min={1}
+                min={0}
                 step={8}
+                allowEmpty
               />
             </div>
           </div>
