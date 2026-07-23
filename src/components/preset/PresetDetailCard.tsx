@@ -236,7 +236,7 @@ export function PresetDetailCard({
         </motion.div>
 
         <div className="absolute -bottom-8 inset-x-0 text-center font-mono text-[9px] text-eva-ink-dim/70">
-          右クリック / 回転ボタンで裏面 · Esc / 背景クリックで閉じる
+          左クリック / 回転ボタンで裏面 · Esc / 背景クリックで閉じる
         </div>
       </div>
     </motion.div>
