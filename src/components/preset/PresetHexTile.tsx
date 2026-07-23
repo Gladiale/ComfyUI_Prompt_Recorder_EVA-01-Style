@@ -1,6 +1,6 @@
 // 正六角形プリセットタイル
 import { motion } from "motion/react";
-import { FiCheck, FiEdit2, FiRefreshCw, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 import type { PromptPreset } from "@/types";
 
 export function PresetHexTile({
@@ -9,7 +9,7 @@ export function PresetHexTile({
   isOver,
   isAnyDragging,
   setCellRef,
-  onApply,
+  // onApply,
   onEdit,
   onUpdate,
   onDelete,
@@ -54,7 +54,7 @@ export function PresetHexTile({
       }
       whileTap={isAnyDragging ? undefined : { scale: 0.97 }}
       className={[
-        "hex-cell list-none cursor-grab active:cursor-grabbing group select-none touch-none",
+        "hex-cell list-none group select-none touch-none",
         isDragging ? "hex-cell-dragging" : "",
         isOver ? "hex-cell-over" : "",
       ]
@@ -68,6 +68,15 @@ export function PresetHexTile({
     >
       <div className="hex-ring" aria-hidden />
 
+      {/* {preset.baseModelKind && (
+        <span
+          className="absolute top-[-5%] right-[50%] translate-x-[50%] z-10 max-w-[42%] truncate px-1 py-px rounded-sm border border-eva-lilac/40 bg-black/55 font-mono text-[8px] text-eva-lavender tracking-wide"
+          title={preset.baseModelKind}
+        >
+          {preset.baseModelKind}
+        </span>
+      )} */}
+
       <div className="hex-inner">
         <div
           className="absolute inset-0 bg-eva-bg-panel-2 bg-cover bg-center"
@@ -75,26 +84,17 @@ export function PresetHexTile({
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/25" />
 
-        <button
+        {/* <button
           onClick={(e) => {
             e.stopPropagation();
             onApply();
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute top-[18%] left-[18%] z-10 p-1 rounded-full border border-eva-green/50 bg-black/60 text-eva-green opacity-0 group-hover:opacity-100 transition-opacity hover:bg-eva-green/25 hover:shadow-glow-green"
+          className="absolute top-[10%] left-[18%] z-10 p-1 rounded-full border border-eva-green/50 bg-black/60 text-eva-green opacity-0 group-hover:opacity-100 transition-opacity hover:bg-eva-green/25 hover:shadow-glow-green"
           title="還元"
         >
           <FiCheck size={11} />
-        </button>
-
-        {preset.baseModelKind && (
-          <span
-            className="absolute top-[16%] right-[14%] z-10 max-w-[42%] truncate px-1 py-px rounded-sm border border-eva-lilac/40 bg-black/55 font-mono text-[8px] text-eva-lavender tracking-wide"
-            title={preset.baseModelKind}
-          >
-            {preset.baseModelKind}
-          </span>
-        )}
+        </button> */}
 
         <div className="absolute inset-x-[18%] top-1/2 translate-y-[-42%] z-10 text-center pointer-events-none">
           <div
@@ -108,7 +108,7 @@ export function PresetHexTile({
           </div>
         </div>
 
-        <div className="absolute inset-x-[20%] bottom-[14%] z-10 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute inset-x-[20%] bottom-[8%] z-10 flex items-center justify-center gap-1.25 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={(e) => {
               e.stopPropagation();
