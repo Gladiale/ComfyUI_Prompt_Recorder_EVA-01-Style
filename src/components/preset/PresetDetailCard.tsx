@@ -144,7 +144,7 @@ export function PresetDetailCard({
                   setFlipped(true);
                 }}
                 className="p-1.5 rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-lavender transition-colors"
-                title="裏面を表示（右クリックでも可）"
+                title="裏面を表示"
               >
                 <FiRotateCw size={13} />
               </button>
