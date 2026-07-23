@@ -105,10 +105,10 @@ export interface RootState {
 
 /** メタデータのデフォルト値。 */
 export const DEFAULT_PRESET_METADATA: PresetMetadata = {
-  steps: 20,
-  cfg: 7,
-  sampler: "euler",
-  scheduler: "normal",
-  width: 1024,
-  height: 1024,
+  steps: 0,
+  cfg: 0,
+  sampler: "euler_ancestral",
+  scheduler: "karras",
+  width: 0,
+  height: 0,
 };
