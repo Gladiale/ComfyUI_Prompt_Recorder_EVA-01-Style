@@ -1,7 +1,7 @@
 // 数値入力フィールド（Steps / CFG / Width / Height / strength など）
 // ネイティブスピンナーを隠し、EVA風の上下ステップボタンで調整する
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 export function NumField({
@@ -32,8 +32,11 @@ export function NumField({
 }) {
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 長押しリピート用。render 中の ref 更新は react-hooks/refs 違反のため effect で同期
   const valueRef = useRef(value ?? 0);
-  valueRef.current = value ?? 0;
+  useEffect(() => {
+    valueRef.current = value ?? 0;
+  }, [value]);
 
   const clearHold = useCallback(() => {
     if (holdTimer.current) {
@@ -98,11 +101,14 @@ export function NumField({
           onChange={(e) => {
             const raw = e.target.value;
             if (allowEmpty && raw === "") {
+              valueRef.current = 0;
               onChange(undefined);
               return;
             }
             const n = Number(raw);
-            onChange(Number.isFinite(n) ? n : allowEmpty ? undefined : 0);
+            const next = Number.isFinite(n) ? n : allowEmpty ? undefined : 0;
+            valueRef.current = next ?? 0;
+            onChange(next);
           }}
           className={`ev-input ev-num-input min-w-0 flex-1 px-1.5 py-0.5 text-[11px] font-mono tabular-nums ${inputClassName}`.trim()}
         />
