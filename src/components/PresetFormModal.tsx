@@ -107,7 +107,7 @@ export function PresetFormModal({
                 value={form.baseModel}
                 onChange={(e) => form.setBaseModel(e.target.value)}
                 className="ev-input rounded-sm px-1.5 py-1 text-[12px] w-full"
-                placeholder="e.g. sd_xl_base"
+                placeholder="e.g. WAI-illustrious-SDXL v17.0"
               />
             </FormField>
             <FormField label="KIND">
@@ -142,9 +142,7 @@ export function PresetFormModal({
                 allowEmpty
               />
               <div className="flex flex-col gap-0.5">
-                <span className="font-mono text-[9px] text-eva-ink-dim/80">
-                  Sampler
-                </span>
+                <span className="font-mono text-[9px] text-eva-ink-dim/80">Sampler</span>
                 <input
                   value={form.metadata.sampler ?? ""}
                   onChange={(e) => form.setMeta("sampler", e.target.value)}
@@ -182,11 +180,7 @@ export function PresetFormModal({
             </div>
           </div>
 
-          <ModelListEditor
-            label="LoRAs"
-            items={form.loras}
-            onChange={form.setLoras}
-          />
+          <ModelListEditor label="LoRAs" items={form.loras} onChange={form.setLoras} />
 
           <ModelListEditor
             label="ControlNets"
