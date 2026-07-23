@@ -71,8 +71,8 @@ export function PresetDetailCard({
           transition={{ type: "spring", stiffness: 260, damping: 22, mass: 0.7 }}
           style={{
             transformStyle: "preserve-3d",
-            width: 340,
-            height: 560,
+            width: 330,
+            height: 530,
           }}
           className="relative"
         >
@@ -235,7 +235,7 @@ export function PresetDetailCard({
           </div>
         </motion.div>
 
-        <div className="absolute -bottom-8 inset-x-0 text-center font-mono text-[9px] text-eva-ink-dim/70">
+        <div className="absolute -bottom-5.5 inset-x-0 text-center font-mono text-[9px] text-eva-ink-dim/70">
           左クリック / 回転ボタンで裏面 · Esc / 背景クリックで閉じる
         </div>
       </div>
