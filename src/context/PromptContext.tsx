@@ -111,7 +111,7 @@ export interface PromptActions {
   deleteWord: (groupId: string, wordId: string) => void;
   reorderWords: (groupId: string, newWords: Word[]) => void;
   moveGroup: (draggedId: string, target: GroupDropTarget) => void;
-  /** フォーム情報 + 現在の選択ワードでプリセット保存（同名は上書き）。 */
+  /** フォーム情報 + 現在の選択ワードでプリセットを新規保存する。 */
   savePreset: (form: PresetFormData) => void;
   applyPreset: (presetId: string) => void;
   deletePreset: (presetId: string) => void;

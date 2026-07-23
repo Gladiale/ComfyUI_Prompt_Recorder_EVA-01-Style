@@ -108,41 +108,32 @@ function applyFormToPreset(
 // ============================================================
 
 /**
- * 現在の選択ワード + フォーム情報をプリセットとして保存する。
- * 同名（大小無視）があれば上書き（id/createdAt は継承）。
+ * 現在の選択ワード + フォーム情報をプリセットとして新規保存する。
+ * 同名があっても上書きせず、常に新規プリセットを追加する。
+ * （同名チェックはフォーム側で行い、送信をブロックする想定）
  */
 export function savePreset(root: RootState, form: PresetFormData): RootState {
   const entries = collectPresetEntries(root);
   const trimmed = form.name.trim();
   const next = clone(root);
-  const existing = (next.presets ?? []).find(
-    (p) => p.name.trim().toLowerCase() === trimmed.toLowerCase(),
+  const preset: PromptPreset = applyFormToPreset(
+    {
+      id: genId("preset"),
+      name: trimmed || `PRESET ${(next.presets?.length ?? 0) + 1}`,
+      baseModel: "",
+      baseModelKind: "",
+      metadata: { ...DEFAULT_PRESET_METADATA },
+      image: "",
+      entries: [],
+      createdAt: Date.now(),
+    },
+    form,
+    entries,
   );
-
-  if (existing) {
-    next.presets = (next.presets ?? []).map((p) =>
-      p.id === existing.id ? applyFormToPreset(p, form, entries) : p,
-    );
-  } else {
-    const preset: PromptPreset = applyFormToPreset(
-      {
-        id: genId("preset"),
-        name: trimmed || `PRESET ${(next.presets?.length ?? 0) + 1}`,
-        baseModel: "",
-        baseModelKind: "",
-        metadata: { ...DEFAULT_PRESET_METADATA },
-        image: "",
-        entries: [],
-        createdAt: Date.now(),
-      },
-      form,
-      entries,
-    );
-    // 新規は createdAt を上書きしない
-    preset.createdAt = Date.now();
-    delete preset.updatedAt;
-    next.presets = [...(next.presets ?? []), preset];
-  }
+  // 新規は createdAt を上書きしない
+  preset.createdAt = Date.now();
+  delete preset.updatedAt;
+  next.presets = [...(next.presets ?? []), preset];
   return next;
 }
 

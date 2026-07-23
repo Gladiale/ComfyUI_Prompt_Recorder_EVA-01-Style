@@ -52,7 +52,7 @@ export function PresetFormProvider({ children }: { children: ReactNode }) {
     [mode, savePreset, updatePresetMeta, close],
   );
 
-  // 同名チェック用
+  // 同名禁止チェック用（上書きはしない）
   const existingNames = (state.presets ?? []).map((p) => ({
     id: p.id,
     name: p.name,

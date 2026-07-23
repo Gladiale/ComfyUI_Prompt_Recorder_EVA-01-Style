@@ -116,7 +116,7 @@ Word {
   - `GroupRef`: グループ参照の型定義
 
 - **[tree/preset.ts](src/lib/tree/preset.ts)** (118行): プリセット操作
-  - `savePreset()`: 現在の選択状態を保存（同名なら上書き）
+  - `savePreset()`: 現在の選択状態を新規プリセットとして保存（同名は不可）
   - `applyPreset()`: プリセットを復元（完全置換）
   - `deletePreset()`, `renamePreset()`, `reorderPresets()`
 

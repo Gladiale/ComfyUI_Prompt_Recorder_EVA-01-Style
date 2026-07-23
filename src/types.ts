@@ -83,7 +83,7 @@ export interface PromptPreset {
   updatedAt?: number;
 }
 
-/** プリセット新規保存・上書き時の入力（id/createdAt 以外）。 */
+/** プリセット新規保存・メタ編集時の入力（id/createdAt 以外）。 */
 export interface PresetFormData {
   name: string;
   baseModel: string;

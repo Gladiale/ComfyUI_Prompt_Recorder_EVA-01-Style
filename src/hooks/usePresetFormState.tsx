@@ -82,6 +82,7 @@ export function usePresetFormState({
   };
 
   const nameTrim = name.trim();
+  // 同名（大小無視）は不可。編集中の自身は除外
   const nameDup = existingNames.some(
     (p) =>
       p.id !== excludeId &&
@@ -89,7 +90,7 @@ export function usePresetFormState({
   );
 
   const canSubmit =
-    nameTrim.length > 0 && !busy && (!requireImage || !!image);
+    nameTrim.length > 0 && !nameDup && !busy && (!requireImage || !!image);
 
   const submit = () => {
     if (!canSubmit) return;

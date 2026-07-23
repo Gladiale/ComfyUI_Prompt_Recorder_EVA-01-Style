@@ -96,7 +96,7 @@ export function PresetFormModal({
             />
             {form.nameDup && (
               <span className="text-[10px] text-eva-magenta">
-                同名のプリセットが既に存在します（保存すると上書きされます）
+                同名のプリセットが既に存在します
               </span>
             )}
           </FormField>
