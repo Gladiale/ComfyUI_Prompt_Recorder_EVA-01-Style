@@ -11,14 +11,8 @@ import { usePresetList } from "./PresetListPanel";
 import { MAX_STRENGTH, clampStrength, formatWordWithStrength } from "@/lib/strength";
 
 export function SelectedPanel() {
-  const {
-    selectedRefs,
-    deselectWord,
-    setWordStrength,
-    focusWordId,
-    focusNonce,
-    state,
-  } = usePrompt();
+  const { selectedRefs, deselectWord, setWordStrength, focusWordId, focusNonce, state } =
+    usePrompt();
   const { openSave } = usePresetForm();
   const { open: openPresetList } = usePresetList();
   const presets = state.presets ?? [];
@@ -50,12 +44,12 @@ export function SelectedPanel() {
         </span>
 
         {/* プリセット操作群 */}
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           {/* 保存：詳細フォームを開く */}
           <button
             onClick={openSave}
             disabled={selectedRefs.length === 0}
-            className="p-0.5 text-eva-green-soft hover:text-eva-green transition-colors disabled:opacity-30 disabled:hover:text-eva-green-soft"
+            className="p-0.5 text-eva-green-soft/75 hover:text-eva-green transition-colors disabled:opacity-30 disabled:hover:text-eva-green-soft"
             title="現在の選択組み合わせをプリセット保存"
           >
             <FiBookmark size={13} />
@@ -64,7 +58,7 @@ export function SelectedPanel() {
           {/* 一覧パネル */}
           <button
             onClick={openPresetList}
-            className="flex items-center gap-0.5 p-0.5 text-eva-lilac hover:text-eva-green transition-colors"
+            className="flex items-center gap-0.5 p-0.5 text-eva-green-soft/75 hover:text-eva-green transition-colors"
             title="プリセット一覧"
           >
             <FiLayers size={13} />
