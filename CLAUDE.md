@@ -233,13 +233,14 @@ PresetFormData {
   - 同名プリセットはフォーム側で送信ブロック（上書き不可）
   - 子: `preset/FormField`, `ImagePicker`, `ModelListEditor`, `NumField`（EVA風ステッパー）
 
-- **[PresetListPanel.tsx](src/components/PresetListPanel.tsx)** (230行): 全画面スライドインの一覧
+- **[PresetListPanel.tsx](src/components/PresetListPanel.tsx)**: 全画面スライドインの一覧
   - 正六角形ハニカム + Motion DnD 並替
   - タイルクリックで 3D 詳細カード（表面=画像 / 裏面=メタ）
   - 還元・エントリ更新・削除・メタ編集
   - 子: `preset/PresetHexTile`, `HexDragGhost`, `PresetDetailCard`, `UpdateDiffBody`
 
-- **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)** (92行): 保存/編集モーダルの open API
+- **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)**: 保存/編集モーダルの open API
+- **[PresetListContext.tsx](src/context/PresetListContext.tsx)**: 一覧パネルの open/close API
 
 **モーダル・ダイアログ**:
 

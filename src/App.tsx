@@ -5,7 +5,7 @@ import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { WordEditorProvider } from "@/components/WordEditModal";
 import { ClockNavProvider } from "@/components/ClockNav";
 import { PresetFormProvider } from "@/context/PresetFormContext";
-import { PresetListProvider } from "@/components/PresetListPanel";
+import { PresetListProvider } from "@/context/PresetListContext";
 import { WordPanel } from "@/components/WordPanel";
 import { SynthesisPanel } from "@/components/SynthesisPanel";
 import { SelectedPanel } from "@/components/SelectedPanel";

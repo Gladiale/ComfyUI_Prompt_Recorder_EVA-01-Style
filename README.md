@@ -86,7 +86,8 @@ src/
 ├─ index.css                # Tailwind + EVA-01 テーマ
 ├─ context/
 │  ├─ PromptContext.tsx     # グローバル状態 + chrome.storage 永続化
-│  └─ PresetFormContext.tsx # プリセット保存・編集モーダル API
+│  ├─ PresetFormContext.tsx # プリセット保存・編集モーダル API
+│  └─ PresetListContext.tsx # プリセット一覧パネル open/close API
 ├─ components/
 │  ├─ WordPanel.tsx         # 左：ワード画面統括
 │  ├─ SynthesisPanel.tsx    # 右上：総括欄（重複排除・コピー）

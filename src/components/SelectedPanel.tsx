@@ -7,7 +7,7 @@ import { FiX, FiMinus, FiPlus, FiBookmark, FiLayers } from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
 import { usePresetForm } from "@/context/PresetFormContext";
-import { usePresetList } from "./PresetListPanel";
+import { usePresetList } from "@/context/PresetListContext";
 import { MAX_STRENGTH, clampStrength, formatWordWithStrength } from "@/lib/strength";
 
 export function SelectedPanel() {

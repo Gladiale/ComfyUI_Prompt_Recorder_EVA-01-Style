@@ -1,14 +1,6 @@
 // プリセット一覧パネル / PresetListPanel
 // 全画面スライドイン + 正六角形ハニカム + Motion DnD 並替 + 3Dカード詳細
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { FiLayers, FiX } from "react-icons/fi";
 import { usePrompt } from "@/context/PromptContext";
@@ -20,43 +12,7 @@ import { usePresetHexDnD } from "@/hooks/usePresetHexDnD";
 import { usePresetListActions } from "@/hooks/usePresetListActions";
 import type { PromptPreset } from "@/types";
 
-// ============================================================
-// Context
-// ============================================================
-
-interface PresetListValue {
-  open: () => void;
-  close: () => void;
-}
-
-const PresetListContext = createContext<PresetListValue | null>(null);
-
-export function PresetListProvider({ children }: { children: ReactNode }) {
-  const [visible, setVisible] = useState(false);
-  const open = useCallback(() => setVisible(true), []);
-  const close = useCallback(() => setVisible(false), []);
-  const value = useMemo(() => ({ open, close }), [open, close]);
-
-  return (
-    <PresetListContext value={value}>
-      {children}
-      <AnimatePresence>{visible && <PresetListPanel onClose={close} />}</AnimatePresence>
-    </PresetListContext>
-  );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function usePresetList(): PresetListValue {
-  const ctx = useContext(PresetListContext);
-  if (!ctx) throw new Error("usePresetList must be used within PresetListProvider");
-  return ctx;
-}
-
-// ============================================================
-// Panel
-// ============================================================
-
-function PresetListPanel({ onClose }: { onClose: () => void }) {
+export function PresetListPanel({ onClose }: { onClose: () => void }) {
   const { state, reorderPresets } = usePrompt();
   const { openEdit } = usePresetForm();
   const presets = useMemo(() => state.presets ?? [], [state.presets]);
