@@ -247,6 +247,69 @@
     }
   }
 
+  /* 数値フィールド：ネイティブスピンナーを隠し、カスタムステップと一体化 */
+  .ev-num-field {
+    border: 1px solid var(--color-eva-line);
+    background: rgba(7, 3, 16, 0.8);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+
+    &:focus-within {
+      border-color: var(--color-eva-green);
+      box-shadow:
+        0 0 0 1px rgba(57, 255, 20, 0.35),
+        inset 0 0 8px rgba(57, 255, 20, 0.12);
+    }
+  }
+
+  .ev-num-input {
+    /* 外側の枠は .ev-num-field が担当 */
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+
+    /* Chrome / Safari / Edge */
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    /* Firefox */
+    -moz-appearance: textfield;
+    appearance: textfield;
+
+    &:focus {
+      border: none !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .ev-num-stepper {
+    border: none;
+    border-left: 1px solid var(--color-eva-line-soft);
+    background: transparent;
+    transition: border-color 0.15s;
+  }
+
+  .ev-num-field:focus-within .ev-num-stepper {
+    border-left-color: rgba(57, 255, 20, 0.35);
+  }
+
+  .ev-num-btn {
+    line-height: 1;
+    padding: 0;
+  }
+
+  .ev-num-btn + .ev-num-btn {
+    border-top: 1px solid var(--color-eva-line-soft);
+  }
+
+  .ev-num-field:focus-within .ev-num-btn + .ev-num-btn {
+    border-top-color: rgba(57, 255, 20, 0.25);
+  }
+
   /* 選択一覧へのフォーカス点滅：縦線クリックで該当行を一時強調 */
   @keyframes focusedFlash {
     0%,

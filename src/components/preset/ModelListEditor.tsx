@@ -1,6 +1,7 @@
 // LoRA / ControlNet の model + strength リスト編集
 import { FiMinus, FiPlus } from "react-icons/fi";
 import type { PresetModelRef } from "@/types";
+import { NumField } from "./NumField";
 
 export function ModelListEditor({
   label,
@@ -41,15 +42,12 @@ export function ModelListEditor({
             className="ev-input flex-1 min-w-0 rounded-sm px-1.5 py-0.5 text-[11px]"
             placeholder="model name"
           />
-          <input
-            type="number"
+          <NumField
             value={m.strength}
             step={0.05}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              patch(i, { strength: Number.isFinite(n) ? n : 1 });
-            }}
-            className="ev-input w-14 rounded-sm px-1 py-0.5 text-[11px] font-mono text-center"
+            onChange={(v) => patch(i, { strength: v })}
+            className="w-16 shrink-0"
+            inputClassName="px-1 text-center"
             title="strength"
           />
           <button
