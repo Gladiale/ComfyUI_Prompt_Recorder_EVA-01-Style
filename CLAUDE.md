@@ -100,9 +100,8 @@ PresetFormData {
 - **[tree/id.ts](src/lib/tree/id.ts)** (18行): ID生成
   - `genId()`: ユニークID生成（タイムスタンプ + カウンタ + ランダム）
 
-- **[tree/factory.ts](src/lib/tree/factory.ts)** (58行): オブジェクト生成
+- **[tree/factory.ts](src/lib/tree/factory.ts)**: オブジェクト生成
   - `createWord()`, `createGroup()`: 新規オブジェクト生成
-  - `createDefaultState()`: 初期状態生成（サンプルデータ）
 
 - **[tree/search.ts](src/lib/tree/search.ts)** (42行): ツリー検索
   - `findGroup()`: グループをIDで検索

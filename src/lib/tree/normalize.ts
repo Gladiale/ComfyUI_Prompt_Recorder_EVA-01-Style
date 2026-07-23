@@ -19,17 +19,21 @@ import type {
 import { ROOT_VERSION } from "@/types";
 import { clampStrength } from "@/lib/strength";
 import { genId } from "./id";
-import { createDefaultState } from "./factory";
 
 // ============================================================
 // Import / Export
 // ============================================================
 
+/** 空の RootState（無効データ・初回起動のフォールバック）。 */
+function emptyState(): RootState {
+  return { version: ROOT_VERSION, rootGroups: [] };
+}
+
 /** 未知のデータを RootState へ検証付きで正規化する。 */
 export function normalizeImportedState(raw: unknown): RootState {
-  // null / 非オブジェクト（配列含む）は初期状態へフォールバック
+  // null / 非オブジェクト（配列含む）は空状態へフォールバック
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return createDefaultState();
+    return emptyState();
   }
   const obj = raw as Record<string, unknown>;
   const rootGroups = Array.isArray(obj.rootGroups)
@@ -39,7 +43,7 @@ export function normalizeImportedState(raw: unknown): RootState {
     ? (obj.presets.map(normalizePreset).filter(Boolean) as PromptPreset[])
     : [];
 
-  // createDefaultState と同様、空の presets はキー自体を持たせない
+  // 空の presets はキー自体を持たせない
   const state: RootState = { version: ROOT_VERSION, rootGroups };
   if (presets.length > 0) state.presets = presets;
   return state;

@@ -13,13 +13,13 @@ import {
   type ReactNode,
 } from "react";
 import type { Group, PresetFormData, RootState, Word } from "@/types";
+import { ROOT_VERSION } from "@/types";
 import {
   addGroup as treeAddGroup,
   addWord as treeAddWord,
   applyPreset as treeApplyPreset,
   analyzePresetApply as treeAnalyzePresetApply,
   collectSelected,
-  createDefaultState,
   deleteGroup as treeDeleteGroup,
   expandGroupPath as treeExpandGroupPath,
   deletePreset as treeDeletePreset,
@@ -128,7 +128,10 @@ export interface PromptActions {
 const PromptContext = createContext<PromptContextValue | null>(null);
 
 export function PromptProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<RootState>(() => createDefaultState());
+  const [state, setState] = useState<RootState>(() => ({
+    version: ROOT_VERSION,
+    rootGroups: [],
+  }));
   const [ready, setReady] = useState(false);
   const [separator, setSeparator] = useState<Separator>("comma");
 
