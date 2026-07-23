@@ -121,11 +121,11 @@ function PresetListPanel({ onClose }: { onClose: () => void }) {
     <>
       {/* 背景オーバーレイ */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0, x: -100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -100 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-80 bg-black/55 backdrop-blur-[2px]"
+        className="fixed inset-0 z-80 bg-eva-claret/50 backdrop-blur-[2px] bg-[url(/images/PresetPanelBg.png)] bg-no-repeat bg-center bg-contain"
         onClick={onClose}
       />
 
