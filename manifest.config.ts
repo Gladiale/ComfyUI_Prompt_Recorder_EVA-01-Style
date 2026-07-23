@@ -18,7 +18,7 @@ export default defineManifest({
       48: "icons/icon48.png",
     },
     default_popup: "src/popup.html",
-    default_title: "ComfyUI Prompt Recorder",
+    default_title: "ComfyUI Prompt Recorder Eva-01",
   },
   permissions: ["storage"],
 });
