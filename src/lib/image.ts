@@ -42,8 +42,16 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** 縦横が maxDim 以下に収まるよう、比率を維持して縮小。元が小さればそのまま。 */
-function fitWithin(w: number, h: number, maxDim: number): { w: number; h: number } {
+/**
+ * 縦横が maxDim 以下に収まるよう、比率を維持して縮小する。
+ * 元がどちらも maxDim 以下ならそのまま返す。
+ * （Canvas を使わない純粋計算。圧縮パイプラインの寸法決定に使用）
+ */
+export function fitWithin(
+  w: number,
+  h: number,
+  maxDim: number,
+): { w: number; h: number } {
   const ratio = Math.min(maxDim / w, maxDim / h);
   if (ratio >= 1) return { w, h };
   return { w: Math.round(w * ratio), h: Math.round(h * ratio) };

@@ -2,7 +2,7 @@
 
 > 最終更新: 2026-07-24  
 > ブランチ: `feature/preset-enhancement`  
-> 現状: **Phase 0〜7 完了** / **Phase 8 未着手（任意）**
+> 現状: **Phase 0〜7 + 8a（条件付き）完了** / **Phase 8b・8c 未着手（任意）**
 
 ---
 
@@ -17,11 +17,12 @@
 | 4 | プリセット | `preset.test.ts`（save/apply/diff/analyze + 統合） | `44a8117` |
 | 5 | Import 正規化 | `normalize.test.ts` + `import-samples.ts` | `b1778a3` |
 | 6 | 差分検出 | `diff.test.ts` | `b44c2b7` |
-| 7 | storage | `storage.test.ts`（memory + chrome mock + debounce） | （未コミット） |
+| 7 | storage | `storage.test.ts`（memory + chrome mock + debounce） | `f94c7d5` |
+| 8a | image（条件付き） | `fitWithin` export + `image.test.ts`（定数・寸法計算のみ） | （未コミット） |
 
 ```bash
 npm run test:run
-# 目安: 14 files / 222 tests（Phase 7 時点）
+# 目安: 15 files / 236 tests（Phase 8a 時点）
 ```
 
 ### 実行コマンド
@@ -61,11 +62,11 @@ CLI でも同フラグを scripts に直書き（`package.json`）。
 | ~~**5** Import 正規化~~ | ~~高~~ | ~~`tree/normalize.ts`~~ | ✅ 完了 | — |
 | ~~**6** 差分検出~~ | ~~高~~ | ~~`diff.ts`~~ | ✅ 完了 | — |
 | ~~**7** storage~~ | ~~中~~ | ~~`storage.ts`~~ | ✅ 完了 | — |
-| **8a** image | 低 | `image.ts` | 0.5〜1 日 | jsdom + canvas mock |
+| ~~**8a** image~~ | ~~低~~ | ~~`image.ts`（fitWithin のみ）~~ | ✅ 条件付き完了 | — |
 | **8b** hooks | 低 | `src/hooks/*` | 1 日 | jsdom + RTL |
 | **8c** UI smoke | 任意 | 主要コンポーネント | 1 日〜 | RTL |
 
-**推奨着手順:** （必要なら）8a → 8b。Phase 1〜7 で `src/lib` 純粋パスはほぼ固まった。
+**推奨着手順:** （必要なら）8b。Canvas / `processPresetImage` 全体のモックテストは行わない。
 
 ---
 
@@ -376,27 +377,23 @@ expect(fn).toHaveBeenCalledWith(3);
 
 Phase 1〜7 で `src/lib` の純粋パスがほぼ固まる。ROI が落ちる部分はここに集約する。
 
-### 8a. 画像圧縮 [`src/lib/image.ts`](../src/lib/image.ts)
+### 8a. 画像圧縮 [`src/lib/image.ts`](../src/lib/image.ts) — ✅ 条件付き完了
 
 | 項目 | 内容 |
 |------|------|
-| 公開 API | `getImageNaturalSize`, `fileToCompressedDataURL`, `processPresetImage` 等 |
-| 依存 | `FileReader`, `Image`, `HTMLCanvasElement` |
-| 環境 | `// @vitest-environment jsdom` または config でファイル単位指定 |
-| mock | `Image` onload、`canvas.getContext('2d')`、`toDataURL` |
+| 実施 | `fitWithin` を export し、定数 + 寸法計算のみ unit 化 |
+| 非実施 | Canvas / FileReader / `processPresetImage` 全体の mock テスト |
+| 成果物 | `src/lib/image.test.ts` |
 
-**最低限ケース案:**
+**カバー済み:**
 
 | # | 内容 |
 |---|------|
 | I1 | `WORD_IMAGE_MAX_DIM` / `PRESET_IMAGE_MAX_DIM` 定数 |
-| I2 | `fitWithin` 相当の縮小（export されていなければ compress 結果の data URL 形式） |
-| I3 | sizeBudget 内の JPEG data URL（`data:image/jpeg;base64,` で始まる） |
-| I4 | 読み込み失敗時の reject / エラーメッセージ |
+| I2 | `fitWithin` — 縮小なし / 幅超過 / 高さ超過 / 正方形 / 比率維持 / round |
+| — | 極端に細い画像で短辺 0 になる実装挙動を文書化 |
 
-**やらないこと:** 実画像の見た目・品質の目視、巨大バイナリのスナップショット。
-
-**pure に切り出せるなら:** `fitWithin` を export して unit 化すると mock が減る（リファクタ任意）。
+**やらないこと（継続）:** 実画像の見た目・品質、巨大バイナリのスナップショット、jsdom + canvas mock。
 
 ### 8b. Hooks
 
@@ -462,7 +459,7 @@ src/lib/
   array.test.ts              ✅ Phase 1
   diff.test.ts               ✅ Phase 6
   storage.test.ts            ✅ Phase 7
-  image.test.ts              ⬜ Phase 8a（任意）
+  image.test.ts              ✅ Phase 8a（fitWithin + 定数のみ）
   tree/
     __fixtures__/
       sampleState.ts         ✅
@@ -511,8 +508,8 @@ src/lib/
 
 ### Phase 8（任意）
 
-- [ ] jsdom / RTL 依存追加
-- [ ] image 最低限 or fitWithin 切り出し
+- [x] 8a: `fitWithin` export + unit（Canvas mock なし）
+- [ ] jsdom / RTL 依存追加（8b 着手時）
 - [ ] 軽量 hooks のみ
 - [ ] UI は smoke に限定
 
@@ -533,6 +530,7 @@ src/lib/
 1. ~~**Phase 5** から着手~~ ✅ 完了
 2. ~~**Phase 6**（コピー後 diff）~~ ✅ 完了
 3. ~~**Phase 7** で永続化の安心を足す~~ ✅ 完了
-4. Phase 8 は不具合が出てからで十分なことが多い
+4. ~~**Phase 8a**（fitWithin のみ）~~ ✅ 完了
+5. Phase 8b / 8c は不具合が出てからで十分なことが多い
 
-実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜7 と同じ運用になる。
+実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜8a と同じ運用になる。
