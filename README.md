@@ -1,5 +1,5 @@
 # vibe coding
-- MODEL: glm 5.2
+- MODEL: glm 5.2 + grok 4.5
 - IDE:   vscode + claude code + cc switch
 
 ![preview](preview_01.png)
