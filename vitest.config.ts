@@ -14,9 +14,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    // Windows で threads プール時に config 未初期化で落ちることがあるため forks 固定
+    // Windows で worker 分離時に runner/config 未初期化で落ちることがあるため固定
     pool: "forks",
     maxWorkers: 1,
     fileParallelism: false,
+    isolate: false,
   },
 });
