@@ -2,7 +2,7 @@
 
 > 最終更新: 2026-07-24  
 > ブランチ: `feature/preset-enhancement`  
-> 現状: **Phase 0〜5 完了** / **Phase 6〜8 未着手**
+> 現状: **Phase 0〜6 完了** / **Phase 7〜8 未着手**
 
 ---
 
@@ -15,11 +15,12 @@
 | 2 | ツリー基盤 | factory / search / collector / navigation / immutable + fixtures | `f4e0914` |
 | 3 | word / group CRUD | `word.test.ts` / `group.test.ts`（`moveGroup` 重点） | `cc20c97` |
 | 4 | プリセット | `preset.test.ts`（save/apply/diff/analyze + 統合） | `44a8117` |
-| 5 | Import 正規化 | `normalize.test.ts` + `import-samples.ts` | （未コミット） |
+| 5 | Import 正規化 | `normalize.test.ts` + `import-samples.ts` | `b1778a3` |
+| 6 | 差分検出 | `diff.test.ts` | （未コミット） |
 
 ```bash
 npm run test:run
-# 目安: 12 files / 186 tests（Phase 5 時点）
+# 目安: 13 files / 207 tests（Phase 6 時点）
 ```
 
 ### 実行コマンド
@@ -34,7 +35,7 @@ npm run test:run
 
 ワーカー分離時に `config` / runner 未初期化で落ちることがあるため、現状は次を固定している。
 
-- `pool: "forks"`
+- `pool: "vmThreads"`（forks は Windows で断続的に config 未初期化）
 - `maxWorkers: 1`
 - `fileParallelism: false`
 - `isolate: false`
@@ -57,13 +58,13 @@ CLI でも同フラグを scripts に直書き（`package.json`）。
 | Phase | 優先度 | 対象 | 目安工数 | 依存 |
 |-------|--------|------|----------|------|
 | ~~**5** Import 正規化~~ | ~~高~~ | ~~`tree/normalize.ts`~~ | ✅ 完了 | — |
-| **6** 差分検出 | **高** | `diff.ts` | 0.5 日 | Phase 1 strength/normalize |
+| ~~**6** 差分検出~~ | ~~高~~ | ~~`diff.ts`~~ | ✅ 完了 | — |
 | **7** storage | 中 | `storage.ts` | 0.5 日 | mock / 環境分岐 |
 | **8a** image | 低 | `image.ts` | 0.5〜1 日 | jsdom + canvas mock |
 | **8b** hooks | 低 | `src/hooks/*` | 1 日 | jsdom + RTL |
 | **8c** UI smoke | 任意 | 主要コンポーネント | 1 日〜 | RTL |
 
-**推奨着手順:** Phase 6 → 7 →（必要なら）8a → 8b。
+**推奨着手順:** Phase 7 →（必要なら）8a → 8b。
 
 ---
 
@@ -262,9 +263,9 @@ function ref(
 
 ### 完了条件
 
-- [ ] added / removed / strength / text / null snapshot / 重複排除をカバー
-- [ ] strength+text 同時変更の kind 優先を明文化したテストあり
-- [ ] 全体緑
+- [x] added / removed / strength / text / null snapshot / 重複排除をカバー
+- [x] strength+text 同時変更の kind 優先を明文化したテストあり
+- [x] 全体緑（13 files / 207 tests）
 
 ---
 
@@ -458,7 +459,7 @@ src/lib/
   normalize.test.ts          ✅ Phase 1
   strength.test.ts           ✅ Phase 1
   array.test.ts              ✅ Phase 1
-  diff.test.ts               ⬜ Phase 6
+  diff.test.ts               ✅ Phase 6
   storage.test.ts            ⬜ Phase 7
   image.test.ts              ⬜ Phase 8a（任意）
   tree/
@@ -492,10 +493,10 @@ src/lib/
 
 ### Phase 6
 
-- [ ] `diff.test.ts` — buildSnapshotEntries（重複排除・空 text）
-- [ ] makeSnapshot
-- [ ] computeDiff 全 kind + null + strength 優先
-- [ ] `npm run test:run` 緑
+- [x] `diff.test.ts` — buildSnapshotEntries（重複排除・空 text）
+- [x] makeSnapshot
+- [x] computeDiff 全 kind + null + strength 優先
+- [x] `npm run test:run` 緑
 - [ ] コミット例: `test: Phase 6 — プロンプト差分検出のユニットテスト`
 
 ### Phase 7
@@ -529,8 +530,8 @@ src/lib/
 ## 11. 次のアクション
 
 1. ~~**Phase 5** から着手~~ ✅ 完了
-2. **Phase 6**（コピー後 diff はユーザー向けコア体験）
+2. ~~**Phase 6**（コピー後 diff）~~ ✅ 完了
 3. **Phase 7** で永続化の安心を足す
 4. Phase 8 は不具合が出てからで十分なことが多い
 
-実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜5 と同じ運用になる。
+実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜6 と同じ運用になる。

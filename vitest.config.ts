@@ -14,8 +14,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    // Windows で worker 分離時に runner/config 未初期化で落ちることがあるため固定
-    pool: "forks",
+    // Windows で forks 時に runner/config 未初期化で落ちることがあるため固定
+    // vmThreads の方が forks より安定（forks は断続的に config 未初期化）
+    pool: "vmThreads",
     maxWorkers: 1,
     fileParallelism: false,
     isolate: false,
