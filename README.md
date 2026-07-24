@@ -41,7 +41,7 @@
 
 ## 技術スタック
 
-React 19 / Vite / TypeScript / Tailwind CSS / Motion / React Icons / Manifest V3 / CRXJS Vite Plugin  
+React 19 / Vite / TypeScript / Tailwind CSS / Motion / React Icons / Manifest V3 / CRXJS Vite Plugin / Vitest  
 
 ReactCompilerは未使用
 
@@ -74,6 +74,9 @@ npm run build      # dist/ に拡張機能を出力
 | `npm run dev` | Vite 開発サーバ（ブラウザで UI 確認用） |
 | `npm run build` | 型チェック + 本番ビルド → `dist/` |
 | `npm run lint` | ESLint |
+| `npm test` | Vitest（watch） |
+| `npm run test:run` | Vitest（1回実行） |
+| `npm run test:coverage` | Vitest（カバレッジ） |
 
 ## ファイル構成
 
@@ -125,24 +128,26 @@ src/
    ├─ tree.ts               # ツリー操作（全モジュールを再エクスポート）
    ├─ tree/                 # ツリー操作モジュール（SRP分割）
    │  ├─ id.ts              # ID生成
-   │  ├─ factory.ts         # オブジェクト生成
-   │  ├─ search.ts          # ツリー検索
-   │  ├─ immutable.ts       # immutable更新ヘルパ
-   │  ├─ group.ts           # グループ操作
-   │  ├─ word.ts            # ワード操作
-   │  ├─ collector.ts       # 選択ワード収集
-   │  ├─ navigation.ts      # グループ列挙・展開
-   │  ├─ preset.ts          # プリセット操作（保存/還元/差分/並替）
-   │  └─ normalize.ts       # Import/Export正規化
-   ├─ normalize.ts          # 重複判定（trim+小文字化+空白圧縮）
-   ├─ strength.ts           # 強度調整（0..10 → ()/(text:1.x)）
-   ├─ diff.ts               # 差分検出（追加/削除/強度変更）
-   ├─ image.ts              # 画像圧縮（ワード420px / プリセット560px）
-   ├─ array.ts              # 配列ユーティリティ
-   ├─ storage.ts            # chrome.storage ラッパ + debounce
+   │  ├─ factory.ts / factory.test.ts
+   │  ├─ search.ts / search.test.ts
+   │  ├─ immutable.ts / immutable.test.ts
+   │  ├─ group.ts / group.test.ts
+   │  ├─ word.ts / word.test.ts
+   │  ├─ collector.ts / collector.test.ts
+   │  ├─ navigation.ts / navigation.test.ts
+   │  ├─ preset.ts / preset.test.ts
+   │  ├─ normalize.ts / normalize.test.ts
+   │  └─ __fixtures__/      # テスト用固定 ID 状態・Import サンプル
+   ├─ normalize.ts / normalize.test.ts
+   ├─ strength.ts / strength.test.ts
+   ├─ diff.ts / diff.test.ts
+   ├─ image.ts / image.test.ts
+   ├─ array.ts / array.test.ts
+   ├─ storage.ts / storage.test.ts
    └─ motions.ts            # Motion用アニメーション定義
 public/
 ├─ manifest.json            # Chrome拡張機能マニフェスト（V3）
 ├─ icons/                   # アイコン画像（16/32/48/128px）
 └─ images/                  # UI用背景画像（PresetPanelBg 等）
+vitest.config.ts            # テスト専用設定（vite.config と分離）
 ```

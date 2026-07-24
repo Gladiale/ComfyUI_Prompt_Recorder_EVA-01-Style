@@ -24,6 +24,8 @@ npm run lint
 npm test
 # テスト（1回実行）
 npm run test:run
+# テスト（カバレッジ）
+npm run test:coverage
 ```
 
 ## Chrome拡張機能の読み込み
@@ -42,6 +44,7 @@ npm run test:run
 - **状態管理**: React Context API
 - **永続化**: chrome.storage.local
 - **拡張機能ビルド**: @crxjs/vite-plugin
+- **テスト**: Vitest（`src/lib` の純粋関数ユニットテスト）
 
 **注意**: React Compiler (babel-plugin-react-compiler) は未使用。
 
@@ -183,6 +186,19 @@ PresetFormData {
 - `PROMPT_STATE_KEY`: メイン状態
 - `PROMPT_SNAPSHOT_KEY`: 差分検出用スナップショット
 - debounce 関数による書き込み頻度制御
+
+### テスト
+
+- **ランナー**: Vitest 4（設定は [vitest.config.ts](vitest.config.ts)。`vite.config.ts` の crx/zip と干渉するため分離）
+- **対象**: `src/lib/**` の純粋関数（UI / React コンポーネントは対象外）
+- **配置**: 実装と同ディレクトリの `*.test.ts`（例: `src/lib/tree/preset.test.ts`）
+- **フィクスチャ**: [src/lib/tree/__fixtures__/](src/lib/tree/__fixtures__/)
+  - `sampleState.ts`: 固定 ID のツリー状態
+  - `import-samples.ts`: Import 正規化用の正常・破損データ
+- **実行環境**: `environment: "node"`。Windows 安定化のため `pool: vmThreads` / 単一ワーカー / `isolate: false`（`package.json` の scripts と `vitest.config.ts` で固定）
+- **カバレッジ対象の主なモジュール**:
+  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算）
+  - `tree/*`: factory, search, immutable, collector, navigation, word, group, preset, normalize
 
 ### コンポーネント構成
 
