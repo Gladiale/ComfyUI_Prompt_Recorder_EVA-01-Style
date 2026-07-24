@@ -19,6 +19,11 @@ npm run build
 
 # リント
 npm run lint
+
+# テスト（watch）
+npm test
+# テスト（1回実行）
+npm run test:run
 ```
 
 ## Chrome拡張機能の読み込み

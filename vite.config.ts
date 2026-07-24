@@ -9,6 +9,7 @@ import manifest from "./manifest.config.ts";
 import pkg from "./package.json" with { type: "json" };
 
 // https://vite.dev/config/
+// テスト設定は vitest.config.ts を参照（crx/zip プラグインとの干渉回避）
 export default defineConfig({
   resolve: {
     alias: {
