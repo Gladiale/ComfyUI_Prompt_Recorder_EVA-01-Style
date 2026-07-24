@@ -2,7 +2,7 @@
 
 > 最終更新: 2026-07-24  
 > ブランチ: `feature/preset-enhancement`  
-> 現状: **Phase 0〜6 完了** / **Phase 7〜8 未着手**
+> 現状: **Phase 0〜7 完了** / **Phase 8 未着手（任意）**
 
 ---
 
@@ -16,11 +16,12 @@
 | 3 | word / group CRUD | `word.test.ts` / `group.test.ts`（`moveGroup` 重点） | `cc20c97` |
 | 4 | プリセット | `preset.test.ts`（save/apply/diff/analyze + 統合） | `44a8117` |
 | 5 | Import 正規化 | `normalize.test.ts` + `import-samples.ts` | `b1778a3` |
-| 6 | 差分検出 | `diff.test.ts` | （未コミット） |
+| 6 | 差分検出 | `diff.test.ts` | `b44c2b7` |
+| 7 | storage | `storage.test.ts`（memory + chrome mock + debounce） | （未コミット） |
 
 ```bash
 npm run test:run
-# 目安: 13 files / 207 tests（Phase 6 時点）
+# 目安: 14 files / 222 tests（Phase 7 時点）
 ```
 
 ### 実行コマンド
@@ -59,12 +60,12 @@ CLI でも同フラグを scripts に直書き（`package.json`）。
 |-------|--------|------|----------|------|
 | ~~**5** Import 正規化~~ | ~~高~~ | ~~`tree/normalize.ts`~~ | ✅ 完了 | — |
 | ~~**6** 差分検出~~ | ~~高~~ | ~~`diff.ts`~~ | ✅ 完了 | — |
-| **7** storage | 中 | `storage.ts` | 0.5 日 | mock / 環境分岐 |
+| ~~**7** storage~~ | ~~中~~ | ~~`storage.ts`~~ | ✅ 完了 | — |
 | **8a** image | 低 | `image.ts` | 0.5〜1 日 | jsdom + canvas mock |
 | **8b** hooks | 低 | `src/hooks/*` | 1 日 | jsdom + RTL |
 | **8c** UI smoke | 任意 | 主要コンポーネント | 1 日〜 | RTL |
 
-**推奨着手順:** Phase 7 →（必要なら）8a → 8b。
+**推奨着手順:** （必要なら）8a → 8b。Phase 1〜7 で `src/lib` 純粋パスはほぼ固まった。
 
 ---
 
@@ -364,10 +365,10 @@ expect(fn).toHaveBeenCalledWith(3);
 
 ### 完了条件
 
-- [ ] state / snapshot の往復と壊データ
-- [ ] debounce を fake timers で検証
-- [ ] chrome mock または「chrome なしパス」を文書化してカバー
-- [ ] 全体緑
+- [x] state / snapshot の往復と壊データ
+- [x] debounce を fake timers で検証
+- [x] chrome mock + memory パスをカバー（resetModules + stubGlobal）
+- [x] 全体緑（14 files / 222 tests）
 
 ---
 
@@ -460,7 +461,7 @@ src/lib/
   strength.test.ts           ✅ Phase 1
   array.test.ts              ✅ Phase 1
   diff.test.ts               ✅ Phase 6
-  storage.test.ts            ⬜ Phase 7
+  storage.test.ts            ✅ Phase 7
   image.test.ts              ⬜ Phase 8a（任意）
   tree/
     __fixtures__/
@@ -501,11 +502,11 @@ src/lib/
 
 ### Phase 7
 
-- [ ] `storage.test.ts` — load/save 往復
-- [ ] 壊 JSON / 不正 snapshot
-- [ ] debounce + fake timers
-- [ ] chrome 分岐（resetModules または memory パスのみ明記）
-- [ ] `npm run test:run` 緑
+- [x] `storage.test.ts` — load/save 往復
+- [x] 壊 JSON / 不正 snapshot
+- [x] debounce + fake timers
+- [x] chrome 分岐（resetModules + stubGlobal）と memory パス
+- [x] `npm run test:run` 緑
 - [ ] コミット例: `test: Phase 7 — storage と debounce のユニットテスト`
 
 ### Phase 8（任意）
@@ -531,7 +532,7 @@ src/lib/
 
 1. ~~**Phase 5** から着手~~ ✅ 完了
 2. ~~**Phase 6**（コピー後 diff）~~ ✅ 完了
-3. **Phase 7** で永続化の安心を足す
+3. ~~**Phase 7** で永続化の安心を足す~~ ✅ 完了
 4. Phase 8 は不具合が出てからで十分なことが多い
 
-実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜6 と同じ運用になる。
+実装に入る際は、このドキュメントのチェックリストを上から消化し、フェーズごとにコミットすると Phase 0〜7 と同じ運用になる。
