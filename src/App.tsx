@@ -4,6 +4,8 @@ import { PromptProvider, usePrompt } from "@/context/PromptContext";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { WordEditorProvider } from "@/components/WordEditModal";
 import { ClockNavProvider } from "@/components/ClockNav";
+import { PresetFormProvider } from "@/context/PresetFormContext";
+import { PresetListProvider } from "@/context/PresetListContext";
 import { WordPanel } from "@/components/WordPanel";
 import { SynthesisPanel } from "@/components/SynthesisPanel";
 import { SelectedPanel } from "@/components/SelectedPanel";
@@ -53,9 +55,13 @@ export default function App() {
     <PromptProvider>
       <ConfirmProvider>
         <WordEditorProvider>
-          <ClockNavProvider>
-            <Shell />
-          </ClockNavProvider>
+          <PresetFormProvider>
+            <PresetListProvider>
+              <ClockNavProvider>
+                <Shell />
+              </ClockNavProvider>
+            </PresetListProvider>
+          </PresetFormProvider>
         </WordEditorProvider>
       </ConfirmProvider>
     </PromptProvider>

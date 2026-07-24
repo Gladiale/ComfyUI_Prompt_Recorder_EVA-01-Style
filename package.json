@@ -7,8 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest --pool=vmThreads --maxWorkers=1 --no-file-parallelism --isolate=false",
+    "test:run": "vitest run --pool=vmThreads --maxWorkers=1 --no-file-parallelism --isolate=false",
+    "test:coverage": "vitest run --coverage --pool=vmThreads --maxWorkers=1 --no-file-parallelism --isolate=false"
   },
+
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "motion": "^12.42.2",
@@ -36,6 +40,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.1.1",
-    "vite-plugin-zip-pack": "^1.2.4"
+    "vite-plugin-zip-pack": "^1.2.4",
+    "vitest": "^4.1.10"
   }
 }

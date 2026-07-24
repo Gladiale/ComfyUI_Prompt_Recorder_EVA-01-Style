@@ -8,7 +8,7 @@
 export { genId } from "./tree/id";
 
 // ファクトリ関数
-export { createWord, createGroup, createDefaultState } from "./tree/factory";
+export { createWord, createGroup } from "./tree/factory";
 
 // 検索ヘルパ
 export { findGroup, isDescendant } from "./tree/search";
@@ -58,6 +58,13 @@ export {
   deletePreset,
   renamePreset,
   reorderPresets,
+  updatePresetMeta,
+  updatePresetEntries,
+  collectPresetEntries,
+  analyzePresetApply,
+  diffPresetEntries,
+  type PresetApplyReport,
+  type PresetUpdateDiff,
 } from "./tree/preset";
 
 // Import / Export

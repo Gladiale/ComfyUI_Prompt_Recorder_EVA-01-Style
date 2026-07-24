@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-ComfyUI用プロンプトワード記録Chrome拡張機能（Manifest V3）。エヴァンゲリオン初号機テーマのUI。階層的なグループ構造でワードを管理し、重複排除した最終プロンプトを生成する。
+ComfyUI用プロンプトワード記録Chrome拡張機能（Manifest V3）。エヴァンゲリオン初号機テーマのUI。階層的なグループ構造でワードを管理し、重複排除した最終プロンプトを生成する。選択組み合わせをメタデータ付きプリセットとして保存・還元できる。
 
 ## 開発コマンド
 
@@ -19,6 +19,13 @@ npm run build
 
 # リント
 npm run lint
+
+# テスト（watch）
+npm test
+# テスト（1回実行）
+npm run test:run
+# テスト（カバレッジ）
+npm run test:coverage
 ```
 
 ## Chrome拡張機能の読み込み
@@ -37,6 +44,7 @@ npm run lint
 - **状態管理**: React Context API
 - **永続化**: chrome.storage.local
 - **拡張機能ビルド**: @crxjs/vite-plugin
+- **テスト**: Vitest（`src/lib` の純粋関数ユニットテスト）
 
 **注意**: React Compiler (babel-plugin-react-compiler) は未使用。
 
@@ -49,6 +57,7 @@ npm run lint
 - 全ての更新操作は immutable（structuredClone ベース）
 - debounce（220ms）で chrome.storage.local へ自動保存
 - 選択ワードの収集・重複排除・差分計算は useMemo で派生
+- プリセット関連: `savePreset` / `applyPreset` / `updatePresetMeta` / `updatePresetEntries` / `analyzePresetApply` / `diffPresetEntries` など
 
 ### データモデル ([src/types.ts](src/types.ts))
 
@@ -70,6 +79,24 @@ Word {
   strength?: number  // 0..10（0=デフォルト / 1=() / 2..10=(text:1.x)）
   image?: string     // Base64 data URL（最大420×420）
 }
+
+// プリセット（選択組み合わせ + 生成メタ）
+PromptPreset {
+  id, name
+  baseModel, baseModelKind
+  loras?: PresetModelRef[]        // { model, strength }
+  controlNets?: PresetModelRef[]
+  metadata: PresetMetadata        // steps, cfg, sampler, scheduler, width, height
+  image: string                   // プレビュー画像（最大560px JPEG data URL）
+  description?: string
+  entries: PresetEntry[]          // { wordId, text, strength } text は差分通知用
+  createdAt, updatedAt?
+}
+
+PresetFormData {
+  // 新規保存・メタ編集の入力（id/createdAt 以外）
+  // metadata は未入力時 optional。保存時に正規化して metadata へ落とす
+}
 ```
 
 ### ツリー操作 ([src/lib/tree/](src/lib/tree/))
@@ -81,9 +108,8 @@ Word {
 - **[tree/id.ts](src/lib/tree/id.ts)** (18行): ID生成
   - `genId()`: ユニークID生成（タイムスタンプ + カウンタ + ランダム）
 
-- **[tree/factory.ts](src/lib/tree/factory.ts)** (58行): オブジェクト生成
+- **[tree/factory.ts](src/lib/tree/factory.ts)**: オブジェクト生成
   - `createWord()`, `createGroup()`: 新規オブジェクト生成
-  - `createDefaultState()`: 初期状態生成（サンプルデータ）
 
 - **[tree/search.ts](src/lib/tree/search.ts)** (42行): ツリー検索
   - `findGroup()`: グループをIDで検索
@@ -104,10 +130,10 @@ Word {
   - `toggleWord()`, `setWordSelected()`, `setWordStrength()`
   - `reorderWords()`: 同一グループ内の並替（Motion Reorder 対応）
 
-- **[tree/collector.ts](src/lib/tree/collector.ts)** (52行): 選択ワード収集
+- **[tree/collector.ts](src/lib/tree/collector.ts)** (57行): 選択ワード収集
   - `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
   - `groupHasSelection()`: 選択ワード存在チェック（折り畳み徽章用）
-  - `countSelectedWords()`: 選択ワード数カウント
+  - `countSelectedWords()`, `countSelectedWordsInGroup()`
   - `SelectedWordRef`: 選択ワード参照の型定義
 
 - **[tree/navigation.ts](src/lib/tree/navigation.ts)** (71行): グループ列挙・展開
@@ -115,15 +141,22 @@ Word {
   - `expandGroupPath()`: 指定グループとその祖先を展開
   - `GroupRef`: グループ参照の型定義
 
-- **[tree/preset.ts](src/lib/tree/preset.ts)** (118行): プリセット操作
-  - `savePreset()`: 現在の選択状態を保存（同名なら上書き）
-  - `applyPreset()`: プリセットを復元（完全置換）
+- **[tree/preset.ts](src/lib/tree/preset.ts)** (370行): プリセット操作
+  - `collectPresetEntries()`: 現在の選択から PresetEntry 配列を構築
+  - `savePreset(form)`: 現在の選択 + フォーム情報を新規保存（同名でも上書きしない。重複名チェックはフォーム側）
+  - `updatePresetMeta(id, form)`: メタ情報のみ更新（entries は維持）
+  - `updatePresetEntries(id)`: ワード情報だけを現在の選択で更新
+  - `applyPreset(id)`: 全ワードを未選択・強度0にリセット後、entries の wordId で selected/strength を当てはめる（text は復元しない）
+  - `analyzePresetApply(id)`: 還元前に id 欠落・text 変更を検査
+  - `diffPresetEntries(id)`: 現在の選択 vs プリセット entries の差分（追加/削除/強度変更/text変更）
   - `deletePreset()`, `renamePreset()`, `reorderPresets()`
 
-- **[tree/normalize.ts](src/lib/tree/normalize.ts)** (93行): Import/Export正規化
+- **[tree/normalize.ts](src/lib/tree/normalize.ts)** (190行): Import/Export正規化
   - `normalizeImportedState()`: 外部データを検証・正規化
+  - 旧形式プリセット（name + entries のみ）も読み込み可能
+  - 未知・欠損フィールドは安全なデフォルトへ落とす
 
-**メインファイル [tree.ts](src/lib/tree.ts)** (63行): 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
+**メインファイル [tree.ts](src/lib/tree.ts)** (71行): 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
 
 ### 重複排除 ([src/lib/normalize.ts](src/lib/normalize.ts))
 
@@ -139,13 +172,41 @@ Word {
 
 コピーボタン押下時にスナップショットを保存し、以降の変更（追加・削除・強度変更）を検出。
 
+### 画像処理 ([src/lib/image.ts](src/lib/image.ts))
+
+- ワード画像: 最大 420×420px、sizeBudget 約 60KB（`WORD_IMAGE_MAX_DIM`）
+- プリセット画像: 最大 560px、sizeBudget 約 140KB（`PRESET_IMAGE_MAX_DIM`）
+- 品質を段階的に下げて予算内の JPEG data URL を採用
+- `processPresetImage()`: 元解像度取得 + 560px 圧縮を一括（width/height を metadata に自動記入）
+- `getImageNaturalSize()`: 元解像度のみ取得
+
+### 永続化 ([src/lib/storage.ts](src/lib/storage.ts))
+
+- `chrome.storage.local` に JSON 保存
+- `PROMPT_STATE_KEY`: メイン状態
+- `PROMPT_SNAPSHOT_KEY`: 差分検出用スナップショット
+- debounce 関数による書き込み頻度制御
+
+### テスト
+
+- **ランナー**: Vitest 4（設定は [vitest.config.ts](vitest.config.ts)。`vite.config.ts` の crx/zip と干渉するため分離）
+- **対象**: `src/lib/**` の純粋関数（UI / React コンポーネントは対象外）
+- **配置**: 実装と同ディレクトリの `*.test.ts`（例: `src/lib/tree/preset.test.ts`）
+- **フィクスチャ**: [src/lib/tree/__fixtures__/](src/lib/tree/__fixtures__/)
+  - `sampleState.ts`: 固定 ID のツリー状態
+  - `import-samples.ts`: Import 正規化用の正常・破損データ
+- **実行環境**: `environment: "node"`。Windows 安定化のため `pool: vmThreads` / 単一ワーカー / `isolate: false`（`package.json` の scripts と `vitest.config.ts` で固定）
+- **カバレッジ対象の主なモジュール**:
+  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算）
+  - `tree/*`: factory, search, immutable, collector, navigation, word, group, preset, normalize
+
 ### コンポーネント構成
 
 **メインレイアウト**:
 
-- **[App.tsx](src/App.tsx)** (63行): ルートコンポーネント
+- **[App.tsx](src/App.tsx)** (69行): ルートコンポーネント
   - 黄金比レイアウト（左61.8% / 右38.2%）
-  - 各種Providerでラップ（PromptContext, ClockNav, WordEditor, Confirm）
+  - Provider 階層: Prompt → Confirm → WordEditor → PresetForm → PresetList → ClockNav
 
 **左側パネル - ワード管理**:
 
@@ -175,37 +236,62 @@ Word {
 
 **右側パネル - プロンプト生成**:
 
-- **[SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)** (341行): 右上総括欄
+- **[SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)** (140行): 右上総括欄
   - 選択ワードを重複排除して最終プロンプト生成
   - カンマ区切り/改行区切り切替
   - コピーボタン（スナップショット保存 → 差分検出開始）
-  - 差分表示（追加=緑、削除=赤、強度変更=黄）
-  - プリセット管理（保存・適用・並替・削除）
+  - 差分ポップアップは `synthesis/DiffPopup` に分離
 
-- **[SelectedPanel.tsx](src/components/SelectedPanel.tsx)** (426行): 右下選択ワード一覧
+- **[SelectedPanel.tsx](src/components/SelectedPanel.tsx)** (164行): 右下選択ワード一覧
   - 選択中ワードをグループパス付きで表示
-  - クリックで選択解除
-  - グループ名クリックでジャンプ（祖先ごと展開+スクロール）
+  - クリックで選択解除 / 強度ステッパー
+  - ヘッダからプリセット保存（ブックマーク）・一覧（レイヤー）を起動
+
+**プリセット UI**:
+
+- **[PresetFormModal.tsx](src/components/PresetFormModal.tsx)** (227行): 保存・メタ編集フォーム
+  - 画像 / 名前 / baseModel / LoRA・ControlNet / 生成メタ（steps, cfg 等）/ 説明
+  - 同名プリセットはフォーム側で送信ブロック（上書き不可）
+  - 子: `preset/FormField`, `ImagePicker`, `ModelListEditor`, `NumField`（EVA風ステッパー）
+
+- **[PresetListPanel.tsx](src/components/PresetListPanel.tsx)**: 全画面スライドインの一覧
+  - 正六角形ハニカム + Motion DnD 並替
+  - タイルクリックで 3D 詳細カード（表面=画像 / 裏面=メタ）
+  - 還元・エントリ更新・削除・メタ編集
+  - 子: `preset/PresetHexTile`, `HexDragGhost`, `PresetDetailCard`, `UpdateDiffBody`
+
+- **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)**: 保存/編集モーダルの open API
+- **[PresetListContext.tsx](src/context/PresetListContext.tsx)**: 一覧パネルの open/close API
 
 **モーダル・ダイアログ**:
 
 - **[WordEditModal.tsx](src/components/WordEditModal.tsx)** (288行): ワード追加・編集モーダル
   - ワード本文、注釈、画像（最大420×420px）を編集
   - Provider + Context で呼び出し
-  - 画像は自動圧縮（JPEG quality=0.7）
+  - 画像は自動圧縮（JPEG quality 段階低下）
 
-- **[ConfirmDialog.tsx](src/components/ConfirmDialog.tsx)** (111行): 確認ダイアログ
+- **[ConfirmDialog.tsx](src/components/ConfirmDialog.tsx)** (120行): 確認ダイアログ
   - `window.confirm`の代替（エヴァ風デザイン）
   - Promise<boolean>で結果を返す
   - 破壊的操作（削除）は赤紫の確認ボタン
+  - ReactNode ボディ対応（プリセット更新差分 UI 等）
 
 **ナビゲーション**:
 
-- **[ClockNav.tsx](src/components/ClockNav.tsx)** (419行): 時計の指針型ロードマップ
+- **[ClockNav.tsx](src/components/ClockNav.tsx)** (428行): 時計の指針型ロードマップ
   - 「WORDS」ラベルから起動
   - マウスの動きに合わせて針が回転
   - クリックで該当グループへジャンプ（祖先展開+スクロール）
   - 深度別の色分けリング表示
+
+### カスタム Hooks ([src/hooks/](src/hooks/))
+
+- **useClickOutside**: 要素外クリックでコールバック
+- **useEscapeKey**: Esc キーでコールバック
+- **useSynthesisCopy**: 総括欄コピー + スナップショット更新
+- **usePresetFormState**: フォーム状態・バリデーション・画像処理
+- **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
+- **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
 
 ### 操作仕様
 
@@ -214,14 +300,5 @@ Word {
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索、非ヒットを淡色化
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
-
-### 画像処理 ([src/lib/image.ts](src/lib/image.ts))
-
-ユーザー提供画像を最大420×420pxに縮小（比率維持）、JPEG圧縮（quality=0.7）、Base64 data URLとして保存。
-
-### 永続化 ([src/lib/storage.ts](src/lib/storage.ts))
-
-- `chrome.storage.local` に JSON 保存
-- `PROMPT_STATE_KEY`: メイン状態
-- `PROMPT_SNAPSHOT_KEY`: 差分検出用スナップショット
-- debounce 関数による書き込み頻度制御
+- **プリセット保存**: SELECTED ヘッダのブックマーク → フォーム入力 → 現在の選択 + メタを保存
+- **プリセット一覧**: SELECTED ヘッダのレイヤー → ハニカム一覧。還元は wordId 基準（text は復元しない）。更新時は差分プレビューあり

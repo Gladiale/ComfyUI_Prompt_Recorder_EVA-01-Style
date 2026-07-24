@@ -6,10 +6,13 @@ import { FiAlertTriangle } from "react-icons/fi";
 
 interface ConfirmOptions {
   title?: string;
-  message: string;
+  /** 文字列またはリッチな差分 UI など */
+  message: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean; // 削除など破壊的操作：確認ボタンを赤紫に
+  /** 差分一覧など縦に長い内容向け（既定: 320） */
+  width?: number;
 }
 
 type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
@@ -56,7 +59,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               exit={{ scale: 0.95, opacity: 0, y: 8 }}
               transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-[320px] rounded-sm border border-eva-line bg-eva-bg-panel-2 shadow-glow-purple"
+              className="rounded-sm border border-eva-line bg-eva-bg-panel-2 shadow-glow-purple"
+              style={{ width: pending.width ?? 320 }}
             >
               {/* ヘッダ */}
               <div className="flex items-center gap-2 px-3 py-2 border-b border-eva-line-soft">
@@ -69,8 +73,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 </span>
               </div>
 
-              {/* 本文 */}
-              <div className="px-3 py-3 text-[13px] text-eva-ink/90 whitespace-pre-line">
+              {/* 本文（差分など長い内容はスクロール） */}
+              <div
+                className={[
+                  "px-3 py-3 text-[13px] text-eva-ink/90 max-h-115 overflow-y-auto",
+                  typeof pending.message === "string" ? "whitespace-pre-line" : "",
+                ].join(" ")}
+              >
                 {pending.message}
               </div>
 
