@@ -1,7 +1,7 @@
 {
   "name": "comfyui-prompt-recorder-eva-01-style",
   "private": true,
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,6 @@
     "test:run": "vitest run --pool=vmThreads --maxWorkers=1 --no-file-parallelism --isolate=false",
     "test:coverage": "vitest run --coverage --pool=vmThreads --maxWorkers=1 --no-file-parallelism --isolate=false"
   },
-
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "motion": "^12.42.2",
