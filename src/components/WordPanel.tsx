@@ -5,7 +5,7 @@ import { usePrompt } from "@/context/PromptContext";
 import { GroupNode } from "./GroupNode";
 import { SearchBox } from "./SearchBox";
 import { IOButtons } from "./IOButtons";
-import { useClockNav } from "./ClockNav";
+import { useClockNav } from "@/context/ClockNavContext";
 
 export function WordPanel() {
   const { state, addGroup, moveGroup } = usePrompt();
