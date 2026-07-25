@@ -3,7 +3,7 @@
 import { PromptProvider, usePrompt } from "@/context/PromptContext";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { WordEditorProvider } from "@/components/WordEditModal";
-import { ClockNavProvider } from "@/components/ClockNav";
+import { ClockNavProvider } from "@/context/ClockNavContext";
 import { PresetFormProvider } from "@/context/PresetFormContext";
 import { PresetListProvider } from "@/context/PresetListContext";
 import { WordPanel } from "@/components/WordPanel";

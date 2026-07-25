@@ -278,11 +278,11 @@ PresetFormData {
 
 **ナビゲーション**:
 
-- **[ClockNav.tsx](src/components/ClockNav.tsx)** (428行): 時計の指針型ロードマップ
-  - 「WORDS」ラベルから起動
-  - マウスの動きに合わせて針が回転
-  - クリックで該当グループへジャンプ（祖先展開+スクロール）
-  - 深度別の色分けリング表示
+- **時計ナビ ([context/ClockNavContext.tsx](src/context/ClockNavContext.tsx) + [components/clock/](src/components/clock/))**: 指針型ロードマップ
+  - Provider: open でダイヤル表示（PresetList と同パターン）
+  - `ClockDial` / `DialFace` / `DialMarker` / `DialNeedle` / `MagicCircleDecor` / `ActiveGroupLabel`
+  - hooks: `useClockDial`（針角度・アクティブ）、`useClockJump`（展開+スクロール）
+  - 幾何: `lib/clockGeometry.ts`（純粋関数）
 
 ### カスタム Hooks ([src/hooks/](src/hooks/))
 
