@@ -39,6 +39,9 @@
 
   /* --- アニメーション設定 --- */
   --animate-flicker: flicker 2.4s ease-in-out infinite;
+  /* 時計ナビ魔法陣: ゆるい連続回転 */
+  --animate-spin-cw-slow: spin-cw 96s linear infinite;
+  --animate-spin-ccw-slow: spin-ccw 72s linear infinite;
 
   /* --- キーフレーム設定 --- */
   @keyframes flicker {
@@ -48,6 +51,22 @@
     }
     50% {
       opacity: 0.7;
+    }
+  }
+  @keyframes spin-cw {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes spin-ccw {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
     }
   }
 }

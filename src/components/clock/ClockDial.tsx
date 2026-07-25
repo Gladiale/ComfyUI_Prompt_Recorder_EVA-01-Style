@@ -46,9 +46,9 @@ export function ClockDial({ onClose }: ClockDialProps) {
           filter: "drop-shadow(0 0 16px rgba(180,120,255,0.55))",
         }}
       >
-        {/* 背景: 正十二角形でクリップしたパネル */}
+        {/* 背景: 正十二角形でクリップしたパネル（ゆるく右回り） */}
         <div
-          className="absolute inset-0 bg-eva-bg-panel-2/95"
+          className="absolute inset-0 bg-eva-bg-panel-2/95 animate-spin-cw-slow"
           style={{ clipPath: CLIP_DODECAGON }}
         />
 
