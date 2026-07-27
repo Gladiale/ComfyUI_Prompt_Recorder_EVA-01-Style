@@ -22,6 +22,7 @@
   --color-eva-ink-dim: #9a86c8;
   --color-eva-line: #3a1f5e;
   --color-eva-line-soft: #241244;
+  --color-eva-bg-purple: #572e68;
   --color-eva-claret: #371029; /* 深みのある赤ワイン色 */
   --color-eva-lavender: #fccbfc; /* 淡い紫の代表的な表現です。少し青みや白みがかった上品な色合いを指します。*/
   --color-eva-lilac: #cb73dc; /* ラベンダーと似ていますが、よりピンクや赤みがかった淡い紫を指す際によく使われます。*/
@@ -84,14 +85,12 @@
   }
 
   body {
-    position: relative;
-    background: #572e68;
     /* background: #734586; */
+    @apply relative bg-eva-bg-purple;
   }
 
   #root {
-    width: 800px;
-    height: 600px;
+    @apply w-200 h-150;
   }
 
   /* スクロールバー（ポップアップ内） */
