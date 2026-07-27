@@ -24,7 +24,7 @@ export function ImagePicker({
   return (
     <div className="flex flex-col gap-1">
       <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
-        IMAGE {requireImage ? "(必須・最大560px)" : "(任意・最大560px)"}
+        IMAGE {requireImage ? "(必須・最大560pxで保存)" : "(任意・最大560pxで保存)"}
       </span>
       {image ? (
         <div className="relative w-fit max-w-full">
