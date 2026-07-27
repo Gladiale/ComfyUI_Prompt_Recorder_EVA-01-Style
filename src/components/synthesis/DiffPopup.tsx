@@ -34,7 +34,7 @@ export function DiffPopup({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.14 }}
-      className="absolute right-0 top-full mt-0 z-30 w-80 max-h-132.5 overflow-y-auto rounded-sm border border-eva-line bg-eva-bg-void/95 backdrop-blur shadow-glow-purple"
+      className="absolute right-0 top-full mt-0 z-30 w-80 max-h-135.5 overflow-y-auto rounded-sm border border-eva-line bg-[#4e0f42]/95 backdrop-blur shadow-glow-purple"
     >
       {/* ヘッダ：基準情報 */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-eva-line-soft">
