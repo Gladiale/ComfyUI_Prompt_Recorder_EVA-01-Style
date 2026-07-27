@@ -43,7 +43,7 @@ export function WordPanel() {
         <IOButtons />
         <button
           onClick={() => addGroup(null)}
-          className="group h-full aspect-square rounded-full active:scale-90 flex items-center justify-center p-1 border border-eva-purple hover:border-eva-green text-eva-green-soft hover:text-eva-green hover:shadow-glow-green transition-all cursor-pointer"
+          className="group h-full aspect-square rounded-full active:scale-90 flex items-center justify-center p-1 border border-eva-amber/40 hover:border-eva-green text-eva-green-soft hover:text-eva-green hover:shadow-glow-green transition-all cursor-pointer"
           title="ルートグループ追加"
         >
           <FiPlus size={15} className="absolute group-hover:opacity-0 transition-all" />
@@ -57,7 +57,7 @@ export function WordPanel() {
       <div
         onDragOver={onRootDragOver}
         onDrop={onRootDrop}
-        className="flex-1 min-h-0 overflow-y-auto pr-1 pb-2"
+        className="flex-1 min-h-0 overflow-y-auto pr-1"
       >
         <div className="flex flex-col gap-2">
           {state.rootGroups.map((g) => (

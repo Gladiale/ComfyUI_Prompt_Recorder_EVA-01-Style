@@ -18,7 +18,7 @@ export function SearchBox({ query, onChange }: Props) {
         value={query}
         onChange={(e) => onChange(e.target.value)}
         placeholder="SEARCH WORDS · NOTES"
-        className="ev-input w-full rounded-sm pl-9 pr-8 py-2 font-mono text-[12px] tracking-widest uppercase placeholder:text-eva-ink-dim/60"
+        className="ev-input-search transition-all w-full focus:rounded-sm pl-9 pr-8 py-2 font-mono text-[12px] tracking-widest uppercase placeholder:text-eva-ink-dim/60"
       />
       <AnimatePresence>
         {query && (
