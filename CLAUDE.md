@@ -128,7 +128,7 @@ PresetFormData {
 - **[tree/word.ts](src/lib/tree/word.ts)** (87行): ワード操作
   - `addWord()`, `updateWord()`, `deleteWord()`
   - `toggleWord()`, `setWordSelected()`, `setWordStrength()`
-  - `reorderWords()`: 同一グループ内の並替（Motion Reorder 対応）
+  - `reorderWords()`: 同一グループ内の並替（HTML5 DnD / Motion layout 対応）
 
 - **[tree/collector.ts](src/lib/tree/collector.ts)** (57行): 選択ワード収集
   - `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
@@ -228,12 +228,18 @@ PresetFormData {
   - `GroupWords`: ワード一覧とワードDnDイベント接続
   - `GroupChildren`: 子グループの再帰描画
 
-- **[WordItem.tsx](src/components/WordItem.tsx)** (307行): ワード行の表示と操作
-  - シングルクリック=選択トグル
-  - ダブルクリック=編集モーダル起動
-  - 選択時右クリック=強度調整（0..10）
-  - ドラッグ&ドロップで同一グループ内並替
-  - 注釈アイコン（緑）ホバーで画像+注釈ポップアップ
+- **[WordItem.tsx](src/components/WordItem.tsx)**: ワード行のオーケストレーター
+  - 操作、DnD、情報popoverの処理はhooksへ委譲
+  - ワード本体と情報popoverは `components/word/` に分離
+  - PromptContextは永続ワード操作のみを担当し、popover/DnD一時状態は保持しない
+
+- **[components/word/](src/components/word/)**: WordItemの表示責務
+  - `WordBody`: 本文、strength、情報マーカー、削除ボタン、ワードDnDイベント接続
+  - `WordInfoPopover`: 注釈/画像のportal表示、AnimatePresence、画像load後の再測定
+
+- **[src/lib/wordPopoverGeometry.ts](src/lib/wordPopoverGeometry.ts)**: DOM非依存のpopover位置計算
+  - viewport端のclamp、上下配置、左右補正を純粋関数として提供
+  - `wordPopoverGeometry.test.ts`で位置計算を検証
 
 - **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
   - Import（赤紫↓）: JSONファイル読み込み
@@ -303,11 +309,15 @@ PresetFormData {
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
 - **useGroupWordDnD**: flex-wrapワード一覧のHTML5 DnD並替
 - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
+- **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、選択ワードfocus
+- **useWordDnD**: `text/word` MIMEを使うワードDnDイベントアダプター。グループDnDと分離
+- **useInfoPopover**: 注釈/画像popoverのhover状態、timer、portal位置測定、scroll/resize追従
 
 ### 操作仕様
 
 - **グループ**: シングルクリック=折り畳み、ダブルクリック=編集、ドラッグ&ドロップ=順調整＆入れ子移動
 - **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、選択時右クリック=強度調整
+- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、DnDは`useGroupWordDnD`/`useWordDnD`、popoverは`useInfoPopover`で管理する
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索、非ヒットを淡色化
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
