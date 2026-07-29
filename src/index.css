@@ -22,6 +22,7 @@
   --color-eva-ink-dim: #9a86c8;
   --color-eva-line: #3a1f5e;
   --color-eva-line-soft: #241244;
+  --color-eva-bg-purple: #572e68;
   --color-eva-claret: #371029; /* 深みのある赤ワイン色 */
   --color-eva-lavender: #fccbfc; /* 淡い紫の代表的な表現です。少し青みや白みがかった上品な色合いを指します。*/
   --color-eva-lilac: #cb73dc; /* ラベンダーと似ていますが、よりピンクや赤みがかった淡い紫を指す際によく使われます。*/
@@ -83,30 +84,13 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  #root {
-    width: 800px;
-    height: 600px;
+  body {
+    /* background: #734586; */
+    @apply relative bg-eva-bg-purple;
   }
 
-  /* 深淵のハロー + 格子 */
-  body {
-    background:
-      radial-gradient(720px 420px at 82% -8%, rgba(139, 63, 200, 0.22), transparent 60%),
-      radial-gradient(560px 360px at 0% 100%, rgba(57, 255, 20, 0.06), transparent 55%),
-      var(--color-eva-bg-void);
-    position: relative;
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image:
-      linear-gradient(rgba(91, 31, 142, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(91, 31, 142, 0.06) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+  #root {
+    @apply w-200 h-150;
   }
 
   /* スクロールバー（ポップアップ内） */
@@ -118,11 +102,11 @@
     background: rgba(15, 8, 32, 0.4);
   }
   *::-webkit-scrollbar-thumb {
-    background: rgba(91, 31, 142, 0.5);
+    background: rgba(176, 117, 227, 0.5);
     border-radius: 2px;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: rgba(138, 63, 200, 0.7);
+    background: rgba(227, 77, 225, 0.7);
   }
 }
 
@@ -246,6 +230,11 @@
     50% {
       opacity: 1;
     }
+  }
+
+  /* 編集入力のフォーカス */
+  .ev-input-search {
+    @apply outline-none text-eva-green border-b border-eva-green-soft/30 focus:border-eva-green focus:shadow-[0_0_0_1px_rgb(57_255_20/0.35),inset_0_0_8px_rgb(57_255_20/0.12)];
   }
 
   /* 編集入力のフォーカス */
@@ -384,14 +373,7 @@
 
   /* flat-top 正六角形の clip-path */
   .hex-shape {
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 50%,
-      75% 100%,
-      25% 100%,
-      0% 50%
-    );
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   }
 
   /* 枠線風：外側を少し大きくし、内側を clip して縁を見せる */
@@ -404,14 +386,7 @@
       rgba(57, 255, 20, 0.55),
       rgba(255, 46, 136, 0.65)
     );
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 50%,
-      75% 100%,
-      25% 100%,
-      0% 50%
-    );
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
     transition:
       filter 0.2s,
       opacity 0.2s;
@@ -426,14 +401,7 @@
   .hex-inner {
     position: absolute;
     inset: 2px;
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 50%,
-      75% 100%,
-      25% 100%,
-      0% 50%
-    );
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
     background: var(--color-eva-bg-panel-2);
     overflow: hidden;
   }
@@ -507,28 +475,14 @@
       rgba(138, 63, 200, 0.95),
       rgba(255, 46, 136, 0.85)
     );
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 50%,
-      75% 100%,
-      25% 100%,
-      0% 50%
-    );
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
     animation: hexGhostShimmer 1.4s linear infinite;
   }
 
   .hex-ghost-inner {
     position: absolute;
     inset: 2px;
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 50%,
-      75% 100%,
-      25% 100%,
-      0% 50%
-    );
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
     background: var(--color-eva-bg-panel-2);
     overflow: hidden;
   }

@@ -205,7 +205,7 @@ PresetFormData {
 **メインレイアウト**:
 
 - **[App.tsx](src/App.tsx)** (69行): ルートコンポーネント
-  - 黄金比レイアウト（左61.8% / 右38.2%）
+  - レイアウト
   - Provider 階層: Prompt → Confirm → WordEditor → PresetForm → PresetList → ClockNav
 
 **左側パネル - ワード管理**:

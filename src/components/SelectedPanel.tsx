@@ -71,7 +71,7 @@ export function SelectedPanel() {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 overflow-x-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1 overflow-x-hidden">
         <AnimatePresence initial={false}>
           {selectedRefs.map((ref, i) => {
             const strength = clampStrength(ref.word.strength ?? 0);
@@ -89,7 +89,7 @@ export function SelectedPanel() {
                 exit={{ opacity: 0, x: 12, height: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 24 }}
                 onClick={() => deselectWord(ref.groupId, ref.word.id)}
-                className="sel-row group w-full flex items-center gap-2 px-1.5 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 mb-1 text-left cursor-pointer"
+                className="sel-row group w-full flex items-center gap-2 px-1.5 py-1 rounded-sm border border-eva-line-soft hover:border-eva-magenta bg-eva-bg-panel-2/60 text-left cursor-pointer"
                 title="クリックで選択解除"
               >
                 <span className="font-mono text-[9px] text-eva-purple-bright w-4 text-left shrink-0">

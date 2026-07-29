@@ -200,18 +200,16 @@ export function GroupNode({
   // ルート領域へのドロップ（親がいないグループをルートへ戻す用）は WordPanel で処理
 
   return (
-    <motion.div
-      layout
-      data-group-id={group.id}
-      className="select-none bg-eva-claret scroll-mt-2"
-    >
+    <motion.div layout data-group-id={group.id} className="select-none scroll-mt-2">
       <div
         onDragOver={onGroupDragOver}
         onDragLeave={() => setDropInfo(null)}
         onDrop={onGroupDrop}
         className={[
-          "rounded-sm border transition-colors",
-          dropInfo === "into" ? "border-eva-green shadow-glow-green" : "border-[#8058b1]",
+          "bg-eva-claret rounded-xl transition-all overflow-hidden",
+          dropInfo === "into"
+            ? "border border-eva-green shadow-glow-green"
+            : "border-t border-[#c993e0]",
         ].join(" ")}
       >
         {/* 挿入位置インジケータ（before）：折り畳み時も表示するため枠直下に置く */}

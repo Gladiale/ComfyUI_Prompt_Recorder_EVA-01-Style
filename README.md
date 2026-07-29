@@ -83,7 +83,7 @@ npm run build      # dist/ に拡張機能を出力
 ```
 src/
 ├─ main.tsx                 # React エントリ
-├─ App.tsx                  # 黄金比レイアウト + Provider 階層
+├─ App.tsx                  # レイアウト + Provider 階層
 ├─ popup.html               # Vite 入力 HTML
 ├─ types.ts                 # 型定義（RootState/Group/Word/Preset）
 ├─ index.css                # Tailwind + EVA-01 テーマ
