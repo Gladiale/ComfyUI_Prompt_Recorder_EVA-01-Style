@@ -6,25 +6,34 @@ import { GroupNode } from "./GroupNode";
 import { SearchBox } from "./SearchBox";
 import { IOButtons } from "./IOButtons";
 import { useClockNav } from "@/context/ClockNavContext";
+import { GroupTreeDndProvider, useGroupTreeDnd } from "@/context/GroupTreeDndContext";
 
 export function WordPanel() {
+  return (
+    <GroupTreeDndProvider>
+      <WordPanelContent />
+    </GroupTreeDndProvider>
+  );
+}
+
+function WordPanelContent() {
   const { state, addGroup, moveGroup } = usePrompt();
   const { open: openClockNav } = useClockNav();
+  const { draggingGroupId, endGroupDrag } = useGroupTreeDnd();
   const [query, setQuery] = useState("");
-  const [draggingGroup, setDraggingGroup] = useState<string | null>(null);
 
   // ルート領域へのドロップ → ルート直下へ
   const onRootDragOver = (e: DragEvent) => {
-    if (draggingGroup && e.dataTransfer.types.includes("text/group")) {
+    if (draggingGroupId && e.dataTransfer.types.includes("text/group")) {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
     }
   };
   const onRootDrop = (e: DragEvent) => {
-    if (!draggingGroup) return;
+    if (!draggingGroupId) return;
     e.preventDefault();
-    moveGroup(draggingGroup, { kind: "root" });
-    setDraggingGroup(null);
+    moveGroup(draggingGroupId, { kind: "root" });
+    endGroupDrag();
   };
 
   return (
@@ -66,8 +75,6 @@ export function WordPanel() {
               group={g}
               depth={0}
               query={query}
-              isDraggingGroup={draggingGroup}
-              setIsDraggingGroup={setDraggingGroup}
             />
           ))}
         </div>

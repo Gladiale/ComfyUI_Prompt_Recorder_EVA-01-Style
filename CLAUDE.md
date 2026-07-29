@@ -41,7 +41,7 @@ npm run test:coverage
 - **スタイル**: Tailwind CSS 4 (エヴァンゲリオン初号機カラーテーマ)
 - **アニメーション**: Motion (framer-motion の軽量版)
 - **アイコン**: React Icons
-- **状態管理**: React Context API
+- **状態管理**: React Context API（永続状態と画面限定の一時状態を分離）
 - **永続化**: chrome.storage.local
 - **拡張機能ビルド**: @crxjs/vite-plugin
 - **テスト**: Vitest（`src/lib` の純粋関数ユニットテスト）
@@ -217,17 +217,22 @@ PresetFormData {
   - ワード本文と注釈を横断検索
   - 非ヒットグループ/ワードを淡色化
 
-- **[GroupNode.tsx](src/components/GroupNode.tsx)** (376行): 再帰的グループ表示
-  - 折り畳み/展開（選択ワード内包時に緑徽章表示）
-  - ドラッグ&ドロップでグループ移動・ネスト化
-  - ダブルクリックで名前編集
-  - コンテキストメニュー（削除、全展開/全折り畳み）
+- **[GroupNode.tsx](src/components/GroupNode.tsx)**: 再帰的グループ表示のオーケストレーター
+  - 検索・編集・ワードDnD・グループDnDはhooksへ委譲
+  - ヘッダー、ワード一覧、子グループ一覧は `components/group/` に分離
+  - グループDnD状態は `GroupTreeDndContext` でツリー内共有
+  - 折り畳み/展開、選択ワード内包時の緑徽章、グループ移動・ネスト化を提供
+
+- **[components/group/](src/components/group/)**: GroupNodeの表示責務
+  - `GroupHeader`: 名前表示/編集、追加・削除操作、DnDドラッグ元
+  - `GroupWords`: ワード一覧とワードDnDイベント接続
+  - `GroupChildren`: 子グループの再帰描画
 
 - **[WordItem.tsx](src/components/WordItem.tsx)** (307行): ワード行の表示と操作
   - シングルクリック=選択トグル
   - ダブルクリック=編集モーダル起動
   - 選択時右クリック=強度調整（0..10）
-  - ドラッグ&ドロップで同一グループ内並替（Motion Reorder）
+  - ドラッグ&ドロップで同一グループ内並替
   - 注釈アイコン（緑）ホバーで画像+注釈ポップアップ
 
 - **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
@@ -260,6 +265,8 @@ PresetFormData {
   - 還元・エントリ更新・削除・メタ編集
   - 子: `preset/PresetHexTile`, `HexDragGhost`, `PresetDetailCard`, `UpdateDiffBody`
 
+- **[PromptContext.tsx](src/context/PromptContext.tsx)**: 永続RootStateとツリー操作actionを管理。DnD中の一時状態は保持しない
+- **[GroupTreeDndContext.tsx](src/context/GroupTreeDndContext.tsx)**: ワードツリー内のグループDnD状態（dragging ID、drop target）を管理
 - **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)**: 保存/編集モーダルの open API
 - **[PresetListContext.tsx](src/context/PresetListContext.tsx)**: 一覧パネルの open/close API
 
@@ -292,6 +299,10 @@ PresetFormData {
 - **usePresetFormState**: フォーム状態・バリデーション・画像処理
 - **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
+- **useGroupSearch**: グループ名・ワード本文・注釈の検索と検索時展開判定
+- **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
+- **useGroupWordDnD**: flex-wrapワード一覧のHTML5 DnD並替
+- **useGroupDnD**: グループのbefore/after/into移動とdrop表示
 
 ### 操作仕様
 
