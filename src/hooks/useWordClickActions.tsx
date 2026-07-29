@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, type MouseEvent } from "react";
 import type { Word } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { useWordEditor } from "@/components/WordEditModal";
+import { useWordEditor } from "@/context/WordEditorContext";
 
 const DBL_CLICK_DELAY = 230;
 

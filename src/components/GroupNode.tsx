@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Group } from "@/types";
 import { usePrompt } from "@/context/PromptContext";
-import { useWordEditor } from "@/components/WordEditModal";
+import { useWordEditor } from "@/context/WordEditorContext";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { countSelectedWords } from "@/lib/tree";
 import { useGroupSearch } from "@/hooks/useGroupSearch";

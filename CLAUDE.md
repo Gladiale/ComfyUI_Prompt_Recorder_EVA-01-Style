@@ -278,10 +278,18 @@ PresetFormData {
 
 **モーダル・ダイアログ**:
 
-- **[WordEditModal.tsx](src/components/WordEditModal.tsx)** (288行): ワード追加・編集モーダル
+- **[WordEditModal.tsx](src/components/WordEditModal.tsx)**: ワード追加・編集モーダルの表示コンポーネント
   - ワード本文、注釈、画像（最大420×420px）を編集
-  - Provider + Context で呼び出し
+  - フォーム状態と画像処理は `useWordEditFormState` へ委譲
+  - 画像UIは `components/word/WordImagePicker` へ分離
+  - Provider / Context は `context/WordEditorContext` で管理
   - 画像は自動圧縮（JPEG quality 段階低下）
+
+- **[WordEditorContext.tsx](src/context/WordEditorContext.tsx)**: ワード追加・編集モーダルのProvider / Context
+  - `openAdd` / `openEdit` APIを公開
+  - `addWord` / `updateWord` の呼び分けとモーダルのライフサイクルを管理
+
+- **[WordImagePicker.tsx](src/components/word/WordImagePicker.tsx)**: ワード画像の選択・プレビュー・削除UI
 
 - **[ConfirmDialog.tsx](src/components/ConfirmDialog.tsx)** (120行): 確認ダイアログ
   - `window.confirm`の代替（エヴァ風デザイン）
@@ -303,6 +311,7 @@ PresetFormData {
 - **useEscapeKey**: Esc キーでコールバック
 - **useSynthesisCopy**: 総括欄コピー + スナップショット更新
 - **usePresetFormState**: フォーム状態・バリデーション・画像処理
+- **useWordEditFormState**: ワード編集フォームの状態・trim・送信可否・画像圧縮処理
 - **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
 - **useGroupSearch**: グループ名・ワード本文・注釈の検索と検索時展開判定

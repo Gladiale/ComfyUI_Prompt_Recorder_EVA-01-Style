@@ -1,7 +1,7 @@
 // 全体レイアウト / App
 import { PromptProvider } from "@/context/PromptContext";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
-import { WordEditorProvider } from "@/components/WordEditModal";
+import { WordEditorProvider } from "@/context/WordEditorContext";
 import { ClockNavProvider } from "@/context/ClockNavContext";
 import { PresetFormProvider } from "@/context/PresetFormContext";
 import { PresetListProvider } from "@/context/PresetListContext";
