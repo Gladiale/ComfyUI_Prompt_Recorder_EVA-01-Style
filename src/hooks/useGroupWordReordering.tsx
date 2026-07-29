@@ -18,7 +18,7 @@ export function reorderWordsAroundTarget(
   return next.some((word, index) => word.id !== words[index]?.id) ? next : null;
 }
 
-export function useGroupWordDnD(groupId: string, words: Word[]) {
+export function useGroupWordReordering(groupId: string, words: Word[]) {
   const { reorderWords } = usePrompt();
   const [dragWordId, setDragWordId] = useState<string | null>(null);
   const dragWordIdRef = useRef<string | null>(null);

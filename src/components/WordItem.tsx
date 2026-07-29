@@ -4,7 +4,7 @@ import type { DragEvent } from "react";
 import type { Word } from "@/types";
 import { useInfoPopover } from "@/hooks/useInfoPopover";
 import { useWordClickActions } from "@/hooks/useWordClickActions";
-import { useWordDnD } from "@/hooks/useWordDnD";
+import { useWordDragEvents } from "@/hooks/useWordDragEvents";
 import { WordBody } from "./word/WordBody";
 import { WordInfoPopover } from "./word/WordInfoPopover";
 
@@ -21,7 +21,7 @@ interface Props {
 export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, onWordDragOver, onWordDragEnd }: Props) {
   const hasInfo = !!word.note.trim() || !!word.image;
   const actions = useWordClickActions(groupId, word);
-  const dnd = useWordDnD({ word, onWordDragStart, onWordDragOver, onWordDragEnd });
+  const dnd = useWordDragEvents({ word, onWordDragStart, onWordDragOver, onWordDragEnd });
   const info = useInfoPopover({ enabled: hasInfo });
 
   return (

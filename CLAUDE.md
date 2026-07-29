@@ -307,17 +307,17 @@ PresetFormData {
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
 - **useGroupSearch**: グループ名・ワード本文・注釈の検索と検索時展開判定
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
-- **useGroupWordDnD**: flex-wrapワード一覧のHTML5 DnD並替
-- **useGroupDnD**: グループのbefore/after/into移動とdrop表示
-- **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、選択ワードfocus
-- **useWordDnD**: `text/word` MIMEを使うワードDnDイベントアダプター。グループDnDと分離
+  - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
+  - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
+  - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、選択ワードfocus
+  - **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
 - **useInfoPopover**: 注釈/画像popoverのhover状態、timer、portal位置測定、scroll/resize追従
 
 ### 操作仕様
 
 - **グループ**: シングルクリック=折り畳み、ダブルクリック=編集、ドラッグ&ドロップ=順調整＆入れ子移動
 - **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、選択時右クリック=強度調整
-- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、DnDは`useGroupWordDnD`/`useWordDnD`、popoverは`useInfoPopover`で管理する
+- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、配列並替は`useGroupWordReordering`、個別行のDnDイベントは`useWordDragEvents`、popoverは`useInfoPopover`で管理する
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索、非ヒットを淡色化
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）

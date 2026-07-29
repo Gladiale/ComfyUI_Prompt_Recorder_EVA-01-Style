@@ -8,7 +8,7 @@ interface Options {
   onWordDragEnd: () => void;
 }
 
-export function useWordDnD({ word, onWordDragStart, onWordDragOver, onWordDragEnd }: Options) {
+export function useWordDragEvents({ word, onWordDragStart, onWordDragOver, onWordDragEnd }: Options) {
   const isWordDrag = useCallback((event: DragEvent) => (
     event.dataTransfer.types.includes("text/word")
   ), []);

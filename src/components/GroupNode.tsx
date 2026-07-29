@@ -9,7 +9,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { countSelectedWords } from "@/lib/tree";
 import { useGroupSearch } from "@/hooks/useGroupSearch";
 import { useGroupNodeEditing } from "@/hooks/useGroupNodeEditing";
-import { useGroupWordDnD } from "@/hooks/useGroupWordDnD";
+import { useGroupWordReordering } from "@/hooks/useGroupWordReordering";
 import { useGroupDnD } from "@/hooks/useGroupDnD";
 import { GroupHeader } from "./group/GroupHeader";
 import { GroupWords } from "./group/GroupWords";
@@ -23,7 +23,7 @@ export function GroupNode({ group, depth, query }: Props) {
   const { openAdd } = useWordEditor();
   const search = useGroupSearch(group, query);
   const editing = useGroupNodeEditing(group.id, group.name);
-  const wordsDnd = useGroupWordDnD(group.id, group.words);
+  const wordsDnd = useGroupWordReordering(group.id, group.words);
   const groupDnd = useGroupDnD(group.id, search.expanded);
   const selectedCount = countSelectedWords(group);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
