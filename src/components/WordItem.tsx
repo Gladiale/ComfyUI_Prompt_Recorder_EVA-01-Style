@@ -60,12 +60,12 @@ export function WordItem({
 
     const GAP = 8;
     const PADDING = 4; // 画面端からの安全マージン
-    const r = el.getBoundingClientRect();
     const pop = popRef.current;
+    if (!pop) return;
 
-    // 実寸法（未描画フォールバック）
-    const popW = pop ? pop.offsetWidth : 200;
-    const popH = pop ? pop.offsetHeight : hasImage ? 230 : 30;
+    const r = el.getBoundingClientRect();
+    const popW = pop.offsetWidth;
+    const popH = pop.offsetHeight;
 
     // 1. 垂直位置（top）の基本計算：基本は印の上。上に収まらなければ下。
     let top = r.top - GAP - popH < PADDING ? r.bottom + GAP : r.top - GAP - popH;
@@ -100,13 +100,11 @@ export function WordItem({
     }
 
     setPopPos({ left, top, x });
-  }, [hasImage]);
+  }, []);
 
-  // ポップオーバー表示中：初回・スクロール・リサイズで再計算。
-  // 初回は motion の描画前で popRef が未確定なため rAF で次フレームに再測定。
+  // ポップオーバー表示後、DOMの実寸を測定して位置を確定する。
   useEffect(() => {
     if (!showInfo) return;
-    measure();
     const raf = requestAnimationFrame(measure);
     window.addEventListener("scroll", measure, true);
     window.addEventListener("resize", measure);
@@ -171,7 +169,10 @@ export function WordItem({
   // 注釈/画像プレビュー：ホバーで遅延表示、離脱で遅延非表示（クリック耐性用）
   const enterInfo = () => {
     if (infoTimer.current) clearTimeout(infoTimer.current);
-    infoTimer.current = setTimeout(() => setShowInfo(true), 120);
+    infoTimer.current = setTimeout(() => {
+      setPopPos(null);
+      setShowInfo(true);
+    }, 120);
   };
   const leaveInfo = () => {
     if (infoTimer.current) clearTimeout(infoTimer.current);
@@ -244,7 +245,10 @@ export function WordItem({
             onMouseLeave={leaveInfo}
             onClick={(e) => {
               e.stopPropagation();
-              setShowInfo((v) => !v);
+              setShowInfo((v) => {
+                if (!v) setPopPos(null);
+                return !v;
+              });
             }}
           >
             ✦
@@ -265,7 +269,7 @@ export function WordItem({
       {hasInfo &&
         createPortal(
           <AnimatePresence>
-            {showInfo && popPos && (
+            {showInfo && (
               <motion.div
                 ref={popRef}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -277,9 +281,10 @@ export function WordItem({
                 onMouseLeave={leaveInfo}
                 style={{
                   position: "fixed",
-                  left: popPos.left,
-                  top: popPos.top,
-                  x: popPos.x,
+                  left: popPos?.left ?? 0,
+                  top: popPos?.top ?? 0,
+                  x: popPos?.x ?? "0",
+                  visibility: popPos ? "visible" : "hidden",
                   zIndex: 9999,
                 }}
                 className="w-fit max-w-80 rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
