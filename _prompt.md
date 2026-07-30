@@ -95,3 +95,11 @@ imageプロパティについて、これはユーザーから送った画像を
   - cardの高さは560px, cardの背景にはimageプロパティの画像。
   - cardを左クリックまたはcardにある回転ボタンをクリックすると、cardはY軸で回転、背面を表す。
   - cardの背面にはbaseModel, baseModelKind, loras, controlNets, metadata, descriptionの情報を記載。
+
+
+## 2026 07 31 追加機能プロンプト (ワードのonContextMenu機能を調整)
+### @WordBody.tsx のonContextMenu機能を調整
+- @WordBody.tsxに右クリックする時、クリックの場所にサブメニューが出る
+- サブメニュー内は二つの機能があり
+　- 機能1. 現在に設定された強度調整の機能、ワードが選択してないとこの機能は発動しないように。
+　- 機能2. ワードのグループを調整する機能、この機能をクリックすると、グループ一覧が出る、グループ一覧からワードのグループ移動が可能にする
