@@ -24,6 +24,7 @@ export function useInfoPopover({ enabled }: Options): InfoPopoverState {
   const markRef = useRef<HTMLSpanElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const infoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverRegions = useRef(0);
 
   const clearTimer = useCallback(() => {
     if (infoTimer.current) clearTimeout(infoTimer.current);
@@ -59,16 +60,23 @@ export function useInfoPopover({ enabled }: Options): InfoPopoverState {
   useEffect(() => () => clearTimer(), [clearTimer]);
 
   const enterInfo = useCallback(() => {
+    hoverRegions.current += 1;
     clearTimer();
     infoTimer.current = setTimeout(() => {
-      setPopPos(null);
-      setShowInfo(true);
+      setShowInfo((visible) => {
+        if (!visible) setPopPos(null);
+        return true;
+      });
     }, HOVER_DELAY);
   }, [clearTimer]);
 
   const leaveInfo = useCallback(() => {
+    hoverRegions.current = Math.max(0, hoverRegions.current - 1);
     clearTimer();
-    infoTimer.current = setTimeout(() => setShowInfo(false), HOVER_DELAY);
+    if (hoverRegions.current > 0) return;
+    infoTimer.current = setTimeout(() => {
+      if (hoverRegions.current === 0) setShowInfo(false);
+    }, HOVER_DELAY);
   }, [clearTimer]);
 
   const toggleInfo = useCallback(() => {
