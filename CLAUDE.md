@@ -41,7 +41,7 @@ npm run test:coverage
 - **スタイル**: Tailwind CSS 4 (エヴァンゲリオン初号機カラーテーマ)
 - **アニメーション**: Motion (framer-motion の軽量版)
 - **アイコン**: React Icons
-- **状態管理**: React Context API
+- **状態管理**: React Context API（永続状態と画面限定の一時状態を分離）
 - **永続化**: chrome.storage.local
 - **拡張機能ビルド**: @crxjs/vite-plugin
 - **テスト**: Vitest（`src/lib` の純粋関数ユニットテスト）
@@ -128,7 +128,7 @@ PresetFormData {
 - **[tree/word.ts](src/lib/tree/word.ts)** (87行): ワード操作
   - `addWord()`, `updateWord()`, `deleteWord()`
   - `toggleWord()`, `setWordSelected()`, `setWordStrength()`
-  - `reorderWords()`: 同一グループ内の並替（Motion Reorder 対応）
+  - `reorderWords()`: 同一グループ内の並替（HTML5 DnD / Motion layout 対応）
 
 - **[tree/collector.ts](src/lib/tree/collector.ts)** (57行): 選択ワード収集
   - `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
@@ -217,18 +217,29 @@ PresetFormData {
   - ワード本文と注釈を横断検索
   - 非ヒットグループ/ワードを淡色化
 
-- **[GroupNode.tsx](src/components/GroupNode.tsx)** (376行): 再帰的グループ表示
-  - 折り畳み/展開（選択ワード内包時に緑徽章表示）
-  - ドラッグ&ドロップでグループ移動・ネスト化
-  - ダブルクリックで名前編集
-  - コンテキストメニュー（削除、全展開/全折り畳み）
+- **[GroupNode.tsx](src/components/GroupNode.tsx)**: 再帰的グループ表示のオーケストレーター
+  - 検索・編集・ワードDnD・グループDnDはhooksへ委譲
+  - ヘッダー、ワード一覧、子グループ一覧は `components/group/` に分離
+  - グループDnD状態は `GroupTreeDndContext` でツリー内共有
+  - 折り畳み/展開、選択ワード内包時の緑徽章、グループ移動・ネスト化を提供
 
-- **[WordItem.tsx](src/components/WordItem.tsx)** (307行): ワード行の表示と操作
-  - シングルクリック=選択トグル
-  - ダブルクリック=編集モーダル起動
-  - 選択時右クリック=強度調整（0..10）
-  - ドラッグ&ドロップで同一グループ内並替（Motion Reorder）
-  - 注釈アイコン（緑）ホバーで画像+注釈ポップアップ
+- **[components/group/](src/components/group/)**: GroupNodeの表示責務
+  - `GroupHeader`: 名前表示/編集、追加・削除操作、DnDドラッグ元
+  - `GroupWords`: ワード一覧とワードDnDイベント接続
+  - `GroupChildren`: 子グループの再帰描画
+
+- **[WordItem.tsx](src/components/WordItem.tsx)**: ワード行のオーケストレーター
+  - 操作、DnD、情報popoverの処理はhooksへ委譲
+  - ワード本体と情報popoverは `components/word/` に分離
+  - PromptContextは永続ワード操作のみを担当し、popover/DnD一時状態は保持しない
+
+- **[components/word/](src/components/word/)**: WordItemの表示責務
+  - `WordBody`: 本文、strength、情報マーカー、削除ボタン、ワードDnDイベント接続
+  - `WordInfoPopover`: 注釈/画像のportal表示、AnimatePresence、画像load後の再測定
+
+- **[src/lib/wordPopoverGeometry.ts](src/lib/wordPopoverGeometry.ts)**: DOM非依存のpopover位置計算
+  - viewport端のclamp、上下配置、左右補正を純粋関数として提供
+  - `wordPopoverGeometry.test.ts`で位置計算を検証
 
 - **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
   - Import（赤紫↓）: JSONファイル読み込み
@@ -260,15 +271,25 @@ PresetFormData {
   - 還元・エントリ更新・削除・メタ編集
   - 子: `preset/PresetHexTile`, `HexDragGhost`, `PresetDetailCard`, `UpdateDiffBody`
 
+- **[PromptContext.tsx](src/context/PromptContext.tsx)**: 永続RootStateとツリー操作actionを管理。DnD中の一時状態は保持しない
+- **[GroupTreeDndContext.tsx](src/context/GroupTreeDndContext.tsx)**: ワードツリー内のグループDnD状態（dragging ID、drop target）を管理
 - **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)**: 保存/編集モーダルの open API
 - **[PresetListContext.tsx](src/context/PresetListContext.tsx)**: 一覧パネルの open/close API
 
 **モーダル・ダイアログ**:
 
-- **[WordEditModal.tsx](src/components/WordEditModal.tsx)** (288行): ワード追加・編集モーダル
+- **[WordEditModal.tsx](src/components/WordEditModal.tsx)**: ワード追加・編集モーダルの表示コンポーネント
   - ワード本文、注釈、画像（最大420×420px）を編集
-  - Provider + Context で呼び出し
+  - フォーム状態と画像処理は `useWordEditFormState` へ委譲
+  - 画像UIは `components/word/WordImagePicker` へ分離
+  - Provider / Context は `context/WordEditorContext` で管理
   - 画像は自動圧縮（JPEG quality 段階低下）
+
+- **[WordEditorContext.tsx](src/context/WordEditorContext.tsx)**: ワード追加・編集モーダルのProvider / Context
+  - `openAdd` / `openEdit` APIを公開
+  - `addWord` / `updateWord` の呼び分けとモーダルのライフサイクルを管理
+
+- **[WordImagePicker.tsx](src/components/word/WordImagePicker.tsx)**: ワード画像の選択・プレビュー・削除UI
 
 - **[ConfirmDialog.tsx](src/components/ConfirmDialog.tsx)** (120行): 確認ダイアログ
   - `window.confirm`の代替（エヴァ風デザイン）
@@ -290,13 +311,22 @@ PresetFormData {
 - **useEscapeKey**: Esc キーでコールバック
 - **useSynthesisCopy**: 総括欄コピー + スナップショット更新
 - **usePresetFormState**: フォーム状態・バリデーション・画像処理
+- **useWordEditFormState**: ワード編集フォームの状態・trim・送信可否・画像圧縮処理
 - **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
+- **useGroupSearch**: グループ名・ワード本文・注釈の検索と検索時展開判定
+- **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
+  - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
+  - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
+  - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、選択ワードfocus
+  - **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
+- **useInfoPopover**: 注釈/画像popoverのhover状態、timer、portal位置測定、scroll/resize追従
 
 ### 操作仕様
 
 - **グループ**: シングルクリック=折り畳み、ダブルクリック=編集、ドラッグ&ドロップ=順調整＆入れ子移動
 - **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、選択時右クリック=強度調整
+- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、配列並替は`useGroupWordReordering`、個別行のDnDイベントは`useWordDragEvents`、popoverは`useInfoPopover`で管理する
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索、非ヒットを淡色化
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
