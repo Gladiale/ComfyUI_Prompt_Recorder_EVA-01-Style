@@ -55,8 +55,8 @@ export function WordBody({
           ref={markRef}
           className="relative w-1.5 h-1.5 text-[13px] rounded-full shrink-0 hover:text-[#ff92de] flex items-center justify-center cursor-help"
           style={{ boxShadow: "0 0 6px var(--color-eva-green)" }}
-          onMouseEnter={onInfoMouseEnter}
-          onMouseLeave={onInfoMouseLeave}
+          onPointerEnter={onInfoMouseEnter}
+          onPointerLeave={onInfoMouseLeave}
           onClick={onInfoClick}
         >
           ✦

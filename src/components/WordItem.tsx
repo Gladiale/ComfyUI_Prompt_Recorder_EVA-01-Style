@@ -45,8 +45,8 @@ export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, o
         onContextMenu={actions.onContextMenu}
         onDelete={actions.onDelete}
         onFocusStrength={actions.onFocusStrength}
-        onInfoMouseEnter={info.enterInfo}
-        onInfoMouseLeave={info.leaveInfo}
+        onInfoMouseEnter={info.enterMark}
+        onInfoMouseLeave={info.leaveMark}
         onInfoClick={(event) => {
           event.stopPropagation();
           info.toggleInfo();
@@ -58,8 +58,8 @@ export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, o
         position={info.popPos}
         popRef={info.popRef}
         measure={info.measure}
-        onMouseEnter={info.enterInfo}
-        onMouseLeave={info.leaveInfo}
+        onMouseEnter={info.enterPop}
+        onMouseLeave={info.leavePop}
       />
     </motion.div>
   );

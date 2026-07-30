@@ -25,11 +25,13 @@ export function WordInfoPopover({ word, show, position, popRef, measure, onMouse
           ref={popRef}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          // pointerEvents は非アニメート値なので exit 開始と同時に none になり、
+          // フェード中のゴースト要素へのホバーで再オープンするのを防ぐ
+          exit={{ opacity: 0, scale: 0.95, pointerEvents: "none" }}
           transition={{ duration: 0.14 }}
           onClick={(event) => event.stopPropagation()}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
+          onPointerEnter={onMouseEnter}
+          onPointerLeave={onMouseLeave}
           style={{
             position: "fixed",
             left: position?.left ?? 0,
