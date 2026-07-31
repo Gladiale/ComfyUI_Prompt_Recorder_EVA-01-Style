@@ -33,6 +33,7 @@ export {
   setWordStrength,
   deleteWord,
   reorderWords,
+  moveWord,
 } from "./tree/word";
 
 // 選択ワード収集

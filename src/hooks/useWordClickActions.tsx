@@ -6,11 +6,17 @@ import { useWordEditor } from "@/context/WordEditorContext";
 
 const DBL_CLICK_DELAY = 230;
 
-export function useWordClickActions(groupId: string, word: Word) {
+interface Options {
+  /** 右クリックメニューを開く。未指定時は従来どおり Selected フォーカスのみ。 */
+  onOpenContextMenu?: (event: MouseEvent, groupId: string, word: Word) => void;
+}
+
+export function useWordClickActions(groupId: string, word: Word, options: Options = {}) {
   const { toggleWord, deleteWord, focusSelectedWord } = usePrompt();
   const confirm = useConfirm();
   const { openEdit } = useWordEditor();
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { onOpenContextMenu } = options;
 
   useEffect(() => () => {
     if (clickTimer.current) clearTimeout(clickTimer.current);
@@ -34,10 +40,14 @@ export function useWordClickActions(groupId: string, word: Word) {
   }, [groupId, startEdit, toggleWord, word.id]);
 
   const onContextMenu = useCallback((event: MouseEvent) => {
+    if (onOpenContextMenu) {
+      onOpenContextMenu(event, groupId, word);
+      return;
+    }
     event.stopPropagation();
     event.preventDefault();
     if (word.selected) focusSelectedWord(word.id);
-  }, [focusSelectedWord, word.id, word.selected]);
+  }, [focusSelectedWord, groupId, onOpenContextMenu, word]);
 
   const onDelete = useCallback(async (event: MouseEvent) => {
     event.stopPropagation();

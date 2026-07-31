@@ -28,6 +28,7 @@ import {
   moveGroup as treeMoveGroup,
   normalizeImportedState,
   reorderWords as treeReorderWords,
+  moveWord as treeMoveWord,
   renameGroup as treeRenameGroup,
   renamePreset as treeRenamePreset,
   reorderPresets as treeReorderPresets,
@@ -110,6 +111,7 @@ export interface PromptActions {
   setWordStrength: (groupId: string, wordId: string, strength: number) => void;
   deleteWord: (groupId: string, wordId: string) => void;
   reorderWords: (groupId: string, newWords: Word[]) => void;
+  moveWord: (fromGroupId: string, wordId: string, toGroupId: string) => void;
   moveGroup: (draggedId: string, target: GroupDropTarget) => void;
   /** フォーム情報 + 現在の選択ワードでプリセットを新規保存する。 */
   savePreset: (form: PresetFormData) => void;
@@ -207,6 +209,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     deleteWord: (groupId, wordId) => setState((s) => treeDeleteWord(s, groupId, wordId)),
     reorderWords: (groupId, newWords) =>
       setState((s) => treeReorderWords(s, groupId, newWords)),
+    moveWord: (fromGroupId, wordId, toGroupId) =>
+      setState((s) => treeMoveWord(s, fromGroupId, wordId, toGroupId)),
     moveGroup: (draggedId, target) =>
       setState((s) => treeMoveGroup(s, draggedId, target)),
     savePreset: (form) => setState((s) => treeSavePreset(s, form)),

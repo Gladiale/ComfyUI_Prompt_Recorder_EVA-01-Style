@@ -318,15 +318,16 @@ PresetFormData {
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
   - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
   - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
-  - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、選択ワードfocus
+  - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、右クリックメニュー起動
   - **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
+  - **useWordContextMenu**: ワード右クリックメニューの開閉・位置・サブメニュー状態
 - **useInfoPopover**: 注釈/画像popoverのhover状態、timer、portal位置測定、scroll/resize追従
 
 ### 操作仕様
 
 - **グループ**: シングルクリック=折り畳み、ダブルクリック=編集、ドラッグ&ドロップ=順調整＆入れ子移動
-- **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、選択時右クリック=強度調整
-- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、配列並替は`useGroupWordReordering`、個別行のDnDイベントは`useWordDragEvents`、popoverは`useInfoPopover`で管理する
+- **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、右クリック=コンテキストメニュー（強度調整 / グループ移動）
+- **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、配列並替は`useGroupWordReordering`、個別行のDnDイベントは`useWordDragEvents`、popoverは`useInfoPopover`、右クリックメニューは`useWordContextMenu`で管理する
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索、非ヒットを淡色化
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）

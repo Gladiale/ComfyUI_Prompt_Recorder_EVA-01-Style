@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addWord,
   deleteWord,
+  moveWord,
   reorderWords,
   setWordSelected,
   setWordStrength,
@@ -161,5 +162,55 @@ describe("reorderWords", () => {
     const words = [...findGroup(root, "grp-a")!.words].reverse();
     const next = reorderWords(root, "grp-a", words);
     expect(findGroup(next, "grp-a")!.words).toBe(words);
+  });
+});
+
+describe("moveWord", () => {
+  it("別グループの末尾へ移動しフィールドを保持する", () => {
+    const root = makeSampleRoot();
+    const next = moveWord(root, "grp-a", "w-a1", "grp-d");
+    expect(findGroup(next, "grp-a")!.words.map((w) => w.id)).toEqual(["w-a2"]);
+    const moved = findGroup(next, "grp-d")!.words;
+    expect(moved.map((w) => w.id)).toEqual(["w-d1", "w-a1"]);
+    expect(moved[1]).toMatchObject({
+      id: "w-a1",
+      text: "alpha",
+      selected: true,
+      strength: 0,
+    });
+  });
+
+  it("移動先グループを展開する", () => {
+    const root = makeSampleRoot();
+    expect(findGroup(root, "grp-b")?.collapsed).toBe(true);
+    const next = moveWord(root, "grp-a", "w-a2", "grp-b");
+    expect(findGroup(next, "grp-b")?.collapsed).toBe(false);
+    expect(findGroup(next, "grp-b")!.words.map((w) => w.id)).toEqual([
+      "w-b1",
+      "w-a2",
+    ]);
+  });
+
+  it("同一グループでは no-op（同一参照）", () => {
+    const root = makeSampleRoot();
+    const next = moveWord(root, "grp-a", "w-a1", "grp-a");
+    expect(next).toBe(root);
+  });
+
+  it("存在しない group / word では no-op（同一参照）", () => {
+    const root = makeSampleRoot();
+    expect(moveWord(root, "missing", "w-a1", "grp-d")).toBe(root);
+    expect(moveWord(root, "grp-a", "w-a1", "missing")).toBe(root);
+    expect(moveWord(root, "grp-a", "missing", "grp-d")).toBe(root);
+  });
+
+  it("元の root を変更しない", () => {
+    const root = makeSampleRoot();
+    moveWord(root, "grp-a", "w-a1", "grp-d");
+    expect(findGroup(root, "grp-a")!.words.map((w) => w.id)).toEqual([
+      "w-a1",
+      "w-a2",
+    ]);
+    expect(findGroup(root, "grp-d")!.words.map((w) => w.id)).toEqual(["w-d1"]);
   });
 });

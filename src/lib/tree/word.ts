@@ -5,7 +5,8 @@
 
 import type { RootState, Word } from "@/types";
 import { createWord } from "./factory";
-import { mutateGroup } from "./immutable";
+import { findGroup } from "./search";
+import { clone, mutateGroup } from "./immutable";
 
 // ---- ワード操作 ----
 
@@ -84,4 +85,32 @@ export function reorderWords(
   return mutateGroup(root, groupId, (g) => {
     g.words = newWords;
   });
+}
+
+/**
+ * ワードを別グループへ移動する。
+ * - Word.id / 全フィールドを維持（プリセット wordId 互換）
+ * - 移動先 words の末尾に追加
+ * - 移動先グループを展開
+ */
+export function moveWord(
+  root: RootState,
+  fromGroupId: string,
+  wordId: string,
+  toGroupId: string,
+): RootState {
+  if (fromGroupId === toGroupId) return root;
+
+  const next = clone(root);
+  const from = findGroup(next, fromGroupId);
+  const to = findGroup(next, toGroupId);
+  if (!from || !to) return root;
+
+  const index = from.words.findIndex((w) => w.id === wordId);
+  if (index < 0) return root;
+
+  const [word] = from.words.splice(index, 1);
+  to.words.push(word);
+  to.collapsed = false;
+  return next;
 }

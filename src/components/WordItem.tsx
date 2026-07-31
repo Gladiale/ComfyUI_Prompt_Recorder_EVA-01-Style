@@ -1,12 +1,14 @@
-// ワード行 / WordItem — 選択切替・編集・DnD並替
+// ワード行 / WordItem — 選択切替・編集・DnD並替・右クリックメニュー
 import { motion } from "motion/react";
 import type { DragEvent } from "react";
 import type { Word } from "@/types";
 import { useInfoPopover } from "@/hooks/useInfoPopover";
 import { useWordClickActions } from "@/hooks/useWordClickActions";
+import { useWordContextMenu } from "@/hooks/useWordContextMenu";
 import { useWordDragEvents } from "@/hooks/useWordDragEvents";
 import { WordBody } from "./word/WordBody";
 import { WordInfoPopover } from "./word/WordInfoPopover";
+import { WordContextMenu } from "./word/menu/WordContextMenu";
 
 interface Props {
   word: Word;
@@ -20,7 +22,10 @@ interface Props {
 
 export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, onWordDragOver, onWordDragEnd }: Props) {
   const hasInfo = !!word.note.trim() || !!word.image;
-  const actions = useWordClickActions(groupId, word);
+  const menu = useWordContextMenu();
+  const actions = useWordClickActions(groupId, word, {
+    onOpenContextMenu: menu.openMenu,
+  });
   const dnd = useWordDragEvents({ word, onWordDragStart, onWordDragOver, onWordDragEnd });
   const info = useInfoPopover({ enabled: hasInfo });
 
@@ -60,6 +65,16 @@ export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, o
         measure={info.measure}
         onMouseEnter={info.enterPop}
         onMouseLeave={info.leavePop}
+      />
+      <WordContextMenu
+        open={menu.open}
+        target={menu.target}
+        position={menu.position}
+        subOpen={menu.subOpen}
+        menuRef={menu.menuRef}
+        subMenuRef={menu.subMenuRef}
+        onSubOpenChange={menu.setSubOpen}
+        onClose={menu.closeMenu}
       />
     </motion.div>
   );
