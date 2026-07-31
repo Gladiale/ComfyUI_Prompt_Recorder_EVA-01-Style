@@ -115,6 +115,10 @@ PresetFormData {
   - `findGroup()`: グループをIDで検索
   - `isDescendant()`: 子孫関係判定（循環参照防止）
 
+- **[tree/searchHits.ts](src/lib/tree/searchHits.ts)**: 検索ヒット収集（UI フィルタ用）
+  - `wordMatchesQuery()`: ワード本文（normalizeText）・注釈の部分一致
+  - `collectSearchHits()`: DFS で直下ヒットがあるグループだけを収集（グループ名は対象外）
+
 - **[tree/immutable.ts](src/lib/tree/immutable.ts)** (25行): immutable更新ヘルパ
   - `clone()`: structuredCloneによる深いコピー
   - `mutateGroup()`: グループを安全に更新
@@ -198,7 +202,7 @@ PresetFormData {
 - **実行環境**: `environment: "node"`。Windows 安定化のため `pool: vmThreads` / 単一ワーカー / `isolate: false`（`package.json` の scripts と `vitest.config.ts` で固定）
 - **カバレッジ対象の主なモジュール**:
   - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算）
-  - `tree/*`: factory, search, immutable, collector, navigation, word, group, preset, normalize
+  - `tree/*`: factory, search, searchHits, immutable, collector, navigation, word, group, preset, normalize
 
 ### コンポーネント構成
 
@@ -210,15 +214,18 @@ PresetFormData {
 
 **左側パネル - ワード管理**:
 
-- **[WordPanel.tsx](src/components/WordPanel.tsx)** (84行): 左側ワード画面の統括
-  - 検索ボックス、グループツリー、Import/Exportボタンを配置
+- **[WordPanel.tsx](src/components/WordPanel.tsx)**: 左側ワード画面の統括
+  - 検索ボックス、グループツリー / 検索結果、Import/Exportボタンを配置
+  - クエリあり時は `SearchResults`、空時は `GroupNode` ツリーを表示
 
 - **[SearchBox.tsx](src/components/SearchBox.tsx)** (39行): 検索UI
   - ワード本文と注釈を横断検索
-  - 非ヒットグループ/ワードを淡色化
+
+- **[SearchResults.tsx](src/components/SearchResults.tsx)**: 検索ヒット一覧
+  - ヒットしたワードと直属グループ名のみをフラット表示（祖先・非ヒットは出さない）
 
 - **[GroupNode.tsx](src/components/GroupNode.tsx)**: 再帰的グループ表示のオーケストレーター
-  - 検索・編集・ワードDnD・グループDnDはhooksへ委譲
+  - 編集・ワードDnD・グループDnDはhooksへ委譲
   - ヘッダー、ワード一覧、子グループ一覧は `components/group/` に分離
   - グループDnD状態は `GroupTreeDndContext` でツリー内共有
   - 折り畳み/展開、選択ワード内包時の緑徽章、グループ移動・ネスト化を提供
@@ -314,7 +321,6 @@ PresetFormData {
 - **useWordEditFormState**: ワード編集フォームの状態・trim・送信可否・画像圧縮処理
 - **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
-- **useGroupSearch**: グループ名・ワード本文・注釈の検索と検索時展開判定
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
   - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
   - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
@@ -329,7 +335,7 @@ PresetFormData {
 - **ワード**: シングルクリック=選択、ダブルクリック=編集、ドラッグ&ドロップ=同一グループ内並替、右クリック=コンテキストメニュー（強度調整 / グループ移動）
 - **ワードUI分割**: `WordItem`はhooksと表示部品を接続するオーケストレーター。永続操作は`PromptContext`、配列並替は`useGroupWordReordering`、個別行のDnDイベントは`useWordDragEvents`、popoverは`useInfoPopover`、右クリックメニューは`useWordContextMenu`で管理する
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
-- **検索**: ワード本文と注釈を検索、非ヒットを淡色化
+- **検索**: ワード本文と注釈を検索。ヒットしたワードと直属グループ名のみ表示（グループ名は対象外）
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
 - **プリセット保存**: SELECTED ヘッダのブックマーク → フォーム入力 → 現在の選択 + メタを保存
 - **プリセット一覧**: SELECTED ヘッダのレイヤー → ハニカム一覧。還元は wordId 基準（text は復元しない）。更新時は差分プレビューあり

@@ -7,7 +7,6 @@ interface Props {
   group: Group;
   depth: number;
   expanded: boolean;
-  groupMatchesSearch: boolean;
   selectedCount: number;
   editing: boolean;
   draftName: string;
@@ -23,7 +22,7 @@ interface Props {
 }
 
 export function GroupHeader({
-  group, depth, expanded, groupMatchesSearch, selectedCount, editing, draftName,
+  group, depth, expanded, selectedCount, editing, draftName,
   onNameClick, onDraftNameChange, onCommitName, onCancelEdit, onAddWord, onAddGroup,
   onDelete, onDragStart, onDragEnd,
 }: Props) {
@@ -53,7 +52,7 @@ export function GroupHeader({
           className="ev-input flex-1 rounded-sm px-1.5 py-0.5 font-cinzel text-[12px] tracking-widest"
         />
       ) : (
-        <span className={`font-cinzel tracking-widest text-[12px] truncate group-hover:text-eva-green ${groupMatchesSearch ? "text-eva-ink" : "text-eva-ink-dim"}`}>
+        <span className="font-cinzel tracking-widest text-[12px] truncate group-hover:text-eva-green text-eva-ink">
           {group.name}
         </span>
       )}

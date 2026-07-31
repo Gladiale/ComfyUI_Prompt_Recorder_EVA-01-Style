@@ -7,7 +7,6 @@ import { usePrompt } from "@/context/PromptContext";
 import { useWordEditor } from "@/context/WordEditorContext";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { countSelectedWords } from "@/lib/tree";
-import { useGroupSearch } from "@/hooks/useGroupSearch";
 import { useGroupNodeEditing } from "@/hooks/useGroupNodeEditing";
 import { useGroupWordReordering } from "@/hooks/useGroupWordReordering";
 import { useGroupDnD } from "@/hooks/useGroupDnD";
@@ -15,16 +14,16 @@ import { GroupHeader } from "./group/GroupHeader";
 import { GroupWords } from "./group/GroupWords";
 import { GroupChildren } from "./group/GroupChildren";
 
-interface Props { group: Group; depth: number; query: string }
+interface Props { group: Group; depth: number }
 
-export function GroupNode({ group, depth, query }: Props) {
+export function GroupNode({ group, depth }: Props) {
   const { toggleCollapse, addGroup, deleteGroup } = usePrompt();
   const confirm = useConfirm();
   const { openAdd } = useWordEditor();
-  const search = useGroupSearch(group, query);
+  const expanded = !group.collapsed;
   const editing = useGroupNodeEditing(group.id, group.name);
   const wordsDnd = useGroupWordReordering(group.id, group.words);
-  const groupDnd = useGroupDnD(group.id, search.expanded);
+  const groupDnd = useGroupDnD(group.id, expanded);
   const selectedCount = countSelectedWords(group);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -60,8 +59,7 @@ export function GroupNode({ group, depth, query }: Props) {
         <GroupHeader
           group={group}
           depth={depth}
-          expanded={search.expanded}
-          groupMatchesSearch={search.groupMatchesSearch}
+          expanded={expanded}
           selectedCount={selectedCount}
           editing={editing.editing}
           draftName={editing.draftName}
@@ -76,7 +74,7 @@ export function GroupNode({ group, depth, query }: Props) {
           onDragEnd={groupDnd.onGroupDragEnd}
         />
         <AnimatePresence initial={false}>
-          {search.expanded && (
+          {expanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -87,8 +85,6 @@ export function GroupNode({ group, depth, query }: Props) {
               <GroupWords
                 words={group.words}
                 groupId={group.id}
-                query={search.query}
-                wordMatches={search.wordMatches}
                 dragWordId={wordsDnd.dragWordId}
                 onWordDragStart={wordsDnd.onWordDragStart}
                 onWordDragOver={wordsDnd.onWordDragOver}
@@ -96,7 +92,7 @@ export function GroupNode({ group, depth, query }: Props) {
                 onWordsContainerDragOver={wordsDnd.onWordsContainerDragOver}
                 onWordsDrop={wordsDnd.onWordsDrop}
               />
-              <GroupChildren groups={group.groups} depth={depth} query={query} />
+              <GroupChildren groups={group.groups} depth={depth} />
             </motion.div>
           )}
         </AnimatePresence>

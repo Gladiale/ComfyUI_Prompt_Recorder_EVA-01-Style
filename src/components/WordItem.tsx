@@ -13,14 +13,13 @@ import { WordContextMenu } from "./word/menu/WordContextMenu";
 interface Props {
   word: Word;
   groupId: string;
-  dimmed: boolean;
   isDragging: boolean;
   onWordDragStart: (word: Word) => void;
   onWordDragOver: (e: DragEvent, word: Word) => void;
   onWordDragEnd: () => void;
 }
 
-export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, onWordDragOver, onWordDragEnd }: Props) {
+export function WordItem({ word, groupId, isDragging, onWordDragStart, onWordDragOver, onWordDragEnd }: Props) {
   const hasInfo = !!word.note.trim() || !!word.image;
   const menu = useWordContextMenu();
   const actions = useWordClickActions(groupId, word, {
@@ -38,7 +37,6 @@ export function WordItem({ word, groupId, dimmed, isDragging, onWordDragStart, o
     >
       <WordBody
         word={word}
-        dimmed={dimmed}
         draggable={!isDragging}
         hasInfo={hasInfo}
         markRef={info.markRef}

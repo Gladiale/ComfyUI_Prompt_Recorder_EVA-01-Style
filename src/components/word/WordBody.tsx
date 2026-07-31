@@ -4,7 +4,6 @@ import type { Word } from "@/types";
 
 interface Props {
   word: Word;
-  dimmed: boolean;
   draggable: boolean;
   hasInfo: boolean;
   markRef: RefObject<HTMLSpanElement | null>;
@@ -22,7 +21,7 @@ interface Props {
 }
 
 export function WordBody({
-  word, dimmed, draggable, hasInfo, markRef, onDragStart, onDragOver, onDrop, onDragEnd,
+  word, draggable, hasInfo, markRef, onDragStart, onDragOver, onDrop, onDragEnd,
   onClick, onContextMenu, onDelete, onFocusStrength, onInfoMouseEnter, onInfoMouseLeave, onInfoClick,
 }: Props) {
   return (
@@ -37,7 +36,6 @@ export function WordBody({
       className={[
         "font-garamond group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
         word.selected ? "word-selected bg-eva-bg-panel-2" : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
-        dimmed ? "opacity-30" : "opacity-100",
       ].join(" ")}
     >
       <div className="flex-1 min-w-0">

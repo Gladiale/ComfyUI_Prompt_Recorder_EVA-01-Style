@@ -13,6 +13,13 @@ export { createWord, createGroup } from "./tree/factory";
 // 検索ヘルパ
 export { findGroup, isDescendant } from "./tree/search";
 
+// 検索ヒット収集（UI フィルタ用）
+export {
+  collectSearchHits,
+  wordMatchesQuery,
+  type SearchHitGroup,
+} from "./tree/searchHits";
+
 // グループ操作
 export {
   addGroup,

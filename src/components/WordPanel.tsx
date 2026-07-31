@@ -1,9 +1,11 @@
 // 左：ワード画面 / WordPanel
-import { useState, type DragEvent } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import { FiPlus } from "react-icons/fi";
 import { usePrompt } from "@/context/PromptContext";
+import { collectSearchHits } from "@/lib/tree";
 import { GroupNode } from "./GroupNode";
 import { SearchBox } from "./SearchBox";
+import { SearchResults } from "./SearchResults";
 import { IOButtons } from "./IOButtons";
 import { useClockNav } from "@/context/ClockNavContext";
 import { GroupTreeDndProvider, useGroupTreeDnd } from "@/context/GroupTreeDndContext";
@@ -21,6 +23,11 @@ function WordPanelContent() {
   const { open: openClockNav } = useClockNav();
   const { draggingGroupId, endGroupDrag } = useGroupTreeDnd();
   const [query, setQuery] = useState("");
+  const hasQuery = query.trim().length > 0;
+  const searchHits = useMemo(
+    () => collectSearchHits(state.rootGroups, query),
+    [state.rootGroups, query],
+  );
 
   // ルート領域へのドロップ → ルート直下へ
   const onRootDragOver = (e: DragEvent) => {
@@ -62,28 +69,29 @@ function WordPanelContent() {
         </button>
       </header>
 
-      {/* ツリー本体（スクロール領域） */}
+      {/* ツリー本体（スクロール領域） / 検索時はヒット結果のみ */}
       <div
-        onDragOver={onRootDragOver}
-        onDrop={onRootDrop}
+        onDragOver={hasQuery ? undefined : onRootDragOver}
+        onDrop={hasQuery ? undefined : onRootDrop}
         className="flex-1 min-h-0 overflow-y-auto pr-1"
       >
-        <div className="flex flex-col gap-2">
-          {state.rootGroups.map((g) => (
-            <GroupNode
-              key={g.id}
-              group={g}
-              depth={0}
-              query={query}
-            />
-          ))}
-        </div>
-        {state.rootGroups.length === 0 && (
-          <div className="text-center text-eva-ink-dim italic mt-10 font-garamond">
-            グループがありません。
-            <br />
-            「+ GROUP」で新規作成。
-          </div>
+        {hasQuery ? (
+          <SearchResults hits={searchHits} />
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              {state.rootGroups.map((g) => (
+                <GroupNode key={g.id} group={g} depth={0} />
+              ))}
+            </div>
+            {state.rootGroups.length === 0 && (
+              <div className="text-center text-eva-ink-dim italic mt-10 font-garamond">
+                グループがありません。
+                <br />
+                「+ GROUP」で新規作成。
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
