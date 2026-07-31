@@ -21,6 +21,7 @@ function sampleSnapshot(
   overrides: Partial<Snapshot> = {},
 ): Snapshot {
   return {
+    formatVersion: 2,
     entries: [
       {
         wordId: "w1",
@@ -209,10 +210,34 @@ describe("storage — chrome.storage.local", () => {
     const { loadSnapshot } = await loadWithChrome({
       get: async (key) => ({
         [key]: JSON.stringify({
+          formatVersion: 2,
           entries: "nope",
           separator: "comma",
           takenAt: 1,
           count: 0,
+        }),
+      }),
+    });
+    expect(await loadSnapshot()).toBeNull();
+  });
+
+  it("旧形式スナップショット（formatVersion なし）は破棄する", async () => {
+    const { loadSnapshot } = await loadWithChrome({
+      get: async (key) => ({
+        [key]: JSON.stringify({
+          entries: [
+            {
+              wordId: "w1",
+              text: "alpha",
+              strength: 0,
+              formatted: "alpha",
+              groupId: "g1",
+              groupPath: ["G"],
+            },
+          ],
+          separator: "comma",
+          takenAt: 1,
+          count: 1,
         }),
       }),
     });

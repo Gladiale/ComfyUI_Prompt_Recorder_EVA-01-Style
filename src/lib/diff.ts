@@ -2,36 +2,42 @@
 // プロンプト差分検知 / Diff
 // ============================================================
 //
-// コピーボタンを押した瞬間の選択ワード群を「スナップショット（基準）」として
-// 記録し、現在の選択ワード群と比較して変化を抽出する。
+// コピーボタンを押した瞬間の「変換後」テキストをスナップショット（基準）
+// として記録し、現在の変換後テキストと比較して変化を抽出する。
 //
 // 変化の種別：
 //   added    : 基準後に新たに選択されたワード
 //   removed  : 基準時に存在したが現在は選択されていないワード
 //   strength : 同一ワードで強度が変化したもの
-//   text     : 同一ワードでテキストが編集されたもの
+//   text     : 同一ワードで変換後テキストが変化したもの
 //
-// 重複排除ルールは synthesis（総括欄）の構築と同一：整形後テキストを
-// normalizeText で正規化したキーで最初の出現のみ残す。
+// 差分用エントリは重複排除しない（元ワード単位で全件保持）。
+// 変換後が空でも保持し、空文字化は「削除」ではなく「テキスト変更」。
+//
+// 表示用の重複排除は transform.buildDisplayEntries 側で行う。
 
-import { normalizeText } from "@/lib/normalize";
-import { clampStrength, formatWordWithStrength } from "@/lib/strength";
-import type { Word } from "@/types";
+import {
+  buildTransformedEntries,
+  type TransformedEntry,
+  type TransformSelectedRef,
+} from "@/lib/transform";
+import type { PromptTransformRule } from "@/types";
 
 export type Separator = "comma" | "newline";
 
 /** 選択ワードの参照（PromptContext.selectedRefs と同一形状） */
-export interface SelectedRef {
-  word: Word;
-  groupId: string;
-  groupPath: string[];
-}
+export type SelectedRef = TransformSelectedRef;
 
-/** スナップショット内の1エントリ（重複排除済み） */
+/**
+ * スナップショット内の1エントリ（元ワード単位・重複排除なし）。
+ * text / formatted はコピー時点の「変換後」テキスト。
+ */
 export interface SnapshotEntry {
   wordId: string;
+  /** 変換後本文（trim 済み。空文字可） */
   text: string;
   strength: number;
+  /** 強度付き変換後文字列。text が空なら空文字。 */
   formatted: string;
   groupId: string;
   groupPath: string[];
@@ -39,6 +45,8 @@ export interface SnapshotEntry {
 
 /** コピー時のプロンプト基準 */
 export interface Snapshot {
+  /** 新形式識別子。旧形式（このフィールドなし）は破棄する。 */
+  formatVersion: 2;
   entries: SnapshotEntry[];
   separator: Separator;
   takenAt: number;
@@ -71,51 +79,70 @@ export interface PromptDiff {
   hasChanges: boolean;
 }
 
-/**
- * 選択ワード参照から、synthesis と同じ重複排除ルールでエントリ列を構築する。
- * 出現順を維持し、整形後テキストの正規化キーで重複を除外する。
- */
-export function buildSnapshotEntries(refs: SelectedRef[]): SnapshotEntry[] {
-  const seen = new Set<string>();
-  const out: SnapshotEntry[] = [];
-  for (const ref of refs) {
-    const text = ref.word.text.trim();
-    if (!text) continue;
-    const strength = clampStrength(ref.word.strength ?? 0);
-    const formatted = formatWordWithStrength(ref.word.text, ref.word.strength ?? 0);
-    const key = normalizeText(formatted);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({
-      wordId: ref.word.id,
-      text,
-      strength,
-      formatted,
-      groupId: ref.groupId,
-      groupPath: ref.groupPath,
-    });
-  }
-  return out;
-}
-
-/** 現在の選択ワードからスナップショットを生成する。 */
-export function makeSnapshot(refs: SelectedRef[], separator: Separator): Snapshot {
-  const entries = buildSnapshotEntries(refs);
+function toSnapshotEntry(e: TransformedEntry): SnapshotEntry {
   return {
-    entries,
-    separator,
-    takenAt: Date.now(),
-    count: entries.length,
+    wordId: e.wordId,
+    text: e.text,
+    strength: e.strength,
+    formatted: e.formatted,
+    groupId: e.groupId,
+    groupPath: e.groupPath,
   };
 }
 
 /**
+ * 選択ワード参照から、差分用エントリ列を構築する。
+ * - 変換ルールを適用したテキストを保存
+ * - 重複排除しない（元ワード単位で全件）
+ * - 元本文が空のワードのみ除外
+ * - 変換後が空でも保持
+ */
+export function buildSnapshotEntries(
+  refs: SelectedRef[],
+  rules: readonly PromptTransformRule[] = [],
+): SnapshotEntry[] {
+  return buildTransformedEntries(refs, rules).map(toSnapshotEntry);
+}
+
+/** 現在の選択ワードからスナップショットを生成する。 */
+export function makeSnapshot(
+  refs: SelectedRef[],
+  separator: Separator,
+  rules: readonly PromptTransformRule[] = [],
+): Snapshot {
+  const entries = buildSnapshotEntries(refs, rules);
+  // count は表示用ポイント数（変換後が非空のもの）
+  const count = entries.filter((e) => e.text).length;
+  return {
+    formatVersion: 2,
+    entries,
+    separator,
+    takenAt: Date.now(),
+    count,
+  };
+}
+
+/**
+ * 旧形式スナップショットを破棄する。
+ * formatVersion === 2 かつ entries 配列があるものだけ有効。
+ */
+export function isValidSnapshot(raw: unknown): raw is Snapshot {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+  const obj = raw as Record<string, unknown>;
+  if (obj.formatVersion !== 2) return false;
+  if (!Array.isArray(obj.entries)) return false;
+  return true;
+}
+
+/**
  * 現在の選択ワードとスナップショットを比較し、変化を抽出する。
- * ワードID単位で突き合わせる（ユーザー操作の追加/削除/強度変更と一致）。
+ * ワードID単位で突き合わせる。
+ * テキスト比較は完全一致（大小・空白差も検出）。
  */
 export function computeDiff(
   currentRefs: SelectedRef[],
   snapshot: Snapshot | null,
+  rules: readonly PromptTransformRule[] = [],
 ): PromptDiff {
   const empty: PromptDiff = {
     items: [],
@@ -126,7 +153,7 @@ export function computeDiff(
   };
   if (!snapshot) return empty;
 
-  const current = buildSnapshotEntries(currentRefs);
+  const current = buildSnapshotEntries(currentRefs, rules);
   const snapById = new Map(snapshot.entries.map((e) => [e.wordId, e]));
   const curById = new Map(current.map((e) => [e.wordId, e]));
 
@@ -149,7 +176,8 @@ export function computeDiff(
       continue;
     }
     const strengthChanged = prev.strength !== e.strength;
-    const textChanged = normalizeText(prev.text) !== normalizeText(e.text);
+    // 完全一致で比較（normalize しない）
+    const textChanged = prev.text !== e.text;
     if (strengthChanged || textChanged) {
       modified.push({
         kind: strengthChanged ? "strength" : "text",
@@ -157,7 +185,11 @@ export function computeDiff(
         text: e.text,
         groupId: e.groupId,
         groupPath: e.groupPath,
-        before: { text: prev.text, strength: prev.strength, formatted: prev.formatted },
+        before: {
+          text: prev.text,
+          strength: prev.strength,
+          formatted: prev.formatted,
+        },
         after: { text: e.text, strength: e.strength, formatted: e.formatted },
       });
     }
@@ -172,7 +204,11 @@ export function computeDiff(
         text: e.text,
         groupId: e.groupId,
         groupPath: e.groupPath,
-        before: { text: e.text, strength: e.strength, formatted: e.formatted },
+        before: {
+          text: e.text,
+          strength: e.strength,
+          formatted: e.formatted,
+        },
       });
     }
   }

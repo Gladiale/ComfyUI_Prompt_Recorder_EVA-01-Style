@@ -22,7 +22,7 @@ import { clampStrength } from "@/lib/strength";
 describe("normalizeImportedState — root fallback", () => {
   it.each(SAMPLE_INVALID)("無効値 %# は空 state へフォールバックする", (raw) => {
     const state = normalizeImportedState(raw);
-    expect(state).toEqual({ version: ROOT_VERSION, rootGroups: [] });
+    expect(state).toEqual({ version: ROOT_VERSION, rootGroups: [], rules: [] });
     expect(state).not.toHaveProperty("presets");
   });
 
@@ -30,6 +30,7 @@ describe("normalizeImportedState — root fallback", () => {
     const state = normalizeImportedState({});
     expect(state.version).toBe(ROOT_VERSION);
     expect(state.rootGroups).toEqual([]);
+    expect(state.rules).toEqual([]);
     expect(state).not.toHaveProperty("presets");
   });
 
@@ -39,18 +40,20 @@ describe("normalizeImportedState — root fallback", () => {
       presets: "y",
     });
     expect(state.rootGroups).toEqual([]);
+    expect(state.rules).toEqual([]);
     expect(state).not.toHaveProperty("presets");
   });
 
   it("presets: [] のとき presets キーを持たない", () => {
     const state = normalizeImportedState(SAMPLE_EMPTY_PRESETS);
     expect(state.rootGroups).toEqual([]);
+    expect(state.rules).toEqual([]);
     expect(state).not.toHaveProperty("presets");
   });
 
   it("最小 OK オブジェクトを受け入れる", () => {
     const state = normalizeImportedState(SAMPLE_MINIMAL_OK);
-    expect(state).toEqual({ version: ROOT_VERSION, rootGroups: [] });
+    expect(state).toEqual({ version: ROOT_VERSION, rootGroups: [], rules: [] });
   });
 });
 
@@ -427,5 +430,134 @@ describe("normalizeImportedState — round-trip", () => {
     });
     expect(state.presets).toHaveLength(1);
     expect(state.presets![0].id).toBe("p1");
+  });
+
+  it("rules も JSON 往復で維持する", () => {
+    const original = {
+      ...makeSampleRoot(),
+      rules: [
+        {
+          id: "rule-1",
+          name: "cat→dog",
+          from: "cat",
+          to: "dog",
+          enabled: true,
+        },
+      ],
+    };
+    const state = normalizeImportedState(JSON.parse(JSON.stringify(original)));
+    expect(state.rules).toEqual(original.rules);
+  });
+});
+
+// ============================================================
+// 変換ルール
+// ============================================================
+
+describe("normalizeImportedState — rules", () => {
+  it("rules 欠落・非配列は []", () => {
+    expect(normalizeImportedState({ rootGroups: [] }).rules).toEqual([]);
+    expect(
+      normalizeImportedState({ rootGroups: [], rules: "x" }).rules,
+    ).toEqual([]);
+    expect(normalizeImportedState({ rootGroups: [], rules: null }).rules).toEqual(
+      [],
+    );
+  });
+
+  it("正常ルールを読み込む", () => {
+    const state = normalizeImportedState({
+      rootGroups: [],
+      rules: [
+        {
+          id: "rule-1",
+          name: "  A  ",
+          from: " cat ",
+          to: " dog ",
+          enabled: true,
+        },
+      ],
+    });
+    expect(state.rules).toEqual([
+      {
+        id: "rule-1",
+        name: "A",
+        from: "cat",
+        to: "dog",
+        enabled: true,
+      },
+    ]);
+  });
+
+  it("name / from 不正・空は除外する", () => {
+    const state = normalizeImportedState({
+      rootGroups: [],
+      rules: [
+        { id: "r1", name: "", from: "a", to: "b", enabled: true },
+        { id: "r2", name: "  ", from: "a", to: "b", enabled: true },
+        { id: "r3", name: "ok", from: "", to: "b", enabled: true },
+        { id: "r4", name: "ok", from: "  ", to: "b", enabled: true },
+        { id: "r5", name: 1, from: "a", to: "b", enabled: true },
+        { id: "r6", name: "ok", from: 1, to: "b", enabled: true },
+        null,
+        "x",
+        { id: "r7", name: "keep", from: "x", to: "y", enabled: false },
+      ],
+    });
+    expect(state.rules).toEqual([
+      {
+        id: "r7",
+        name: "keep",
+        from: "x",
+        to: "y",
+        enabled: false,
+      },
+    ]);
+  });
+
+  it("to 非文字列は空文字、enabled 非真偽値は false", () => {
+    const state = normalizeImportedState({
+      rootGroups: [],
+      rules: [
+        { id: "r1", name: "n", from: "a", to: 1, enabled: "yes" },
+        { id: "r2", name: "n", from: "b" },
+      ],
+    });
+    expect(state.rules).toEqual([
+      { id: "r1", name: "n", from: "a", to: "", enabled: false },
+      { id: "r2", name: "n", from: "b", to: "", enabled: false },
+    ]);
+  });
+
+  it("id 欠損は rule_ を生成し、重複 ID は2件目以降を再生成する", () => {
+    const state = normalizeImportedState({
+      rootGroups: [],
+      rules: [
+        { name: "first", from: "a", to: "b", enabled: true },
+        { id: "dup", name: "A", from: "x", to: "y", enabled: true },
+        { id: "dup", name: "B", from: "p", to: "q", enabled: false },
+      ],
+    });
+    expect(state.rules).toHaveLength(3);
+    expect(state.rules[0].id).toMatch(/^rule_/);
+    expect(state.rules[1].id).toBe("dup");
+    expect(state.rules[2].id).toMatch(/^rule_/);
+    expect(state.rules[2].id).not.toBe("dup");
+    expect(state.rules[2]).toMatchObject({
+      name: "B",
+      from: "p",
+      to: "q",
+      enabled: false,
+    });
+  });
+
+  it("version は常に ROOT_VERSION(2) へ正規化する", () => {
+    const state = normalizeImportedState({
+      version: 1,
+      rootGroups: [],
+      rules: [],
+    });
+    expect(state.version).toBe(ROOT_VERSION);
+    expect(state.rules).toEqual([]);
   });
 });

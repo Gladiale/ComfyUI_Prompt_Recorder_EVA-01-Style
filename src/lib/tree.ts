@@ -77,5 +77,17 @@ export {
   type PresetUpdateDiff,
 } from "./tree/preset";
 
+// 変換ルール操作
+export {
+  addRule,
+  updateRule,
+  deleteRule,
+  setRuleEnabled,
+  reorderRules,
+  normalizeRuleInput,
+  isValidRuleInput,
+  type RuleFormInput,
+} from "./tree/rules";
+
 // Import / Export
 export { normalizeImportedState } from "./tree/normalize";

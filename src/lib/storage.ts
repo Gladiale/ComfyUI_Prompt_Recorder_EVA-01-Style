@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { RootState } from "@/types";
-import type { Snapshot } from "@/lib/diff";
+import { isValidSnapshot, type Snapshot } from "@/lib/diff";
 
 const STORAGE_KEY = "comfy_prompt_recorder_state_v1";
 const SNAPSHOT_KEY = "comfy_prompt_recorder_snapshot_v1";
@@ -67,8 +67,9 @@ export async function loadSnapshot(): Promise<Snapshot | null> {
   const raw = await getRaw(SNAPSHOT_KEY);
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw) as Snapshot;
-    if (!v || !Array.isArray(v.entries)) return null;
+    const v = JSON.parse(raw) as unknown;
+    // 旧形式スナップショットは破棄（次回コピーで新形式を作成）
+    if (!isValidSnapshot(v)) return null;
     return v;
   } catch {
     return null;

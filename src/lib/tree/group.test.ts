@@ -22,6 +22,7 @@ function makeSiblingRoot(): RootState {
       group("grp-y", "Y"),
       group("grp-z", "Z"),
     ],
+    rules: [],
   };
 }
 
@@ -217,6 +218,7 @@ describe("moveGroup", () => {
           groups: [group("grp-b", "B"), group("grp-e", "E")],
         }),
       ],
+      rules: [],
     };
     // E を B の前へ
     const next = moveGroup(root, "grp-e", { kind: "before", anchorId: "grp-b" });

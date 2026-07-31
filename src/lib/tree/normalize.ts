@@ -13,6 +13,7 @@ import type {
   PresetMetadata,
   PresetModelRef,
   PromptPreset,
+  PromptTransformRule,
   RootState,
   Word,
 } from "@/types";
@@ -26,7 +27,7 @@ import { genId } from "./id";
 
 /** 空の RootState（無効データ・初回起動のフォールバック）。 */
 function emptyState(): RootState {
-  return { version: ROOT_VERSION, rootGroups: [] };
+  return { version: ROOT_VERSION, rootGroups: [], rules: [] };
 }
 
 /** 未知のデータを RootState へ検証付きで正規化する。 */
@@ -42,11 +43,52 @@ export function normalizeImportedState(raw: unknown): RootState {
   const presets = Array.isArray(obj.presets)
     ? (obj.presets.map(normalizePreset).filter(Boolean) as PromptPreset[])
     : [];
+  const rules = normalizeRules(obj.rules);
 
-  // 空の presets はキー自体を持たせない
-  const state: RootState = { version: ROOT_VERSION, rootGroups };
+  // 空の presets はキー自体を持たせない。rules は常に配列。
+  const state: RootState = { version: ROOT_VERSION, rootGroups, rules };
   if (presets.length > 0) state.presets = presets;
   return state;
+}
+
+/**
+ * 変換ルール配列を正規化する。
+ * - 非配列 → []
+ * - name/from 不正・空 → 除外
+ * - to 非文字列 → ""
+ * - id 欠損・重複 → 新規生成（最初の ID は維持）
+ * - enabled 非真偽値 → false
+ */
+function normalizeRules(raw: unknown): PromptTransformRule[] {
+  if (!Array.isArray(raw)) return [];
+  const seenIds = new Set<string>();
+  const out: PromptTransformRule[] = [];
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const obj = item as Record<string, unknown>;
+
+    if (typeof obj.name !== "string") continue;
+    const name = obj.name.trim();
+    if (!name) continue;
+
+    if (typeof obj.from !== "string") continue;
+    const from = obj.from.trim();
+    if (!from) continue;
+
+    const to = typeof obj.to === "string" ? obj.to.trim() : "";
+    const enabled = typeof obj.enabled === "boolean" ? obj.enabled : false;
+
+    let id =
+      typeof obj.id === "string" && obj.id.trim() ? obj.id.trim() : genId("rule");
+    if (seenIds.has(id)) {
+      id = genId("rule");
+    }
+    seenIds.add(id);
+
+    out.push({ id, name, from, to, enabled });
+  }
+  return out;
 }
 
 function normalizePreset(raw: unknown): PromptPreset | null {

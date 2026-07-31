@@ -1,23 +1,40 @@
 // 右上：総括欄 / SynthesisPanel
 import { useCallback, useRef, useState } from "react";
-import { FiCopy, FiCheck, FiMinus, FiMoreHorizontal, FiActivity } from "react-icons/fi";
+import {
+  FiCopy,
+  FiCheck,
+  FiMinus,
+  FiMoreHorizontal,
+  FiActivity,
+  FiSliders,
+} from "react-icons/fi";
 import { motion, AnimatePresence } from "motion/react";
 import { usePrompt } from "@/context/PromptContext";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useSynthesisCopy } from "@/hooks/useSynthesisCopy";
 import { countSynthesisPoints } from "./synthesis/countSynthesisPoints";
 import { DiffPopup } from "./synthesis/DiffPopup";
+import { RulesPopup } from "./synthesis/RulesPopup";
+
+type PopupKind = "none" | "diff" | "rules";
 
 export function SynthesisPanel() {
-  const { synthesis, separator, setSeparator, lastSnapshot, diff, captureSnapshot } =
-    usePrompt();
-  const [diffOpen, setDiffOpen] = useState(false);
+  const {
+    synthesis,
+    separator,
+    setSeparator,
+    lastSnapshot,
+    diff,
+    captureSnapshot,
+    hasEnabledRules,
+  } = usePrompt();
+  const [popup, setPopup] = useState<PopupKind>("none");
   const headerRef = useRef<HTMLElement>(null);
 
-  const closeDiff = useCallback(() => setDiffOpen(false), []);
-  const { copied, onCopy } = useSynthesisCopy({ onCopied: closeDiff });
+  const closePopup = useCallback(() => setPopup("none"), []);
+  const { copied, onCopy } = useSynthesisCopy({ onCopied: closePopup });
 
-  useClickOutside(headerRef, diffOpen, closeDiff);
+  useClickOutside(headerRef, popup !== "none", closePopup);
 
   const count = countSynthesisPoints(synthesis, separator);
   const hasBaseline = !!lastSnapshot;
@@ -46,9 +63,28 @@ export function SynthesisPanel() {
         >
           {separator === "comma" ? <FiMoreHorizontal size={13} /> : <FiMinus size={13} />}
         </button>
+        {/* 変換ルール調整 */}
+        <button
+          onClick={() => setPopup((p) => (p === "rules" ? "none" : "rules"))}
+          className={`p-1 transition-all ${
+            hasEnabledRules
+              ? "text-eva-green"
+              : "text-eva-ink-dim hover:text-eva-lavender"
+          }`}
+          title="変換ルールを調整"
+        >
+          <FiSliders
+            size={13}
+            className={
+              hasEnabledRules
+                ? "animate-flicker drop-shadow-[0_0_5px_rgba(57,255,20,0.7)]"
+                : ""
+            }
+          />
+        </button>
         {/* 差分検知：前回コピー基準からの変化を表示 */}
         <button
-          onClick={() => setDiffOpen((o) => !o)}
+          onClick={() => setPopup((p) => (p === "diff" ? "none" : "diff"))}
           className={`p-1 transition-all ${
             glow
               ? "text-eva-green"
@@ -104,9 +140,9 @@ export function SynthesisPanel() {
           </AnimatePresence>
         </button>
 
-        {/* 差分ポップアップ */}
+        {/* ポップアップ */}
         <AnimatePresence>
-          {diffOpen && (
+          {popup === "diff" && (
             <DiffPopup
               hasBaseline={hasBaseline}
               takenAt={lastSnapshot?.takenAt ?? 0}
@@ -114,10 +150,11 @@ export function SynthesisPanel() {
               diff={diff}
               onRefresh={() => {
                 captureSnapshot();
-                setDiffOpen(false);
+                setPopup("none");
               }}
             />
           )}
+          {popup === "rules" && <RulesPopup />}
         </AnimatePresence>
       </header>
 

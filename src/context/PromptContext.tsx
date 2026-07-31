@@ -12,7 +12,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Group, PresetFormData, RootState, Word } from "@/types";
+import type {
+  Group,
+  PresetFormData,
+  PromptTransformRule,
+  RootState,
+  Word,
+} from "@/types";
 import { ROOT_VERSION } from "@/types";
 import {
   addGroup as treeAddGroup,
@@ -41,9 +47,15 @@ import {
   updatePresetEntries as treeUpdatePresetEntries,
   updatePresetMeta as treeUpdatePresetMeta,
   updateWord as treeUpdateWord,
+  addRule as treeAddRule,
+  updateRule as treeUpdateRule,
+  deleteRule as treeDeleteRule,
+  setRuleEnabled as treeSetRuleEnabled,
+  reorderRules as treeReorderRules,
   type GroupDropTarget,
   type PresetApplyReport,
   type PresetUpdateDiff,
+  type RuleFormInput,
 } from "@/lib/tree";
 import {
   debounce,
@@ -52,8 +64,7 @@ import {
   saveSnapshot,
   saveState,
 } from "@/lib/storage";
-import { normalizeText } from "@/lib/normalize";
-import { clampStrength, formatWordWithStrength } from "@/lib/strength";
+import { clampStrength } from "@/lib/strength";
 import {
   computeDiff,
   makeSnapshot,
@@ -61,6 +72,7 @@ import {
   type SelectedRef,
   type Snapshot,
 } from "@/lib/diff";
+import { buildSynthesisText } from "@/lib/transform";
 
 type Separator = "comma" | "newline";
 
@@ -69,7 +81,7 @@ interface PromptContextValue extends PromptActions {
   ready: boolean;
   separator: Separator;
   setSeparator: (s: Separator) => void;
-  // 派生：重複排除済み最終プロンプト（出現順維持）
+  // 派生：重複排除済み最終プロンプト（出現順維持・ルール適用後）
   synthesis: string;
   // 派生：選択ワード参照（右下一覧用）
   selectedRefs: SelectedRef[];
@@ -87,6 +99,10 @@ interface PromptContextValue extends PromptActions {
   analyzePresetApply: (presetId: string) => PresetApplyReport | null;
   // プリセット更新前の差分
   diffPresetEntries: (presetId: string) => PresetUpdateDiff | null;
+  // 変換ルール一覧
+  rules: PromptTransformRule[];
+  // 有効ルールがあるか（ボタン発光用）
+  hasEnabledRules: boolean;
 }
 
 export interface PromptActions {
@@ -123,6 +139,16 @@ export interface PromptActions {
   updatePresetMeta: (presetId: string, form: PresetFormData) => void;
   /** ワード情報のみ現在の選択で更新。 */
   updatePresetEntries: (presetId: string) => void;
+  /** 変換ルールを新規追加（常に disabled）。 */
+  addRule: (input: RuleFormInput) => void;
+  /** 変換ルールを編集（enabled は維持）。 */
+  updateRule: (ruleId: string, input: RuleFormInput) => void;
+  /** 変換ルールを削除。 */
+  deleteRule: (ruleId: string) => void;
+  /** 変換ルールの適用状態を切替。 */
+  setRuleEnabled: (ruleId: string, enabled: boolean) => void;
+  /** 変換ルールを並べ替え（targetId の前へ挿入）。 */
+  reorderRules: (draggedId: string, targetId: string) => void;
   replaceState: (raw: unknown) => void;
   exportState: () => RootState;
 }
@@ -133,6 +159,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RootState>(() => ({
     version: ROOT_VERSION,
     rootGroups: [],
+    rules: [],
   }));
   const [ready, setReady] = useState(false);
   const [separator, setSeparator] = useState<Separator>("comma");
@@ -223,22 +250,46 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       setState((s) => treeUpdatePresetMeta(s, presetId, form)),
     updatePresetEntries: (presetId) =>
       setState((s) => treeUpdatePresetEntries(s, presetId)),
+    addRule: (input) => setState((s) => treeAddRule(s, input)),
+    updateRule: (ruleId, input) => setState((s) => treeUpdateRule(s, ruleId, input)),
+    deleteRule: (ruleId) => setState((s) => treeDeleteRule(s, ruleId)),
+    setRuleEnabled: (ruleId, enabled) =>
+      setState((s) => treeSetRuleEnabled(s, ruleId, enabled)),
+    reorderRules: (draggedId, targetId) =>
+      setState((s) => treeReorderRules(s, draggedId, targetId)),
     replaceState: (raw) => setState(() => normalizeImportedState(raw)),
-    exportState: () => state,
+    exportState: () => {
+      // Export は常に rules を含む（0件でも []）
+      const rules = state.rules ?? [];
+      const out: RootState = {
+        version: ROOT_VERSION,
+        rootGroups: state.rootGroups,
+        rules,
+      };
+      if (state.presets && state.presets.length > 0) {
+        out.presets = state.presets;
+      }
+      return out;
+    },
   };
 
   // ---- 派生値 ----
   const selectedRefs = useMemo(() => collectSelected(state), [state]);
+  const rules = state.rules ?? [];
+  const hasEnabledRules = useMemo(
+    () => rules.some((r) => r.enabled),
+    [rules],
+  );
 
-  // コピー基準の更新：現在の選択ワードでスナップショットを撮る
+  // コピー基準の更新：現在の選択ワード + 変換後テキストでスナップショットを撮る
   const captureSnapshot = useCallback(() => {
-    setLastSnapshot(makeSnapshot(selectedRefs, separator));
-  }, [selectedRefs, separator]);
+    setLastSnapshot(makeSnapshot(selectedRefs, separator, rules));
+  }, [selectedRefs, separator, rules]);
 
-  // 現在のプロンプトと基準の差分
+  // 現在のプロンプトと基準の差分（変換後テキスト基準）
   const diff = useMemo(
-    () => computeDiff(selectedRefs, lastSnapshot),
-    [selectedRefs, lastSnapshot],
+    () => computeDiff(selectedRefs, lastSnapshot, rules),
+    [selectedRefs, lastSnapshot, rules],
   );
 
   const analyzePresetApply = useCallback(
@@ -251,20 +302,10 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     [state],
   );
 
-  const synthesis = useMemo(() => {
-    // 出現順を維持しつつ、整形後テキストで重複排除
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const ref of selectedRefs) {
-      if (!ref.word.text.trim()) continue;
-      const formatted = formatWordWithStrength(ref.word.text, ref.word.strength ?? 0);
-      const key = normalizeText(formatted);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(formatted);
-    }
-    return separator === "comma" ? out.join(", ") : out.join("\n");
-  }, [selectedRefs, separator]);
+  const synthesis = useMemo(
+    () => buildSynthesisText(selectedRefs, rules, separator),
+    [selectedRefs, rules, separator],
+  );
 
   const value: PromptContextValue = {
     state,
@@ -281,6 +322,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     captureSnapshot,
     analyzePresetApply,
     diffPresetEntries,
+    rules,
+    hasEnabledRules,
     ...actions,
   };
 

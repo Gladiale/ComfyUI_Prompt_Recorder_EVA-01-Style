@@ -116,15 +116,25 @@ export function DiffPopup({
                 count={textItems.length}
                 accent="text-eva-purple-bright"
                 items={textItems}
-                render={(it) => (
-                  <span className="text-eva-purple-bright">
-                    <span className="line-through opacity-60">
-                      {it.before?.formatted}
+                render={(it) => {
+                  const beforeLabel =
+                    it.before?.formatted ||
+                    (it.before?.text === "" ? "（空欄）" : it.before?.text) ||
+                    "（空欄）";
+                  const afterLabel =
+                    it.after?.formatted ||
+                    (it.after?.text === "" ? "（空欄）" : it.after?.text) ||
+                    "（空欄）";
+                  return (
+                    <span className="text-eva-purple-bright">
+                      <span className="line-through opacity-60">
+                        {beforeLabel}
+                      </span>
+                      <span className="text-eva-ink-dim mx-1">→</span>
+                      {afterLabel}
                     </span>
-                    <span className="text-eva-ink-dim mx-1">→</span>
-                    {it.after?.formatted}
-                  </span>
-                )}
+                  );
+                }}
               />
             )}
           </>

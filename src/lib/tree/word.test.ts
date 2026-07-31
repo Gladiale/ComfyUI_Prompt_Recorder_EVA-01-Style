@@ -233,6 +233,7 @@ describe("findDuplicateWords", () => {
           words: [word("w4", "  alpha  ")],
         }),
       ],
+      rules: [],
     };
     const dups = findDuplicateWords(root, "alpha");
     expect(dups.map((d) => d.wordId)).toEqual(["w1", "w2", "w4"]);
@@ -252,6 +253,7 @@ describe("findDuplicateWords", () => {
           words: [word("w3", "same")],
         }),
       ],
+      rules: [],
     };
     const dups = findDuplicateWords(root, "same", { excludeWordId: "w1" });
     expect(dups.map((d) => d.wordId)).toEqual(["w2", "w3"]);
@@ -277,6 +279,7 @@ describe("findDuplicateWords", () => {
           words: [word("w1", "dup"), word("w2", "DUP"), word("w3", "other")],
         }),
       ],
+      rules: [],
     };
     const dups = findDuplicateWords(root, "dup");
     expect(dups).toHaveLength(2);
