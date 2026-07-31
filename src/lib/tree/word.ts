@@ -3,7 +3,8 @@
  * ワードの追加・更新・削除・並替を担当
  */
 
-import type { RootState, Word } from "@/types";
+import type { Group, RootState, Word } from "@/types";
+import { isSameWord } from "@/lib/normalize";
 import { createWord } from "./factory";
 import { findGroup } from "./search";
 import { clone, mutateGroup } from "./immutable";
@@ -113,4 +114,48 @@ export function moveWord(
   to.words.push(word);
   to.collapsed = false;
   return next;
+}
+
+// ---- 重複検出 ----
+
+/** ツリー内の同 text ワード参照（表示用パス付き）。 */
+export interface DuplicateWordRef {
+  wordId: string;
+  text: string;
+  groupId: string;
+  groupPath: string[];
+}
+
+/**
+ * 正規化後に同じ text を持つワードをツリー全体から収集する。
+ * 編集中の自身は excludeWordId で除外する。
+ */
+export function findDuplicateWords(
+  root: RootState,
+  text: string,
+  options?: { excludeWordId?: string },
+): DuplicateWordRef[] {
+  const out: DuplicateWordRef[] = [];
+  const excludeWordId = options?.excludeWordId;
+
+  const walk = (groups: Group[], path: string[]) => {
+    for (const g of groups) {
+      const curPath = [...path, g.name];
+      for (const w of g.words) {
+        if (excludeWordId && w.id === excludeWordId) continue;
+        if (isSameWord(w.text, text)) {
+          out.push({
+            wordId: w.id,
+            text: w.text,
+            groupId: g.id,
+            groupPath: curPath,
+          });
+        }
+      }
+      walk(g.groups, curPath);
+    }
+  };
+
+  walk(root.rootGroups, []);
+  return out;
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addWord,
   deleteWord,
+  findDuplicateWords,
   moveWord,
   reorderWords,
   setWordSelected,
@@ -10,8 +11,8 @@ import {
   updateWord,
 } from "./word";
 import { findGroup } from "./search";
-import { makeSampleRoot } from "./__fixtures__/sampleState";
-import type { Word } from "@/types";
+import { group, makeSampleRoot, word } from "./__fixtures__/sampleState";
+import { ROOT_VERSION, type Word } from "@/types";
 
 describe("addWord", () => {
   it("指定グループの末尾にワードを追加する", () => {
@@ -212,5 +213,73 @@ describe("moveWord", () => {
       "w-a2",
     ]);
     expect(findGroup(root, "grp-d")!.words.map((w) => w.id)).toEqual(["w-d1"]);
+  });
+});
+
+describe("findDuplicateWords", () => {
+  it("別グループの同 text を検出する", () => {
+    const root = {
+      version: ROOT_VERSION,
+      rootGroups: [
+        group("g1", "Parent", {
+          words: [word("w1", "alpha")],
+          groups: [
+            group("g2", "Child", {
+              words: [word("w2", "Alpha"), word("w3", "beta")],
+            }),
+          ],
+        }),
+        group("g3", "Sibling", {
+          words: [word("w4", "  alpha  ")],
+        }),
+      ],
+    };
+    const dups = findDuplicateWords(root, "alpha");
+    expect(dups.map((d) => d.wordId)).toEqual(["w1", "w2", "w4"]);
+    expect(dups[0].groupPath).toEqual(["Parent"]);
+    expect(dups[1].groupPath).toEqual(["Parent", "Child"]);
+    expect(dups[2].groupPath).toEqual(["Sibling"]);
+  });
+
+  it("excludeWordId で自分だけ除外する", () => {
+    const root = {
+      version: ROOT_VERSION,
+      rootGroups: [
+        group("g1", "A", {
+          words: [word("w1", "same"), word("w2", "same")],
+        }),
+        group("g2", "B", {
+          words: [word("w3", "same")],
+        }),
+      ],
+    };
+    const dups = findDuplicateWords(root, "same", { excludeWordId: "w1" });
+    expect(dups.map((d) => d.wordId)).toEqual(["w2", "w3"]);
+  });
+
+  it("正規化不一致（アンダースコア）は検出しない", () => {
+    const root = makeSampleRoot();
+    // sample に alpha と alpha_dup がある
+    const dups = findDuplicateWords(root, "alpha");
+    expect(dups.map((d) => d.wordId)).toEqual(["w-a1"]);
+  });
+
+  it("ヒットなしは空配列", () => {
+    const root = makeSampleRoot();
+    expect(findDuplicateWords(root, "no_such_word")).toEqual([]);
+  });
+
+  it("同一グループ内の複数ヒットを返す", () => {
+    const root = {
+      version: ROOT_VERSION,
+      rootGroups: [
+        group("g1", "Only", {
+          words: [word("w1", "dup"), word("w2", "DUP"), word("w3", "other")],
+        }),
+      ],
+    };
+    const dups = findDuplicateWords(root, "dup");
+    expect(dups).toHaveLength(2);
+    expect(dups.every((d) => d.groupId === "g1")).toBe(true);
   });
 });

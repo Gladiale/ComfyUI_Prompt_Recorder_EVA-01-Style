@@ -8,7 +8,9 @@ import {
 } from "react";
 import { AnimatePresence } from "motion/react";
 import { WordEditModal } from "@/components/WordEditModal";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { usePrompt } from "@/context/PromptContext";
+import { findDuplicateWords } from "@/lib/tree";
 import type { WordEditFormData } from "@/hooks/useWordEditFormState";
 
 type Mode =
@@ -33,8 +35,27 @@ interface WordEditorValue {
 
 const WordEditorContext = createContext<WordEditorValue | null>(null);
 
+const DUP_LIST_LIMIT = 8;
+
+function buildDuplicateMessage(
+  text: string,
+  dups: ReturnType<typeof findDuplicateWords>,
+): string {
+  const shown = dups.slice(0, DUP_LIST_LIMIT);
+  const lines = shown.map((d) => `・${d.groupPath.join(" / ")}`).join("\n");
+  const more =
+    dups.length > DUP_LIST_LIMIT
+      ? `\n…他 ${dups.length - DUP_LIST_LIMIT} 件`
+      : "";
+  return (
+    `同じワード「${text}」が既に ${dups.length} 件あります。\n` +
+    `${lines}${more}\n\nそれでも保存しますか？`
+  );
+}
+
 export function WordEditorProvider({ children }: { children: ReactNode }) {
-  const { addWord, updateWord } = usePrompt();
+  const { state, addWord, updateWord } = usePrompt();
+  const confirm = useConfirm();
   const [mode, setMode] = useState<Mode | null>(null);
 
   const openAdd = useCallback((groupId: string) => {
@@ -51,8 +72,21 @@ export function WordEditorProvider({ children }: { children: ReactNode }) {
   const close = useCallback(() => setMode(null), []);
 
   const submit = useCallback(
-    (data: WordEditFormData) => {
+    async (data: WordEditFormData) => {
       if (!mode) return;
+
+      const excludeWordId = mode.kind === "edit" ? mode.wordId : undefined;
+      const dups = findDuplicateWords(state, data.text, { excludeWordId });
+      if (dups.length > 0) {
+        const ok = await confirm({
+          title: "DUPLICATE WORD",
+          message: buildDuplicateMessage(data.text, dups),
+          confirmLabel: "保存する",
+          cancelLabel: "キャンセル",
+        });
+        if (!ok) return;
+      }
+
       if (mode.kind === "add") {
         addWord(mode.groupId, data);
       } else {
@@ -60,7 +94,7 @@ export function WordEditorProvider({ children }: { children: ReactNode }) {
       }
       close();
     },
-    [mode, addWord, updateWord, close],
+    [mode, state, addWord, updateWord, confirm, close],
   );
 
   const value: WordEditorValue = { openAdd, openEdit };

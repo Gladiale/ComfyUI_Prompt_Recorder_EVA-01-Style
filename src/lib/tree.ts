@@ -41,6 +41,8 @@ export {
   deleteWord,
   reorderWords,
   moveWord,
+  findDuplicateWords,
+  type DuplicateWordRef,
 } from "./tree/word";
 
 // 選択ワード収集
