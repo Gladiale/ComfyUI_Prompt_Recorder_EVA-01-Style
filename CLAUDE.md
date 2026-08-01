@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-ComfyUI用プロンプトワード記録Chrome拡張機能（Manifest V3）。エヴァンゲリオン初号機テーマのUI。階層的なグループ構造でワードを管理し、重複排除した最終プロンプトを生成する。選択組み合わせをメタデータ付きプリセットとして保存・還元できる。
+ComfyUI用プロンプトワード記録Chrome拡張機能（Manifest V3）。エヴァンゲリオン初号機テーマのUI。階層的なグループ構造でワードを管理し、重複排除した最終プロンプトを生成する。選択組み合わせをメタデータ付きプリセットとして保存・還元できる。総括欄には文字列変換ルールを適用でき、元ワード本文は変えずに表示・コピー内容だけを変換できる。
 
 ## 開発コマンド
 
@@ -53,19 +53,23 @@ npm run test:coverage
 ### 状態管理の中核
 
 **[src/context/PromptContext.tsx](src/context/PromptContext.tsx)** がグローバル状態を管理：
-- `RootState`: ルートグループ配列 + プリセット
+- `RootState`: ルートグループ配列 + プリセット + 変換ルール
 - 全ての更新操作は immutable（structuredClone ベース）
 - debounce（220ms）で chrome.storage.local へ自動保存
-- 選択ワードの収集・重複排除・差分計算は useMemo で派生
+- 選択ワードの収集・変換ルール適用・重複排除・差分計算は useMemo で派生
 - プリセット関連: `savePreset` / `applyPreset` / `updatePresetMeta` / `updatePresetEntries` / `analyzePresetApply` / `diffPresetEntries` など
+- 変換ルール関連: `addRule` / `updateRule` / `deleteRule` / `setRuleEnabled` / `reorderRules`
 
 ### データモデル ([src/types.ts](src/types.ts))
 
 ```typescript
+// ROOT_VERSION = 2（rules 追加後）
+
 RootState {
   version: number
   rootGroups: Group[]
   presets?: PromptPreset[]
+  rules: PromptTransformRule[]  // 常に配列（旧データは正規化で []）
 }
 
 Group {
@@ -91,6 +95,15 @@ PromptPreset {
   description?: string
   entries: PresetEntry[]          // { wordId, text, strength } text は差分通知用
   createdAt, updatedAt?
+}
+
+// 総括欄プロンプトの文字列変換ルール
+// 元ワード本文は変更せず、表示・コピー内容だけを変換
+PromptTransformRule {
+  id, name
+  from: string   // 変換前（リテラル。正規表現ではない）
+  to: string     // 変換後（空文字可＝削除ルール）
+  enabled: boolean  // 新規作成時は必ず false
 }
 
 PresetFormData {
@@ -133,6 +146,7 @@ PresetFormData {
   - `addWord()`, `updateWord()`, `deleteWord()`
   - `toggleWord()`, `setWordSelected()`, `setWordStrength()`
   - `reorderWords()`: 同一グループ内の並替（HTML5 DnD / Motion layout 対応）
+  - `moveWord()`, `findDuplicateWords()`
 
 - **[tree/collector.ts](src/lib/tree/collector.ts)** (57行): 選択ワード収集
   - `collectSelected()`: 深さ優先で選択ワードを収集（出現順維持）
@@ -155,12 +169,20 @@ PresetFormData {
   - `diffPresetEntries(id)`: 現在の選択 vs プリセット entries の差分（追加/削除/強度変更/text変更）
   - `deletePreset()`, `renamePreset()`, `reorderPresets()`
 
-- **[tree/normalize.ts](src/lib/tree/normalize.ts)** (190行): Import/Export正規化
-  - `normalizeImportedState()`: 外部データを検証・正規化
+- **[tree/rules.ts](src/lib/tree/rules.ts)**: 総括欄プロンプト変換ルール操作
+  - `normalizeRuleInput()` / `isValidRuleInput()`: trim 正規化・バリデーション（name/from 必須、to は空可）
+  - `addRule(input)`: 末尾に追加（常に `enabled: false`）
+  - `updateRule(id, input)`: 編集（enabled は維持）
+  - `deleteRule(id)` / `setRuleEnabled(id, enabled)`
+  - `reorderRules(draggedId, targetId)`: targetId の前へ挿入（DnD 並替）
+
+- **[tree/normalize.ts](src/lib/tree/normalize.ts)**: Import/Export正規化
+  - `normalizeImportedState()`: 外部データを検証・正規化（`version` は常に `ROOT_VERSION`）
   - 旧形式プリセット（name + entries のみ）も読み込み可能
+  - `rules` 欠損・非配列は `[]`。name/from 不正は除外、id 重複は再採番、enabled 非真偽値は false
   - 未知・欠損フィールドは安全なデフォルトへ落とす
 
-**メインファイル [tree.ts](src/lib/tree.ts)** (71行): 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
+**メインファイル [tree.ts](src/lib/tree.ts)**: 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
 
 ### 重複排除 ([src/lib/normalize.ts](src/lib/normalize.ts))
 
@@ -172,9 +194,32 @@ PresetFormData {
 - 1 = `(text)`
 - 2..10 = `(text:1.1)` .. `(text:1.9)`
 
+### 総括欄プロンプト変換 ([src/lib/transform.ts](src/lib/transform.ts))
+
+ワードツリーの元本文は変更せず、総括欄の表示・コピー・差分用テキストだけを変換する。
+
+適用手順（各選択ワードごと）:
+1. 元本文を `trim`
+2. `enabled` ルールを一覧順に逐次適用（リテラル全置換）
+3. 全ルール適用後に `trim`
+4. 空文字なら表示から除外
+5. 元ワードの強度を付与
+6. 強度付き文字列で `normalizeText` 重複排除（表示用）
+
+主な API:
+- `replaceAllLiteral(source, from, to)`: 正規表現非解釈・`$` もリテラル・左から非重複全置換
+- `applyTransformRules` / `transformWordText`
+- `buildTransformedEntries`: 元ワード単位・重複排除なし（差分追跡用。変換後空も保持）
+- `buildDisplayEntries` / `joinDisplayEntries` / `buildSynthesisText`
+
 ### 差分検出 ([src/lib/diff.ts](src/lib/diff.ts))
 
-コピーボタン押下時にスナップショットを保存し、以降の変更（追加・削除・強度変更）を検出。
+コピーボタン押下時に「変換後」テキストのスナップショットを保存し、以降の変更（追加・削除・強度変更・変換後テキスト変更）を検出。
+
+- スナップショットは `formatVersion: 2`。旧形式（フィールドなし）は破棄
+- 差分用エントリは重複排除せず元ワード単位で全件保持
+- 変換後の空文字化は「削除」ではなく「テキスト変更」
+- ルール一覧そのものはスナップショットに含めない（出力テキストの変化のみを差分とする）
 
 ### 画像処理 ([src/lib/image.ts](src/lib/image.ts))
 
@@ -187,7 +232,7 @@ PresetFormData {
 ### 永続化 ([src/lib/storage.ts](src/lib/storage.ts))
 
 - `chrome.storage.local` に JSON 保存
-- `PROMPT_STATE_KEY`: メイン状態
+- `PROMPT_STATE_KEY`: メイン状態（rules を含む RootState）
 - `PROMPT_SNAPSHOT_KEY`: 差分検出用スナップショット
 - debounce 関数による書き込み頻度制御
 
@@ -201,8 +246,8 @@ PresetFormData {
   - `import-samples.ts`: Import 正規化用の正常・破損データ
 - **実行環境**: `environment: "node"`。Windows 安定化のため `pool: vmThreads` / 単一ワーカー / `isolate: false`（`package.json` の scripts と `vitest.config.ts` で固定）
 - **カバレッジ対象の主なモジュール**:
-  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算）
-  - `tree/*`: factory, search, searchHits, immutable, collector, navigation, word, group, preset, normalize
+  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算） / `transform`
+  - `tree/*`: factory, search, searchHits, immutable, collector, navigation, word, group, preset, rules, normalize
 
 ### コンポーネント構成
 
@@ -243,27 +288,36 @@ PresetFormData {
 - **[components/word/](src/components/word/)**: WordItemの表示責務
   - `WordBody`: 本文、strength、情報マーカー、削除ボタン、ワードDnDイベント接続
   - `WordInfoPopover`: 注釈/画像のportal表示、AnimatePresence、画像load後の再測定
+  - `menu/WordContextMenu` / `StrengthMenuItem` / `MoveGroupMenuItem`: 右クリックメニュー
 
 - **[src/lib/wordPopoverGeometry.ts](src/lib/wordPopoverGeometry.ts)**: DOM非依存のpopover位置計算
   - viewport端のclamp、上下配置、左右補正を純粋関数として提供
   - `wordPopoverGeometry.test.ts`で位置計算を検証
 
 - **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
-  - Import（赤紫↓）: JSONファイル読み込み
-  - Export（緑↑）: 現在の状態をJSON保存
+  - Import（赤紫↓）: JSONファイル読み込み（ワードツリー・プリセット・変換ルールを一括置換）
+  - Export（緑↑）: 現在の状態をJSON保存（常に `rules` フィールドを含む）
 
 **右側パネル - プロンプト生成**:
 
-- **[SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)** (140行): 右上総括欄
-  - 選択ワードを重複排除して最終プロンプト生成
+- **[SynthesisPanel.tsx](src/components/SynthesisPanel.tsx)**: 右上総括欄
+  - 選択ワードへ変換ルールを適用 → 強度付与 → 重複排除して最終プロンプト生成
   - カンマ区切り/改行区切り切替
-  - コピーボタン（スナップショット保存 → 差分検出開始）
-  - 差分ポップアップは `synthesis/DiffPopup` に分離
+  - 変換ルール調整ボタン（`FiSliders`。有効ルールがある場合は発光）
+  - コピーボタン（変換後テキストのスナップショット保存 → 差分検出開始）
+  - 差分ポップアップは `synthesis/DiffPopup`、ルール調整は `synthesis/RulesPopup` に分離
 
 - **[SelectedPanel.tsx](src/components/SelectedPanel.tsx)** (164行): 右下選択ワード一覧
   - 選択中ワードをグループパス付きで表示
   - クリックで選択解除 / 強度ステッパー
   - ヘッダからプリセット保存（ブックマーク）・一覧（レイヤー）を起動
+
+**総括欄 UI ([components/synthesis/](src/components/synthesis/))**:
+
+- `DiffPopup` / `DiffSection` / `countSynthesisPoints`: 差分表示
+- `RulesPopup`: 変換ルール一覧・追加/編集フォーム・DnD並替
+- `RuleForm`: ルール名 / 変換前 / 変換後の入力（name・from 必須、to 空可）
+- `RuleListItem`: 1ルール行（適用切替・編集・削除・DnD。操作ボタンからはドラッグ開始しない）
 
 **プリセット UI**:
 
@@ -322,11 +376,11 @@ PresetFormData {
 - **usePresetHexDnD**: ハニカム並替のポインタ DnD / ゴースト
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
-  - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
-  - **useGroupDnD**: グループのbefore/after/into移動とdrop表示
-  - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、右クリックメニュー起動
-  - **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
-  - **useWordContextMenu**: ワード右クリックメニューの開閉・位置・サブメニュー状態
+- **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
+- **useGroupDnD**: グループのbefore/after/into移動とdrop表示
+- **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、右クリックメニュー起動
+- **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
+- **useWordContextMenu**: ワード右クリックメニューの開閉・位置・サブメニュー状態
 - **useInfoPopover**: 注釈/画像popoverのhover状態、timer、portal位置測定、scroll/resize追従
 
 ### 操作仕様
@@ -337,5 +391,6 @@ PresetFormData {
 - **注釈**: ワード横の緑印（注釈あり）をホバーで画像＋注釈をポップアップ表示
 - **検索**: ワード本文と注釈を検索。ヒットしたワードと直属グループ名のみ表示（グループ名は対象外）
 - **折り畳み徽章**: 選択ワードを内包するグループに緑の徽章（件数表示）
+- **総括欄変換ルール**: SYNTHESIS ヘッダのスライダーアイコン → ルール追加/編集/適用切替/削除/DnD並替。有効ルールのみ一覧順にリテラル置換。元ワード本文は変更しない
 - **プリセット保存**: SELECTED ヘッダのブックマーク → フォーム入力 → 現在の選択 + メタを保存
 - **プリセット一覧**: SELECTED ヘッダのレイヤー → ハニカム一覧。還元は wordId 基準（text は復元しない）。更新時は差分プレビューあり

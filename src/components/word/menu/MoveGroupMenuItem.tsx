@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type PointerEvent,
   type RefObject,
@@ -14,6 +15,9 @@ import {
   type MenuPosition,
 } from "@/lib/contextMenuGeometry";
 
+/** 親行 ↔ サブメニュー移動時のチラ閉じ防止 */
+const SUBMENU_CLOSE_DELAY_MS = 140;
+
 interface Props {
   groups: GroupRef[];
   currentGroupId: string;
@@ -24,7 +28,7 @@ interface Props {
   itemRef: RefObject<HTMLButtonElement | null>;
 }
 
-/** 「グループ移動」行 + 横開きサブメニュー。 */
+/** 「グループ移動」行 + 横開きサブメニュー（ホバー時のみ表示）。 */
 export function MoveGroupMenuItem({
   groups,
   currentGroupId,
@@ -35,8 +39,35 @@ export function MoveGroupMenuItem({
   itemRef,
 }: Props) {
   const [subPos, setSubPos] = useState<MenuPosition | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
   // open=false の間は位置を見せない（effect 内 setState を避ける）
   const visiblePos = open ? subPos : null;
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current == null) return;
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  }, []);
+
+  const openSub = useCallback(() => {
+    clearCloseTimer();
+    onOpenChange(true);
+  }, [clearCloseTimer, onOpenChange]);
+
+  const scheduleCloseSub = useCallback(() => {
+    clearCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      onOpenChange(false);
+    }, SUBMENU_CLOSE_DELAY_MS);
+  }, [clearCloseTimer, onOpenChange]);
+
+  useEffect(() => () => clearCloseTimer(), [clearCloseTimer]);
+
+  // 親から閉じられた場合もタイマーを捨てる
+  useEffect(() => {
+    if (!open) clearCloseTimer();
+  }, [open, clearCloseTimer]);
 
   const measureSub = useCallback((): boolean => {
     const item = itemRef.current;
@@ -129,9 +160,8 @@ export function MoveGroupMenuItem({
         ref={itemRef}
         type="button"
         className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-[12px] text-eva-ink-dim hover:text-eva-ink hover:bg-eva-purple/30 transition-colors cursor-pointer"
-        onMouseEnter={() => onOpenChange(true)}
-        onFocus={() => onOpenChange(true)}
-        onClick={() => onOpenChange(true)}
+        onMouseEnter={openSub}
+        onMouseLeave={scheduleCloseSub}
       >
         <span className="flex-1 min-w-0">グループ移動</span>
         <FiChevronRight size={12} className="shrink-0 text-eva-ink-dim" />
@@ -146,7 +176,8 @@ export function MoveGroupMenuItem({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 2, pointerEvents: "none" }}
               transition={{ duration: 0.12 }}
-              onMouseEnter={() => onOpenChange(true)}
+              onMouseEnter={openSub}
+              onMouseLeave={scheduleCloseSub}
               onPointerDown={onPointerDown}
               onMouseDown={(e) => e.stopPropagation()}
               style={{

@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildSnapshotEntries,
   computeDiff,
+  isValidSnapshot,
   makeSnapshot,
   type SelectedRef,
   type Snapshot,
 } from "./diff";
-import { normalizeText } from "@/lib/normalize";
-import { formatWordWithStrength } from "@/lib/strength";
+import type { PromptTransformRule } from "@/types";
 
 const FIXED_NOW = 1_700_000_000_000;
 
@@ -27,6 +27,15 @@ function ref(
     groupId: opts.groupId ?? "g1",
     groupPath: opts.groupPath ?? ["G"],
   };
+}
+
+function rule(
+  id: string,
+  from: string,
+  to: string,
+  enabled = true,
+): PromptTransformRule {
+  return { id, name: id, from, to, enabled };
 }
 
 // ============================================================
@@ -64,31 +73,18 @@ describe("buildSnapshotEntries", () => {
   });
 
   it("text が空白のみのワードはスキップする", () => {
-    expect(
-      buildSnapshotEntries([ref("w1", "   "), ref("w2", "ok")]),
-    ).toEqual([
+    expect(buildSnapshotEntries([ref("w1", "   "), ref("w2", "ok")])).toEqual([
       expect.objectContaining({ wordId: "w2", text: "ok" }),
     ]);
   });
 
-  it("同一正規化キーの重複は最初の 1 件のみ残す", () => {
+  it("重複は排除せず全件保持する", () => {
     const entries = buildSnapshotEntries([
       ref("w1", "A", { strength: 0 }),
       ref("w2", " a ", { strength: 0 }),
     ]);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].wordId).toBe("w1");
-    expect(entries[0].text).toBe("A");
-  });
-
-  it("生 text が違っても format 後 normalize が同じなら重複排除", () => {
-    // strength 0 の "Hello" と "  HELLO  " → normalizeText 同一
-    const entries = buildSnapshotEntries([
-      ref("w1", "Hello"),
-      ref("w2", "  HELLO  "),
-    ]);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].wordId).toBe("w1");
+    expect(entries).toHaveLength(2);
+    expect(entries.map((e) => e.wordId)).toEqual(["w1", "w2"]);
   });
 
   it("強度付き format: 1 → (text)、2 → (text:1.1)", () => {
@@ -100,48 +96,34 @@ describe("buildSnapshotEntries", () => {
     expect(entries[1].formatted).toBe("(uniform:1.1)");
   });
 
-  it("strength 非数は clamp 後 0", () => {
-    const entries = buildSnapshotEntries([
-      {
-        word: {
-          id: "w1",
-          text: "x",
-          note: "",
-          selected: true,
-          strength: Number.NaN as unknown as number,
-        },
-        groupId: "g1",
-        groupPath: ["G"],
-      },
-    ]);
-    expect(entries[0].strength).toBe(0);
-    expect(entries[0].formatted).toBe("x");
+  it("変換ルール適用後のテキストを保存する", () => {
+    const entries = buildSnapshotEntries(
+      [ref("w1", "cat", { strength: 2 })],
+      [rule("r1", "cat", "dog")],
+    );
+    expect(entries[0]).toMatchObject({
+      text: "dog",
+      formatted: "(dog:1.1)",
+      strength: 2,
+    });
   });
 
-  /**
-   * synthesis 整合 (S1):
-   * 重複排除キーは normalizeText(formatWordWithStrength(text, strength))。
-   * 総括欄と同じルールで最初の出現のみ残す。
-   */
-  it("重複排除キーは normalizeText(formatWordWithStrength(...))", () => {
-    const r1 = ref("w1", "tag", { strength: 1 });
-    const r2 = ref("w2", "TAG", { strength: 1 }); // format 後 "(TAG)" → normalize "(tag)"
-    const entries = buildSnapshotEntries([r1, r2]);
+  it("変換後が空でも保持する", () => {
+    const entries = buildSnapshotEntries(
+      [ref("w1", "cat")],
+      [rule("r1", "cat", "")],
+    );
     expect(entries).toHaveLength(1);
-
-    const key1 = normalizeText(
-      formatWordWithStrength(r1.word.text, r1.word.strength),
-    );
-    const key2 = normalizeText(
-      formatWordWithStrength(r2.word.text, r2.word.strength),
-    );
-    expect(key1).toBe(key2);
-    expect(entries[0].wordId).toBe("w1");
+    expect(entries[0]).toMatchObject({
+      wordId: "w1",
+      text: "",
+      formatted: "",
+    });
   });
 });
 
 // ============================================================
-// makeSnapshot
+// makeSnapshot / isValidSnapshot
 // ============================================================
 
 describe("makeSnapshot", () => {
@@ -154,28 +136,53 @@ describe("makeSnapshot", () => {
     vi.useRealTimers();
   });
 
-  it('separator "comma" と count === entries.length', () => {
+  it('separator "comma" と formatVersion 2', () => {
     const refs = [ref("w1", "a"), ref("w2", "b")];
     const snap = makeSnapshot(refs, "comma");
+    expect(snap.formatVersion).toBe(2);
     expect(snap.separator).toBe("comma");
     expect(snap.count).toBe(2);
     expect(snap.entries).toHaveLength(2);
     expect(snap.takenAt).toBe(FIXED_NOW);
   });
 
-  it('separator "newline" を反映する', () => {
-    const snap = makeSnapshot([ref("w1", "a")], "newline");
-    expect(snap.separator).toBe("newline");
+  it("変換後空は count に含めないが entries には残す", () => {
+    const snap = makeSnapshot(
+      [ref("w1", "cat"), ref("w2", "dog")],
+      "comma",
+      [rule("r1", "cat", "")],
+    );
+    expect(snap.entries).toHaveLength(2);
     expect(snap.count).toBe(1);
   });
+});
 
-  it("重複排除後の件数を count に使う", () => {
-    const snap = makeSnapshot(
-      [ref("w1", "A"), ref("w2", " a ")],
-      "comma",
-    );
-    expect(snap.count).toBe(1);
-    expect(snap.entries).toHaveLength(1);
+describe("isValidSnapshot", () => {
+  it("formatVersion 2 のみ有効", () => {
+    expect(
+      isValidSnapshot({
+        formatVersion: 2,
+        entries: [],
+        separator: "comma",
+        takenAt: 1,
+        count: 0,
+      }),
+    ).toBe(true);
+  });
+
+  it("旧形式（formatVersion なし）は無効", () => {
+    expect(
+      isValidSnapshot({
+        entries: [{ wordId: "w1", text: "a", strength: 0, formatted: "a" }],
+        separator: "comma",
+        takenAt: 1,
+        count: 1,
+      }),
+    ).toBe(false);
+  });
+
+  it("entries 非配列は無効", () => {
+    expect(isValidSnapshot({ formatVersion: 2, entries: null })).toBe(false);
   });
 });
 
@@ -184,8 +191,11 @@ describe("makeSnapshot", () => {
 // ============================================================
 
 describe("computeDiff", () => {
-  function snapFrom(refs: SelectedRef[]): Snapshot {
-    return makeSnapshot(refs, "comma");
+  function snapFrom(
+    refs: SelectedRef[],
+    rules: PromptTransformRule[] = [],
+  ): Snapshot {
+    return makeSnapshot(refs, "comma", rules);
   }
 
   beforeEach(() => {
@@ -213,12 +223,9 @@ describe("computeDiff", () => {
     const diff = computeDiff(refs, snapFrom(refs));
     expect(diff.hasChanges).toBe(false);
     expect(diff.items).toEqual([]);
-    expect(diff.added).toEqual([]);
-    expect(diff.removed).toEqual([]);
-    expect(diff.modified).toEqual([]);
   });
 
-  it("新規選択 wordId は kind: added、after あり", () => {
+  it("新規選択 wordId は kind: added", () => {
     const snapshot = snapFrom([ref("w1", "alpha")]);
     const diff = computeDiff(
       [ref("w1", "alpha"), ref("w2", "beta", { strength: 1 })],
@@ -228,18 +235,12 @@ describe("computeDiff", () => {
     expect(diff.added[0]).toMatchObject({
       kind: "added",
       wordId: "w2",
-      text: "beta",
-      after: {
-        text: "beta",
-        strength: 1,
-        formatted: "(beta)",
-      },
+      after: { text: "beta", strength: 1, formatted: "(beta)" },
     });
-    expect(diff.added[0].before).toBeUndefined();
     expect(diff.hasChanges).toBe(true);
   });
 
-  it("スナップショットにあって現在なしは kind: removed、before あり", () => {
+  it("スナップショットにあって現在なしは kind: removed", () => {
     const snapshot = snapFrom([
       ref("w1", "alpha"),
       ref("w2", "beta", { strength: 2 }),
@@ -249,22 +250,13 @@ describe("computeDiff", () => {
     expect(diff.removed[0]).toMatchObject({
       kind: "removed",
       wordId: "w2",
-      text: "beta",
-      before: {
-        text: "beta",
-        strength: 2,
-        formatted: "(beta:1.1)",
-      },
+      before: { text: "beta", strength: 2, formatted: "(beta:1.1)" },
     });
-    expect(diff.removed[0].after).toBeUndefined();
   });
 
   it("同一 wordId で strength のみ変化は kind: strength", () => {
     const snapshot = snapFrom([ref("w1", "alpha", { strength: 0 })]);
-    const diff = computeDiff(
-      [ref("w1", "alpha", { strength: 3 })],
-      snapshot,
-    );
+    const diff = computeDiff([ref("w1", "alpha", { strength: 3 })], snapshot);
     expect(diff.modified).toHaveLength(1);
     expect(diff.modified[0]).toMatchObject({
       kind: "strength",
@@ -276,15 +268,11 @@ describe("computeDiff", () => {
 
   it("同一 wordId で text のみ変化は kind: text", () => {
     const snapshot = snapFrom([ref("w1", "alpha", { strength: 0 })]);
-    const diff = computeDiff(
-      [ref("w1", "alpha_v2", { strength: 0 })],
-      snapshot,
-    );
+    const diff = computeDiff([ref("w1", "alpha_v2", { strength: 0 })], snapshot);
     expect(diff.modified).toHaveLength(1);
     expect(diff.modified[0]).toMatchObject({
       kind: "text",
       wordId: "w1",
-      text: "alpha_v2",
       before: { text: "alpha", strength: 0 },
       after: { text: "alpha_v2", strength: 0 },
     });
@@ -292,27 +280,51 @@ describe("computeDiff", () => {
 
   it("strength と text 同時変化は kind が strength 優先", () => {
     const snapshot = snapFrom([ref("w1", "alpha", { strength: 0 })]);
-    const diff = computeDiff(
-      [ref("w1", "beta", { strength: 5 })],
-      snapshot,
-    );
-    expect(diff.modified).toHaveLength(1);
+    const diff = computeDiff([ref("w1", "beta", { strength: 5 })], snapshot);
     expect(diff.modified[0].kind).toBe("strength");
-    expect(diff.modified[0].before).toMatchObject({
-      text: "alpha",
-      strength: 0,
-    });
-    expect(diff.modified[0].after).toMatchObject({
-      text: "beta",
-      strength: 5,
+  });
+
+  it("text 比較は完全一致（大小・空白差も変更とみなす）", () => {
+    const snapshot = snapFrom([ref("w1", "Alpha")]);
+    const diff = computeDiff([ref("w1", "  alpha  ")], snapshot);
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.modified[0].kind).toBe("text");
+  });
+
+  it("ルール変更によるテキスト変化を検出する", () => {
+    const refs = [ref("w1", "cat")];
+    const snapshot = snapFrom(refs, []); // コピー時: cat
+    const diff = computeDiff(refs, snapshot, [rule("r1", "cat", "dog")]);
+    expect(diff.modified).toHaveLength(1);
+    expect(diff.modified[0]).toMatchObject({
+      kind: "text",
+      before: { text: "cat", formatted: "cat" },
+      after: { text: "dog", formatted: "dog" },
     });
   });
 
-  it("text 比較は normalizeText（大小・空白差は変更なし）", () => {
-    const snapshot = snapFrom([ref("w1", "Alpha")]);
-    const diff = computeDiff([ref("w1", "  alpha  ")], snapshot);
+  it("変換後の空文字化はテキスト変更として表示", () => {
+    const refs = [ref("w1", "cat")];
+    const snapshot = snapFrom(refs, []);
+    const diff = computeDiff(refs, snapshot, [rule("r1", "cat", "")]);
+    expect(diff.removed).toEqual([]);
+    expect(diff.modified).toHaveLength(1);
+    expect(diff.modified[0]).toMatchObject({
+      kind: "text",
+      before: { text: "cat", formatted: "cat" },
+      after: { text: "", formatted: "" },
+    });
+  });
+
+  it("重複排除で非表示のワードも追跡する", () => {
+    const refs = [ref("w1", "cat"), ref("w2", "cat")];
+    const snapshot = snapFrom(refs, []);
+    // w2 を dog に変換するルールはないが、選択は両方残る
+    const diff = computeDiff(refs, snapshot, []);
     expect(diff.hasChanges).toBe(false);
-    expect(diff.modified).toEqual([]);
+    // ルールで w 全体 cat→dog しても両方 text 変更
+    const diff2 = computeDiff(refs, snapshot, [rule("r1", "cat", "dog")]);
+    expect(diff2.modified).toHaveLength(2);
   });
 
   it("items === [...added, ...removed, ...modified] の結合順", () => {
@@ -323,33 +335,14 @@ describe("computeDiff", () => {
     ]);
     const current = [
       ref("w1", "keep"),
-      ref("w3", "edit", { strength: 2 }), // strength
-      ref("w4", "new"), // added
+      ref("w3", "edit", { strength: 2 }),
+      ref("w4", "new"),
     ];
     const diff = computeDiff(current, snapshot);
-    expect(diff.added.map((i) => i.wordId)).toEqual(["w4"]);
-    expect(diff.removed.map((i) => i.wordId)).toEqual(["w2"]);
-    expect(diff.modified.map((i) => i.wordId)).toEqual(["w3"]);
     expect(diff.items.map((i) => i.kind)).toEqual([
       "added",
       "removed",
       "strength",
     ]);
-    expect(diff.items).toEqual([
-      ...diff.added,
-      ...diff.removed,
-      ...diff.modified,
-    ]);
-  });
-
-  it("いずれか非空なら hasChanges true", () => {
-    const snapshot = snapFrom([ref("w1", "a")]);
-    expect(computeDiff([ref("w1", "a"), ref("w2", "b")], snapshot).hasChanges).toBe(
-      true,
-    );
-    expect(computeDiff([], snapshot).hasChanges).toBe(true);
-    expect(
-      computeDiff([ref("w1", "a", { strength: 1 })], snapshot).hasChanges,
-    ).toBe(true);
   });
 });

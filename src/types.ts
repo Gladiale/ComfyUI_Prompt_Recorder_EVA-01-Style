@@ -3,7 +3,7 @@
 // ============================================================
 
 /** ルート構造のバージョン。将来のマイグレーション用。 */
-export const ROOT_VERSION = 1;
+export const ROOT_VERSION = 2;
 
 /** ワード：必ずいずれかのグループに属する。 */
 export interface Word {
@@ -96,10 +96,27 @@ export interface PresetFormData {
   description?: string;
 }
 
+/**
+ * 総括欄プロンプトの文字列変換ルール。
+ * 元ワード本文は変更せず、表示・コピー内容だけを変換する。
+ */
+export interface PromptTransformRule {
+  id: string;
+  name: string;
+  /** 変換前の文字列（リテラル。正規表現ではない）。 */
+  from: string;
+  /** 変換後の文字列。空文字を許可（削除ルール）。 */
+  to: string;
+  /** ルール適用状態。新規作成時は必ず false。 */
+  enabled: boolean;
+}
+
 /** ルート構造。chrome.storage.local に永続化される。 */
 export interface RootState {
   version: number;
   rootGroups: Group[];
   /** 保存済みの選択組み合わせ一覧。旧データは undefined 可。 */
   presets?: PromptPreset[];
+  /** 総括欄プロンプト変換ルール。常に配列（旧データは正規化で []）。 */
+  rules: PromptTransformRule[];
 }

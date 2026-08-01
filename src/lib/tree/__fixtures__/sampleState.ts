@@ -76,10 +76,11 @@ export function makeSampleRoot(): RootState {
         words: [word("w-d1", "delta", { selected: true })],
       }),
     ],
+    rules: [],
   };
 }
 
 /** 空のルート状態。 */
 export function makeEmptyRoot(): RootState {
-  return { version: ROOT_VERSION, rootGroups: [] };
+  return { version: ROOT_VERSION, rootGroups: [], rules: [] };
 }

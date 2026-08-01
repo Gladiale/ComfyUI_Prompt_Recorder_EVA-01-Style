@@ -466,6 +466,7 @@ describe("deletePreset", () => {
     const root: RootState = {
       version: ROOT_VERSION,
       rootGroups: [],
+      rules: [],
       presets: [
         {
           id: "p1",
@@ -529,6 +530,7 @@ describe("reorderPresets", () => {
     return {
       version: ROOT_VERSION,
       rootGroups: [],
+      rules: [],
       presets: [
         {
           id: "p1",
