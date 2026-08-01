@@ -4,6 +4,7 @@
 
 ![preview](preview_01.png)
 ![preview](preview_02.png)
+![preview](preview_03.png)
 
 # ComfyUI Prompt Recorder
 
