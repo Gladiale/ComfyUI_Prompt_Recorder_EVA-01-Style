@@ -275,7 +275,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
 
   // ---- 派生値 ----
   const selectedRefs = useMemo(() => collectSelected(state), [state]);
-  const rules = state.rules ?? [];
+  const rules = useMemo(() => state.rules ?? [], [state.rules]);
   const hasEnabledRules = useMemo(
     () => rules.some((r) => r.enabled),
     [rules],
