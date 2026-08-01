@@ -1,6 +1,6 @@
 // 変換ルール一覧の1行（DnD + 操作ボタン）
 import type { DragEvent } from "react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiTrash2 } from "react-icons/fi";
 import type { PromptTransformRule } from "@/types";
 
 const RULE_MIME = "text/rule-id";
@@ -57,8 +57,8 @@ export function RuleListItem({
         "flex items-start gap-1.5 px-1.5 py-1.5 rounded-sm border cursor-grab active:cursor-grabbing select-none transition-all",
         isDragging ? "opacity-40" : "",
         rule.enabled
-          ? "border-eva-green/50 bg-eva-green/8 shadow-[0_0_8px_rgba(57,255,20,0.18)]"
-          : "border-eva-line-soft/60 bg-eva-bg/30 hover:bg-eva-line-soft/30",
+          ? "border-eva-green/50 bg-eva-green/15 shadow-[0_0_8px_rgba(57,255,20,0.18)]"
+          : "border-eva-line-soft/60 bg-[#5b2369] hover:bg-[#69235e]/90",
         isDropTarget ? "ring-1 ring-eva-lavender/70" : "",
       ].join(" ")}
     >
@@ -73,7 +73,7 @@ export function RuleListItem({
         </div>
       </div>
 
-      <div className="shrink-0 flex items-center gap-0.5">
+      <div className="shrink-0 flex items-center gap-0.5 cursor-auto">
         <button
           type="button"
           draggable={false}
@@ -83,14 +83,14 @@ export function RuleListItem({
             onToggle(rule);
           }}
           className={[
-            "px-1.5 py-0.5 rounded-sm border text-[10px] transition-colors",
+            "p-1 transition-colors",
             rule.enabled
-              ? "border-eva-amber/50 text-eva-amber hover:bg-eva-amber/10"
-              : "border-eva-green/50 text-eva-green-soft hover:bg-eva-green/10",
+              ? "text-eva-green-soft hover:text-eva-green"
+              : "text-eva-ink-dim hover:text-eva-lavender",
           ].join(" ")}
           title={rule.enabled ? "適用を解除" : "適用する"}
         >
-          {rule.enabled ? "解除" : "適用"}
+          <FiCheck size={14} />
         </button>
         <button
           type="button"

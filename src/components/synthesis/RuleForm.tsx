@@ -21,8 +21,6 @@ export function RuleForm({
   onCancel: () => void;
   submitLabel: string;
 }) {
-  const nameError = !value.name.trim() ? "ルール名は必須です" : "";
-  const fromError = !value.from.trim() ? "変換前の文字は必須です" : "";
   const canSubmit = isValidRuleInput(value);
 
   return (
@@ -49,39 +47,35 @@ export function RuleForm({
           className="w-full px-2 py-1 rounded-sm border border-eva-line bg-eva-bg/60 font-mono text-[11px] text-eva-ink outline-none focus:border-eva-green/50"
           placeholder="例: cat → dog"
         />
-        {nameError && (
-          <span className="font-mono text-[10px] text-eva-magenta">{nameError}</span>
-        )}
       </label>
 
-      <label className="flex flex-col gap-0.5">
-        <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
-          変換前
-        </span>
-        <input
-          value={value.from}
-          onChange={(e) => onChange({ ...value, from: e.target.value })}
-          className="w-full px-2 py-1 rounded-sm border border-eva-line bg-eva-bg/60 font-mono text-[11px] text-eva-ink outline-none focus:border-eva-green/50"
-          placeholder="変換前の文字列"
-        />
-        {fromError && (
-          <span className="font-mono text-[10px] text-eva-magenta">{fromError}</span>
-        )}
-      </label>
+      <div className="flex items-center justify-between gap-1.5">
+        <label className="flex-1 flex flex-col gap-0.5">
+          <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
+            変換前
+          </span>
+          <input
+            value={value.from}
+            onChange={(e) => onChange({ ...value, from: e.target.value })}
+            className="w-full px-2 py-1 rounded-sm border border-eva-line bg-eva-bg/60 font-mono text-[11px] text-eva-ink outline-none focus:border-eva-green/50"
+            placeholder="変換前の文字列"
+          />
+        </label>
 
-      <label className="flex flex-col gap-0.5">
-        <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
-          変換後
-        </span>
-        <input
-          value={value.to}
-          onChange={(e) => onChange({ ...value, to: e.target.value })}
-          className="w-full px-2 py-1 rounded-sm border border-eva-line bg-eva-bg/60 font-mono text-[11px] text-eva-ink outline-none focus:border-eva-green/50"
-          placeholder="空欄で削除"
-        />
-      </label>
+        <label className="flex-1 flex flex-col gap-0.5">
+          <span className="font-mono text-[10px] tracking-widest text-eva-ink-dim">
+            変換後
+          </span>
+          <input
+            value={value.to}
+            onChange={(e) => onChange({ ...value, to: e.target.value })}
+            className="w-full px-2 py-1 rounded-sm border border-eva-line bg-eva-bg/60 font-mono text-[11px] text-eva-ink outline-none focus:border-eva-green/50"
+            placeholder="空欄で削除"
+          />
+        </label>
+      </div>
 
-      <div className="flex items-center justify-end gap-1.5 pt-1">
+      <div className="flex items-center justify-end gap-1.5 pt-0.5">
         <button
           type="button"
           onClick={onCancel}

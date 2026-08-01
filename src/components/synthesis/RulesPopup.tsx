@@ -9,22 +9,13 @@ import type { RuleFormInput } from "@/lib/tree";
 import { RuleForm, type RuleFormState } from "./RuleForm";
 import { RuleListItem } from "./RuleListItem";
 
-type FormMode =
-  | { kind: "closed" }
-  | { kind: "add" }
-  | { kind: "edit"; ruleId: string };
+type FormMode = { kind: "closed" } | { kind: "add" } | { kind: "edit"; ruleId: string };
 
 const emptyForm = (): RuleFormState => ({ name: "", from: "", to: "" });
 
 export function RulesPopup() {
-  const {
-    rules,
-    addRule,
-    updateRule,
-    deleteRule,
-    setRuleEnabled,
-    reorderRules,
-  } = usePrompt();
+  const { rules, addRule, updateRule, deleteRule, setRuleEnabled, reorderRules } =
+    usePrompt();
   const confirm = useConfirm();
 
   const [formMode, setFormMode] = useState<FormMode>({ kind: "closed" });
@@ -131,8 +122,8 @@ export function RulesPopup() {
 
       {/* 追加・編集フォーム */}
       {formMode.kind !== "closed" && (
-        <div className="px-2 py-2 border-b border-eva-line-soft shrink-0">
-          <div className="font-mono text-[10px] text-eva-lavender mb-1 px-1">
+        <div className="px-2 py-2 border-b border-eva-line-soft shrink-0 bg-eva-purple">
+          <div className="font-mono text-[10px] text-eva-lavender mb-1 px-1 text-center">
             {formMode.kind === "add" ? "新規ルール" : "ルール編集"}
           </div>
           <RuleForm
