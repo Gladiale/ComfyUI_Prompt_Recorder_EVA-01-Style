@@ -158,10 +158,10 @@ export function SynthesisPanel() {
         </AnimatePresence>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-2">
+      <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-2">
         {synthesis ? (
           <pre
-            className="font-mono text-[12px] leading-relaxed whitespace-pre-wrap wrap-break-word text-eva-green-soft/95"
+            className="font-mono text-[12px] leading-relaxed whitespace-pre-wrap wrap-break-word text-eva-green-soft/95 break-all"
             style={{ textShadow: "0 0 8px rgba(57,255,20,0.18)" }}
           >
             {synthesis}
