@@ -34,17 +34,28 @@ function rule(
 // ============================================================
 
 describe("normalizeRuleInput / isValidRuleInput", () => {
-  it("前後空白を trim する", () => {
+  it("name のみ trim し、from / to の空白は保持する", () => {
     expect(normalizeRuleInput({ name: "  n  ", from: " a ", to: " b " })).toEqual({
       name: "n",
-      from: "a",
-      to: "b",
+      from: " a ",
+      to: " b ",
     });
   });
 
-  it("name / from が空なら invalid", () => {
+  it("空白のみの from / to も保持する", () => {
+    expect(normalizeRuleInput({ name: "sp", from: " ", to: "  " })).toEqual({
+      name: "sp",
+      from: " ",
+      to: "  ",
+    });
+  });
+
+  it("name が空、または from が空文字なら invalid（空白 from は valid）", () => {
     expect(isValidRuleInput({ name: "", from: "a", to: "" })).toBe(false);
-    expect(isValidRuleInput({ name: "n", from: "  ", to: "" })).toBe(false);
+    expect(isValidRuleInput({ name: "  ", from: "a", to: "" })).toBe(false);
+    expect(isValidRuleInput({ name: "n", from: "", to: "" })).toBe(false);
+    expect(isValidRuleInput({ name: "n", from: "  ", to: "" })).toBe(true);
+    expect(isValidRuleInput({ name: "n", from: " ", to: " " })).toBe(true);
     expect(isValidRuleInput({ name: "n", from: "a", to: "" })).toBe(true);
   });
 });
@@ -54,19 +65,31 @@ describe("normalizeRuleInput / isValidRuleInput", () => {
 // ============================================================
 
 describe("addRule", () => {
-  it("新規ルールを末尾に disabled で追加する", () => {
+  it("新規ルールを末尾に disabled で追加する（from/to の空白は保持）", () => {
     const root = withRules([rule("r1")]);
     const next = addRule(root, { name: "  my  ", from: " cat ", to: " dog " });
     expect(next.rules).toHaveLength(2);
     expect(next.rules[1]).toMatchObject({
       name: "my",
-      from: "cat",
-      to: "dog",
+      from: " cat ",
+      to: " dog ",
       enabled: false,
     });
     expect(next.rules[1].id).toMatch(/^rule_/);
     // 元は不変
     expect(root.rules).toHaveLength(1);
+  });
+
+  it("空白のみの from も保存できる", () => {
+    const root = withRules([]);
+    const next = addRule(root, { name: "space", from: " ", to: "_" });
+    expect(next.rules).toHaveLength(1);
+    expect(next.rules[0]).toMatchObject({
+      name: "space",
+      from: " ",
+      to: "_",
+      enabled: false,
+    });
   });
 
   it("name または from が空なら変更しない", () => {
@@ -81,7 +104,7 @@ describe("addRule", () => {
 // ============================================================
 
 describe("updateRule", () => {
-  it("既存ルールを編集し enabled を維持する", () => {
+  it("既存ルールを編集し enabled を維持する（from/to の空白は保持）", () => {
     const root = withRules([rule("r1", "a", "b", true, "old")]);
     const next = updateRule(root, "r1", {
       name: " new ",
@@ -91,8 +114,8 @@ describe("updateRule", () => {
     expect(next.rules[0]).toEqual({
       id: "r1",
       name: "new",
-      from: "x",
-      to: "y",
+      from: " x ",
+      to: " y ",
       enabled: true,
     });
   });

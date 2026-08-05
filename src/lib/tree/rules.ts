@@ -15,16 +15,20 @@ export interface RuleFormInput {
   to: string;
 }
 
-/** 入力を trim 正規化する。 */
+/**
+ * 入力を正規化する。
+ * - name のみ前後空白を trim（表示用ラベル）
+ * - from / to は空白を変換対象に含めるため trim しない
+ */
 export function normalizeRuleInput(input: RuleFormInput): RuleFormInput {
   return {
     name: input.name.trim(),
-    from: input.from.trim(),
-    to: input.to.trim(),
+    from: input.from,
+    to: input.to,
   };
 }
 
-/** 保存可能か（name / from が非空）。 */
+/** 保存可能か（name が非空 / from が空文字でない。from/to の空白は有効）。 */
 export function isValidRuleInput(input: RuleFormInput): boolean {
   const n = normalizeRuleInput(input);
   return n.name.length > 0 && n.from.length > 0;

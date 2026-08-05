@@ -170,7 +170,7 @@ PresetFormData {
   - `deletePreset()`, `renamePreset()`, `reorderPresets()`
 
 - **[tree/rules.ts](src/lib/tree/rules.ts)**: 総括欄プロンプト変換ルール操作
-  - `normalizeRuleInput()` / `isValidRuleInput()`: trim 正規化・バリデーション（name/from 必須、to は空可）
+  - `normalizeRuleInput()` / `isValidRuleInput()`: name のみ trim。from/to は空白を変換対象に含めるため trim しない（name 必須、from は空文字不可・空白のみ可、to は空可）
   - `addRule(input)`: 末尾に追加（常に `enabled: false`）
   - `updateRule(id, input)`: 編集（enabled は維持）
   - `deleteRule(id)` / `setRuleEnabled(id, enabled)`
@@ -179,7 +179,7 @@ PresetFormData {
 - **[tree/normalize.ts](src/lib/tree/normalize.ts)**: Import/Export正規化
   - `normalizeImportedState()`: 外部データを検証・正規化（`version` は常に `ROOT_VERSION`）
   - 旧形式プリセット（name + entries のみ）も読み込み可能
-  - `rules` 欠損・非配列は `[]`。name/from 不正は除外、id 重複は再採番、enabled 非真偽値は false
+  - `rules` 欠損・非配列は `[]`。name 不正・空（trim 後）は除外、from 非文字列・空文字は除外（空白のみ from は有効）、to は trim せず保持、id 重複は再採番、enabled 非真偽値は false
   - 未知・欠損フィールドは安全なデフォルトへ落とす
 
 **メインファイル [tree.ts](src/lib/tree.ts)**: 全モジュールから関数を再エクスポート。外部から見たAPIは変更なし。
@@ -316,7 +316,7 @@ PresetFormData {
 
 - `DiffPopup` / `DiffSection` / `countSynthesisPoints`: 差分表示
 - `RulesPopup`: 変換ルール一覧・追加/編集フォーム・DnD並替
-- `RuleForm`: ルール名 / 変換前 / 変換後の入力（name・from 必須、to 空可）
+- `RuleForm`: ルール名 / 変換前 / 変換後の入力（name 必須、from は空文字不可・空白可、to 空可。from/to は trim しない）
 - `RuleListItem`: 1ルール行（適用切替・編集・削除・DnD。操作ボタンからはドラッグ開始しない）
 
 **プリセット UI**:

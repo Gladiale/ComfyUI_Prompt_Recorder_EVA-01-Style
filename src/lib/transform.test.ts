@@ -104,6 +104,15 @@ describe("applyTransformRules", () => {
     // "  dog  " の中の dog が置換 → "  animal  "
     expect(applyTransformRules("cat", rules)).toBe("  animal  ");
   });
+
+  it("空白を含む from / to もリテラル置換する", () => {
+    // 単一スペースをアンダースコアへ
+    expect(applyTransformRules("a b c", [rule("r1", " ", "_")])).toBe("a_b_c");
+    // 前後空白付きの from もそのまま一致
+    expect(applyTransformRules("x cat y", [rule("r1", " cat ", " dog ")])).toBe(
+      "x dog y",
+    );
+  });
 });
 
 describe("transformWordText", () => {

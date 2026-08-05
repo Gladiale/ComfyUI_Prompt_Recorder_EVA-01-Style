@@ -465,7 +465,7 @@ describe("normalizeImportedState — rules", () => {
     );
   });
 
-  it("正常ルールを読み込む", () => {
+  it("正常ルールを読み込む（name のみ trim、from/to の空白は保持）", () => {
     const state = normalizeImportedState({
       rootGroups: [],
       rules: [
@@ -482,14 +482,38 @@ describe("normalizeImportedState — rules", () => {
       {
         id: "rule-1",
         name: "A",
-        from: "cat",
-        to: "dog",
+        from: " cat ",
+        to: " dog ",
         enabled: true,
       },
     ]);
   });
 
-  it("name / from 不正・空は除外する", () => {
+  it("空白のみの from / to も保持する", () => {
+    const state = normalizeImportedState({
+      rootGroups: [],
+      rules: [
+        {
+          id: "rule-sp",
+          name: " space ",
+          from: " ",
+          to: "  ",
+          enabled: false,
+        },
+      ],
+    });
+    expect(state.rules).toEqual([
+      {
+        id: "rule-sp",
+        name: "space",
+        from: " ",
+        to: "  ",
+        enabled: false,
+      },
+    ]);
+  });
+
+  it("name / from 不正・空は除外する（空白のみ from は保持）", () => {
     const state = normalizeImportedState({
       rootGroups: [],
       rules: [
@@ -505,6 +529,13 @@ describe("normalizeImportedState — rules", () => {
       ],
     });
     expect(state.rules).toEqual([
+      {
+        id: "r4",
+        name: "ok",
+        from: "  ",
+        to: "b",
+        enabled: true,
+      },
       {
         id: "r7",
         name: "keep",

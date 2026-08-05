@@ -54,8 +54,9 @@ export function normalizeImportedState(raw: unknown): RootState {
 /**
  * 変換ルール配列を正規化する。
  * - 非配列 → []
- * - name/from 不正・空 → 除外
- * - to 非文字列 → ""
+ * - name 不正・空（trim 後）→ 除外
+ * - from 非文字列・空文字 → 除外（空白のみは有効。空白を変換対象に含める）
+ * - to 非文字列 → ""（文字列なら as-is。空白も保持）
  * - id 欠損・重複 → 新規生成（最初の ID は維持）
  * - enabled 非真偽値 → false
  */
@@ -72,11 +73,12 @@ function normalizeRules(raw: unknown): PromptTransformRule[] {
     const name = obj.name.trim();
     if (!name) continue;
 
+    // from/to は空白を変換対象に含めるため trim しない
     if (typeof obj.from !== "string") continue;
-    const from = obj.from.trim();
+    const from = obj.from;
     if (!from) continue;
 
-    const to = typeof obj.to === "string" ? obj.to.trim() : "";
+    const to = typeof obj.to === "string" ? obj.to : "";
     const enabled = typeof obj.enabled === "boolean" ? obj.enabled : false;
 
     let id =
