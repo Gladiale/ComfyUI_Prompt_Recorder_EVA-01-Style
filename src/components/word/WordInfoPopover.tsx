@@ -13,7 +13,15 @@ interface Props {
   onMouseLeave: () => void;
 }
 
-export function WordInfoPopover({ word, show, position, popRef, measure, onMouseEnter, onMouseLeave }: Props) {
+export function WordInfoPopover({
+  word,
+  show,
+  position,
+  popRef,
+  measure,
+  onMouseEnter,
+  onMouseLeave,
+}: Props) {
   const hasNote = !!word.note.trim();
   const hasImage = !!word.image;
   if (!hasNote && !hasImage) return null;
@@ -40,13 +48,18 @@ export function WordInfoPopover({ word, show, position, popRef, measure, onMouse
             visibility: position ? "visible" : "hidden",
             zIndex: 9999,
           }}
-          className="w-fit max-w-80 rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
+          className="w-fit max-w-80 max-h-148 overflow-hidden overflow-y-auto rounded-xl border border-eva-line bg-eva-ink/95 shadow-glow-green p-1.5"
         >
           {hasImage && (
-            <img src={word.image} alt={word.text} onLoad={measure} className="w-full rounded-sm mb-1" />
+            <img
+              src={word.image}
+              alt={word.text}
+              onLoad={measure}
+              className="w-full max-h-120 rounded-sm mb-1 object-contain"
+            />
           )}
           {hasNote && (
-            <p className="text-[11px] font-mono text-eva-purple whitespace-pre-wrap wrap-break-word">
+            <p className="text-[11px] font-mono text-eva-purple whitespace-pre-wrap wrap-break-word break-all">
               {word.note}
             </p>
           )}
