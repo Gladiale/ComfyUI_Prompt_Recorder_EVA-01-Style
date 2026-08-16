@@ -219,7 +219,7 @@ export function PresetDetailCard({
                 </div>
               </SectionTitle>
               <div className="space-y-0.5 max-h-28 w-full overflow-y-auto overflow-x-hidden">
-                <div className="font-mono text-[10px] text-eva-green-soft/90 w-full">
+                <div className="font-mono text-[10px] text-eva-green-soft/90 w-full break-all">
                   {preset.entries
                     .slice(0, 40)
                     .map((e) => formatWordWithStrength(e.text, e.strength))
