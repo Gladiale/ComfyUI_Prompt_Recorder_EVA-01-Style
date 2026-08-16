@@ -21,8 +21,21 @@ interface Props {
 }
 
 export function WordBody({
-  word, draggable, hasInfo, markRef, onDragStart, onDragOver, onDrop, onDragEnd,
-  onClick, onContextMenu, onDelete, onFocusStrength, onInfoMouseEnter, onInfoMouseLeave, onInfoClick,
+  word,
+  draggable,
+  hasInfo,
+  markRef,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onClick,
+  onContextMenu,
+  onDelete,
+  onFocusStrength,
+  onInfoMouseEnter,
+  onInfoMouseLeave,
+  onInfoClick,
 }: Props) {
   return (
     <div
@@ -34,17 +47,25 @@ export function WordBody({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={[
-        "font-garamond group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-65 relative select-none",
-        word.selected ? "word-selected bg-eva-bg-panel-2" : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
+        "font-garamond group flex items-center gap-2 border px-2.25 py-1.25 cursor-pointer transition-all max-w-57 relative select-none",
+        word.selected
+          ? "word-selected bg-eva-bg-panel-2"
+          : "border-eva-line-soft bg-eva-purple-bright/50 hover:border-eva-purple-bright",
       ].join(" ")}
     >
       <div className="flex-1 min-w-0">
-        <div className={`truncate text-[13px] ${word.selected ? "text-eva-green-soft font-medium" : "text-eva-ink group-hover:text-[#07ff77]"}`} title={`+${word.strength}; ${word.text}`}>
+        <div
+          className={`truncate text-[13px] ${word.selected ? "text-eva-green-soft font-medium" : "text-eva-ink group-hover:text-[#07ff77]"}`}
+          title={`+${word.strength}; ${word.text}`}
+        >
           {word.text || <span className="text-eva-ink-dim italic">（empty）</span>}
         </div>
       </div>
       {word.strength !== 0 && word.selected && (
-        <span onClick={onFocusStrength} className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[0.7rem] leading-none w-4 aspect-square flex items-center justify-center">
+        <span
+          onClick={onFocusStrength}
+          className="border border-eva-green hover:border-[#ff92de] hover:text-[#ff92de] rounded-full text-[0.7rem] leading-none w-4 aspect-square flex items-center justify-center"
+        >
           +{word.strength}
         </span>
       )}
@@ -60,7 +81,11 @@ export function WordBody({
           ✦
         </span>
       )}
-      <button onClick={onDelete} className="absolute right-0 bottom-[-0.1rem] opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0 cursor-pointer" title="削除">
+      <button
+        onClick={onDelete}
+        className="absolute right-0 bottom-[-0.1rem] opacity-0 translate-x-1/2 group-hover:opacity-100 text-eva-ink-dim hover:text-eva-magenta transition-all shrink-0 cursor-pointer"
+        title="削除"
+      >
         <RiDeleteBin2Line size={13} />
       </button>
     </div>
