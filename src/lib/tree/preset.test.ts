@@ -302,7 +302,7 @@ describe("applyPreset", () => {
         ],
       },
     );
-    // 事前: w-a1, w-b1, w-d1 が選択
+    // 事前: w-a1, w-b1, w-d1 が選択。w-b1 は strength 2
     const next = applyPreset(root, "preset-1");
 
     const a = findGroup(next, "grp-a")!;
@@ -314,9 +314,10 @@ describe("applyPreset", () => {
       selected: true,
       strength: 5,
     });
+    // プリセット外の w-b1 は選択解除するが、既存強度は維持する
     expect(findGroup(next, "grp-b")!.words[0]).toMatchObject({
       selected: false,
-      strength: 0,
+      strength: 2,
     });
     expect(findGroup(next, "grp-c")!.words[0]).toMatchObject({
       selected: true,
@@ -325,6 +326,34 @@ describe("applyPreset", () => {
     expect(findGroup(next, "grp-d")!.words[0]).toMatchObject({
       selected: false,
       strength: 0,
+    });
+  });
+
+  it("プリセット外ワードの強度はリセットしない", () => {
+    const root = makeSampleRoot();
+    findGroup(root, "grp-a")!.words[1].strength = 8; // 未選択の w-a2
+    findGroup(root, "grp-c")!.words[0].strength = 4; // 未選択の w-c1
+    const withPreset = rootWithPreset(root, {
+      entries: [{ wordId: "w-a1", text: "alpha", strength: 3 }],
+    });
+
+    const next = applyPreset(withPreset, "preset-1");
+
+    expect(findGroup(next, "grp-a")!.words[0]).toMatchObject({
+      selected: true,
+      strength: 3,
+    });
+    expect(findGroup(next, "grp-a")!.words[1]).toMatchObject({
+      selected: false,
+      strength: 8,
+    });
+    expect(findGroup(next, "grp-b")!.words[0]).toMatchObject({
+      selected: false,
+      strength: 2,
+    });
+    expect(findGroup(next, "grp-c")!.words[0]).toMatchObject({
+      selected: false,
+      strength: 4,
     });
   });
 

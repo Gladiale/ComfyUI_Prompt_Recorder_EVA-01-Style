@@ -164,7 +164,7 @@ PresetFormData {
   - `savePreset(form)`: 現在の選択 + フォーム情報を新規保存（同名でも上書きしない。重複名チェックはフォーム側）
   - `updatePresetMeta(id, form)`: メタ情報のみ更新（entries は維持）
   - `updatePresetEntries(id)`: ワード情報だけを現在の選択で更新
-  - `applyPreset(id)`: 全ワードを未選択・強度0にリセット後、entries の wordId で selected/strength を当てはめる（text は復元しない）
+  - `applyPreset(id)`: 全ワードを未選択にし、entries の wordId で selected/strength を当てはめる。プリセット外ワードの強度は維持する（text は復元しない）
   - `analyzePresetApply(id)`: 還元前に id 欠落・text 変更を検査
   - `diffPresetEntries(id)`: 現在の選択 vs プリセット entries の差分（追加/削除/強度変更/text変更）
   - `deletePreset()`, `renamePreset()`, `reorderPresets()`

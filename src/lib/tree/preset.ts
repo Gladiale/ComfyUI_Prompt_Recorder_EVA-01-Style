@@ -224,9 +224,10 @@ export function analyzePresetApply(
 }
 
 /**
- * プリセットを復元（完全置換）：
- * 一旦全ワードを未選択・強度0にリセットし、
+ * プリセットを復元（選択の完全置換）：
+ * 全ワードを未選択にしたうえで、
  * プリセットの entries に一致する wordId があれば selected/strength を当てはめる。
+ * プリセットに含まれないワードの強度は維持する。
  * ※ text は復元しない（差分通知用のみ）。
  */
 export function applyPreset(root: RootState, presetId: string): RootState {
@@ -242,7 +243,6 @@ export function applyPreset(root: RootState, presetId: string): RootState {
       w.strength = e.strength;
     } else {
       w.selected = false;
-      w.strength = 0;
     }
   });
   return next;
