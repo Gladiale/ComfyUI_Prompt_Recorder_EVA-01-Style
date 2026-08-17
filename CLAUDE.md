@@ -246,7 +246,7 @@ PresetFormData {
   - `import-samples.ts`: Import 正規化用の正常・破損データ
 - **実行環境**: `environment: "node"`。Windows 安定化のため `pool: vmThreads` / 単一ワーカー / `isolate: false`（`package.json` の scripts と `vitest.config.ts` で固定）
 - **カバレッジ対象の主なモジュール**:
-  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算） / `transform`
+  - `normalize` / `strength` / `array` / `diff` / `storage` / `image`（`fitWithin` 等の寸法計算） / `transform` / `groupDropGeometry`
   - `tree/*`: factory, search, searchHits, immutable, collector, navigation, word, group, preset, rules, normalize
 
 ### コンポーネント構成
@@ -294,6 +294,11 @@ PresetFormData {
   - viewport端のclamp、上下配置、左右補正を純粋関数として提供
   - `wordPopoverGeometry.test.ts`で位置計算を検証
 
+- **[src/lib/groupDropGeometry.ts](src/lib/groupDropGeometry.ts)**: DOM非依存のグループDnD位置判定
+  - `computeGroupDropMode`: 展開時は上下端を before/after、中央を into。折り畳み時は上下二分
+  - `isPointInsideRect`: 子要素への dragleave を無視するための点内判定
+  - `groupDropGeometry.test.ts`で判定を検証
+
 - **[IOButtons.tsx](src/components/IOButtons.tsx)** (73行): Import/Exportボタン
   - Import（赤紫↓）: JSONファイル読み込み（ワードツリー・プリセット・変換ルールを一括置換）
   - Export（緑↑）: 現在の状態をJSON保存（常に `rules` フィールドを含む）
@@ -333,7 +338,7 @@ PresetFormData {
   - 子: `preset/PresetHexTile`, `HexDragGhost`, `PresetDetailCard`, `UpdateDiffBody`
 
 - **[PromptContext.tsx](src/context/PromptContext.tsx)**: 永続RootStateとツリー操作actionを管理。DnD中の一時状態は保持しない
-- **[GroupTreeDndContext.tsx](src/context/GroupTreeDndContext.tsx)**: ワードツリー内のグループDnD状態（dragging ID、drop target）を管理
+- **[GroupTreeDndContext.tsx](src/context/GroupTreeDndContext.tsx)**: ワードツリー内のグループDnD状態（dragging ID、drop target）を管理。ネスト時は最深の子が `stopPropagation` で親の into 上書きを防ぐ
 - **[PresetFormContext.tsx](src/context/PresetFormContext.tsx)**: 保存/編集モーダルの open API
 - **[PresetListContext.tsx](src/context/PresetListContext.tsx)**: 一覧パネルの open/close API
 
@@ -377,7 +382,7 @@ PresetFormData {
 - **usePresetListActions**: 還元・エントリ更新・削除（確認ダイアログ付き）
 - **useGroupNodeEditing**: グループ名のシングル/ダブルクリック編集
 - **useGroupWordReordering**: flex-wrapワード一覧のHTML5 DnD並替
-- **useGroupDnD**: グループのbefore/after/into移動とdrop表示
+- **useGroupDnD**: グループのbefore/after/into移動とdrop表示。ネスト時は最深ノードが `stopPropagation` し、親の大きな矩形による into 上書きを防ぐ
 - **useWordClickActions**: ワードのシングル/ダブルクリック、編集、削除確認、右クリックメニュー起動
 - **useWordDragEvents**: `text/word` MIMEを使う個別ワードのDnDイベントアダプター。グループ内並替ロジックとは分離
 - **useWordContextMenu**: ワード右クリックメニューの開閉・位置・サブメニュー状態

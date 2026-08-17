@@ -1,16 +1,10 @@
 // グループ自身のHTML5 DnD
 import { useEffect, useState, type DragEvent } from "react";
 import { usePrompt } from "@/context/PromptContext";
-import { useGroupTreeDnd, type GroupDropMode } from "@/context/GroupTreeDndContext";
+import { useGroupTreeDnd } from "@/context/GroupTreeDndContext";
+import { computeGroupDropMode, isPointInsideRect } from "@/lib/groupDropGeometry";
 
-export function computeGroupDropMode(relativeY: number, height: number, expanded: boolean): GroupDropMode {
-  if (expanded) {
-    if (relativeY < height * 0.22) return "before";
-    if (relativeY > height * 0.78) return "after";
-    return "into";
-  }
-  return relativeY < height / 2 ? "before" : "after";
-}
+export { computeGroupDropMode } from "@/lib/groupDropGeometry";
 
 export function useGroupDnD(groupId: string, expanded: boolean) {
   const { moveGroup } = usePrompt();
@@ -36,22 +30,30 @@ export function useGroupDnD(groupId: string, expanded: boolean) {
     endGroupDrag();
   };
   const onGroupDragOver = (event: DragEvent) => {
-    if (!draggingGroupId || draggingGroupId === groupId) return;
-    if (!event.dataTransfer.types.includes("text/group")) return;
+    if (!draggingGroupId || !event.dataTransfer.types.includes("text/group")) return;
+    // ネストした子の上では子が処理する。親へバブルすると親の大きな矩形で
+    // mode がほぼ常に into になり、子の drop-indicator が出ない。
+    event.stopPropagation();
+    if (draggingGroupId === groupId) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     setDropTarget(groupId, modeFromEvent(event));
   };
-  const onGroupDragLeave = () => {
-    if (targetGroupId === groupId) clearDropTarget();
+  const onGroupDragLeave = (event: DragEvent) => {
+    if (targetGroupId !== groupId) return;
+    event.stopPropagation();
+    // 子要素へ移っただけの dragleave ではインジケータを消さない
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (isPointInsideRect(event.clientX, event.clientY, rect)) return;
+    clearDropTarget();
   };
   const onGroupDrop = (event: DragEvent) => {
+    event.stopPropagation();
     if (!draggingGroupId || draggingGroupId === groupId) {
       clearDropTarget();
       return;
     }
     event.preventDefault();
-    event.stopPropagation();
     const mode = modeFromEvent(event);
     if (mode === "into") moveGroup(draggingGroupId, { kind: "into", parentId: groupId });
     else moveGroup(draggingGroupId, { kind: mode, anchorId: groupId });
