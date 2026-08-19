@@ -24,9 +24,15 @@ export function GroupTreeDndProvider({ children }: { children: ReactNode }) {
     setTarget(null);
   }, []);
   const setDropTarget = useCallback((groupId: string, mode: GroupDropMode | null) => {
-    setTarget(mode ? { groupId, mode } : null);
+    setTarget((prev) => {
+      if (!mode) return null;
+      if (prev?.groupId === groupId && prev.mode === mode) return prev;
+      return { groupId, mode };
+    });
   }, []);
-  const clearDropTarget = useCallback(() => setTarget(null), []);
+  const clearDropTarget = useCallback(() => {
+    setTarget((prev) => (prev === null ? prev : null));
+  }, []);
   const value = useMemo<GroupTreeDndValue>(() => ({
     draggingGroupId,
     targetGroupId: target?.groupId ?? null,
