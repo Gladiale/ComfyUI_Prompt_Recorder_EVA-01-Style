@@ -1,7 +1,7 @@
 // プリセット 3D 詳細カード（表面=画像 / 裏面=メタ情報）
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { FiCheck, FiEdit2, FiRotateCw } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiLock, FiUnlock } from "react-icons/fi";
 import type { PromptPreset } from "@/types";
 import { formatWordWithStrength } from "@/lib/strength";
 
@@ -17,6 +17,7 @@ export function PresetDetailCard({
   onEdit: () => void;
 }) {
   const [flipped, setFlipped] = useState(false);
+  const [locked, setLocked] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
@@ -29,6 +30,7 @@ export function PresetDetailCard({
   }, [onClose]);
 
   const onMove = (e: React.MouseEvent) => {
+    if (locked) return;
     const el = cardRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -62,7 +64,9 @@ export function PresetDetailCard({
           ref={cardRef}
           onMouseMove={onMove}
           onMouseLeave={onLeave}
-          onClick={() => setFlipped((f) => !f)}
+          onClick={() => {
+            if (!locked) setFlipped((f) => !f);
+          }}
           animate={{
             rotateX: tilt.rx,
             rotateY: flipped ? 180 + tilt.ry : tilt.ry,
@@ -141,12 +145,14 @@ export function PresetDetailCard({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setFlipped(true);
+                  setTilt({ rx: 0, ry: 0 });
+                  setLocked((value) => !value);
                 }}
                 className="p-1.5 rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-lavender transition-colors"
-                title="裏面を表示"
+                title={locked ? "回転ロックを解除" : "回転をロック"}
+                aria-label={locked ? "回転ロックを解除" : "回転をロック"}
               >
-                <FiRotateCw size={13} />
+                {locked ? <FiLock size={13} /> : <FiUnlock size={13} />}
               </button>
             </div>
           </div>
@@ -171,13 +177,14 @@ export function PresetDetailCard({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setFlipped(false);
+                    setTilt({ rx: 0, ry: 0 });
+                    setLocked((value) => !value);
                   }}
                   className="p-1.5 min-w-8 min-h-8 inline-flex items-center justify-center rounded-sm border border-eva-line bg-black/55 text-eva-ink-dim hover:text-eva-lavender hover:border-eva-lilac/50 transition-colors"
-                  title="表面に戻る"
-                  aria-label="表面に戻る"
+                  title={locked ? "回転ロックを解除" : "回転をロック"}
+                  aria-label={locked ? "回転ロックを解除" : "回転をロック"}
                 >
-                  <FiRotateCw size={13} />
+                  {locked ? <FiLock size={13} /> : <FiUnlock size={13} />}
                 </button>
               </div>
 
@@ -236,7 +243,7 @@ export function PresetDetailCard({
         </motion.div>
 
         <div className="absolute -bottom-5.5 inset-x-0 text-center font-mono text-[9px] text-eva-ink-dim/70">
-          左クリック / 回転ボタンで裏面 · Esc / 背景クリックで閉じる
+          左クリックで表裏切替 · ロック中は回転無効 · Esc / 背景クリックで閉じる
         </div>
       </div>
     </motion.div>
